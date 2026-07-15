@@ -27,6 +27,7 @@
 
     body {
       margin: 0;
+      min-width: 1200px;
       font-family: Inter, "Segoe UI", sans-serif;
       color: #0b1c30;
       background: var(--bg);
@@ -55,17 +56,26 @@
       padding: 0 6px;
     }
 
+    .brand-logo-wrap {
+      width: 168px;
+      height: 54px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: transparent;
+    }
+
     .brand-logo {
       display: block;
       width: 100%;
-      max-width: 160px;
-      height: auto;
+      height: 120px;
+      object-fit: cover;
+      object-position: center bottom;
     }
 
     .brand p {
       margin: 6px 0 0;
-      font-size: 0.82rem;
-      opacity: 0.8;
+      font-size: 0.8rem;
+      opacity: 0.74;
     }
 
     .nav {
@@ -129,56 +139,16 @@
       background: var(--bg);
     }
 
-    @media (max-width: 960px) {
-      .layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-      }
-
-      .sidebar {
-        position: sticky;
-        top: 0;
-        height: auto;
-        z-index: 20;
-        padding: 12px;
-        border-right: 0;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .brand {
-        display: none;
-      }
-
-      .nav {
-        grid-auto-flow: column;
-        grid-auto-columns: 1fr;
-        gap: 8px;
-      }
-
-      .nav-link {
-        justify-content: center;
-        border-left: 0;
-        border-bottom: 3px solid transparent;
-        border-radius: 8px;
-        font-size: 0.9rem;
-      }
-
-      .nav-link.is-active {
-        border-bottom-color: var(--sidebar-active);
-      }
-
-      .content {
-        min-height: calc(100vh - 76px);
-      }
-    }
   </style>
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar" aria-label="Navegacion principal">
       <div class="brand">
-        <img class="brand-logo" src="/stitch-export/Ucars%20-%20logo%20(2).png" alt="Ucars" />
-        <p>Dealership Admin</p>
+        <div class="brand-logo-wrap">
+          <img class="brand-logo" src="/stitch-export/Ucars%20-%20logo%20(2).png" alt="Ucars" />
+        </div>
+        <p>Panel administrativo</p>
       </div>
       <nav class="nav">
         <a class="nav-link" data-screen="stock" href="#stock">Stock</a>
@@ -228,12 +198,66 @@
             '[class*="md:left-[260px]"], [class*="left-[260px]"] { left: 0 !important; }',
             '[class*="md:w-[calc(100%-260px)]"], [class*="w-[calc(100%-260px)]"] { width: 100% !important; }',
             '[class*="md:pl-[260px]"], [class*="pl-[260px]"] { padding-left: 0 !important; }',
-            '[class*="md:pt-16"], [class*="pt-16"] { padding-top: 0 !important; }'
+            '[class*="md:pt-16"], [class*="pt-16"] { padding-top: 0 !important; }',
+            '.md\\:hidden { display: none !important; }',
+            '.md\\:flex { display: flex !important; }'
           ].join(' ');
           doc.head.appendChild(style);
+
+          localizeIframe(doc);
         } catch (_) {
           // Ignore sanitization errors and keep rendering the iframe as-is.
         }
+      }
+
+      function localizeIframe(doc) {
+        var dictionary = [
+          ['Dealership Admin', 'Panel administrativo'],
+          ['Notifications', 'Notificaciones'],
+          ['Vehicle Stock', 'Stock de vehiculos'],
+          ['Manage and monitor dealership inventory.', 'Gestiona y monitorea el inventario de la automotora.'],
+          ['Add New Stock', 'Agregar vehiculo'],
+          ['Add Vehicle', 'Agregar vehiculo'],
+          ['All Brands', 'Todas las marcas'],
+          ['All Ucarianos', 'Todos los ucarianos'],
+          ['Search stock, VIN...', 'Buscar stock o VIN...'],
+          ['Search...', 'Buscar...'],
+          ["Today's Agenda", 'Agenda de hoy'],
+          ['Ucarianos Directory', 'Directorio de ucarianos'],
+          ['Review and manage communications sent to Ucarianos.', 'Revisa y administra las comunicaciones enviadas a los ucarianos.'],
+          ['Load More Notifications', 'Cargar mas notificaciones']
+        ];
+
+        function replaceText(value) {
+          if (!value) return value;
+
+          var output = value;
+          dictionary.forEach(function (pair) {
+            output = output.split(pair[0]).join(pair[1]);
+          });
+
+          return output;
+        }
+
+        var textNodes = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+        while (textNodes.nextNode()) {
+          var node = textNodes.currentNode;
+          var original = node.nodeValue || '';
+          var replaced = replaceText(original);
+          if (replaced !== original) {
+            node.nodeValue = replaced;
+          }
+        }
+
+        doc.querySelectorAll('input, textarea').forEach(function (input) {
+          if (input.placeholder) {
+            input.placeholder = replaceText(input.placeholder);
+          }
+        });
+
+        doc.querySelectorAll('option').forEach(function (option) {
+          option.textContent = replaceText(option.textContent || '');
+        });
       }
 
       function getScreenFromHash() {

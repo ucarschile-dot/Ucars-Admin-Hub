@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ucars Hub - Stock</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-fixed": "#e7e1df",
+                      "surface-container-highest": "#d3e4fe",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-fixed": "#e4e2e1",
+                      "surface-bright": "#f8f9ff",
+                      "outline-variant": "#c4c7c7",
+                      "on-secondary": "#ffffff",
+                      "on-background": "#0b1c30",
+                      "surface-dim": "#cbdbf5",
+                      "surface-tint": "#5f5e5e",
+                      "secondary-fixed": "#ffdf9c",
+                      "on-tertiary-fixed-variant": "#494645",
+                      "tertiary": "#151413",
+                      "on-primary": "#ffffff",
+                      "primary-container": "#282828",
+                      "on-secondary-container": "#725500",
+                      "on-secondary-fixed-variant": "#5b4300",
+                      "on-tertiary": "#ffffff",
+                      "surface-container": "#e5eeff",
+                      "tertiary-fixed-dim": "#cac5c4",
+                      "on-primary-fixed-variant": "#474746",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#2a2827",
+                      "on-surface-variant": "#444748",
+                      "secondary-container": "#fdcb52",
+                      "secondary": "#785a00",
+                      "on-error": "#ffffff",
+                      "outline": "#747878",
+                      "on-primary-fixed": "#1b1c1c",
+                      "on-surface": "#0b1c30",
+                      "on-tertiary-container": "#938f8d",
+                      "error": "#ba1a1a",
+                      "background": "#f8f9ff",
+                      "surface-container-high": "#dce9ff",
+                      "surface-container-low": "#eff4ff",
+                      "inverse-surface": "#213145",
+                      "on-tertiary-fixed": "#1d1b1a",
+                      "inverse-primary": "#c8c6c5",
+                      "on-primary-container": "#908f8e",
+                      "error-container": "#ffdad6",
+                      "secondary-fixed-dim": "#f1c048",
+                      "inverse-on-surface": "#eaf1ff",
+                      "surface": "#f8f9ff",
+                      "primary": "#131414",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "on-secondary-fixed": "#251a00",
+                      "surface-variant": "#d3e4fe"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-padding": "24px",
+                      "stack-md": "16px",
+                      "gutter": "16px",
+                      "card-gap": "20px",
+                      "unit": "4px",
+                      "stack-sm": "8px"
+              },
+              "fontFamily": {
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-caps": [
+                              "Inter"
+                      ],
+                      "title-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "mono-data": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-sm": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "mono-data": [
+                              "13px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Custom scrollbar for data tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #F8F9FF;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #c4c7c7;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md overflow-x-hidden flex">
+<!-- SideNavBar -->
+<nav class="fixed left-0 top-0 h-full w-[260px] bg-primary dark:bg-primary-container shadow-md flex flex-col py-stack-md z-50 hidden md:flex">
+<div class="px-container-padding mb-8">
+<h1 class="text-headline-md font-headline-md font-bold text-secondary dark:text-secondary-fixed">Ucars Hub</h1>
+<p class="text-body-sm text-on-primary-container dark:text-on-primary-fixed-variant mt-1">Dealership Admin</p>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar px-container-padding space-y-unit">
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-secondary dark:text-secondary-fixed border-l-4 border-secondary opacity-90 transition-all duration-150 bg-tertiary-container dark:bg-tertiary" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2" data-weight="fill">inventory_2</span>
+<span class="text-title-sm font-title-sm">Stock</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="text-title-sm font-title-sm">Ucarianos</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="text-title-sm font-title-sm">Agenda</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="text-title-sm font-title-sm">Notifications</span>
+</a>
+</div>
+<div class="px-container-padding mt-auto pt-8 border-t border-tertiary-container dark:border-tertiary">
+<button class="w-full bg-[#F5C34B] hover:bg-secondary-fixed-dim text-[#131414] font-title-sm text-title-sm py-3 rounded-DEFAULT transition-colors flex justify-center items-center gap-2 mb-6">
+<span class="material-symbols-outlined">add</span>
+                Add New Stock
+            </button>
+<div class="space-y-unit">
+<a class="flex items-center space-x-3 px-4 py-2 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-body-sm font-body-sm">Settings</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-2 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-body-sm font-body-sm">Support</span>
+</a>
+</div>
+<div class="flex items-center gap-3 mt-6 px-4">
+<img alt="Administrator Avatar" class="w-8 h-8 rounded-full bg-surface-container-high object-cover" data-alt="A small circular avatar placeholder showing a generic silhouette for a dealership administrator in a modern, light-themed admin dashboard setting." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="flex-1 min-w-0">
+<p class="text-body-sm font-body-sm text-on-primary truncate">Admin User</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 right-0 left-0 md:left-[260px] h-16 bg-surface-lowest dark:bg-background border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding z-40">
+<div class="flex items-center gap-4">
+<!-- Mobile Menu Toggle -->
+<button class="md:hidden text-primary dark:text-on-background">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 rounded-lg bg-surface-container-low border border-outline-variant text-body-sm font-body-sm w-64 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Search stock, VIN..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant dark:text-outline hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors rounded-full relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-secondary-container rounded-full"></span>
+</button>
+<button class="p-2 text-on-surface-variant dark:text-outline hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors rounded-full">
+<span class="material-symbols-outlined" data-icon="apps">apps</span>
+</button>
+<img alt="Administrator Avatar" class="w-8 h-8 rounded-full ml-2 object-cover border border-outline-variant md:hidden" data-alt="A small circular avatar placeholder for a user profile in a light-themed admin dashboard, showing a generic placeholder silhouette." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 pt-24 px-4 md:px-container-padding pb-8">
+<!-- Page Header & Filters -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+<div>
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-primary">Vehicle Stock</h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Manage and monitor dealership inventory.</p>
+</div>
+<div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+<div class="relative flex-1 md:flex-none min-w-[140px]">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant text-body-md font-body-md py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>All Brands</option>
+<option>Toyota</option>
+<option>Honda</option>
+<option>Ford</option>
+<option>BMW</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
+</div>
+<div class="relative flex-1 md:flex-none min-w-[140px]">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant text-body-md font-body-md py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+<option>All Ucarianos</option>
+<option>Maria S.</option>
+<option>David R.</option>
+<option>Unassigned</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
+</div>
+<button class="md:hidden w-full bg-[#F5C34B] text-[#131414] font-title-sm text-title-sm py-2 rounded-lg flex justify-center items-center gap-2">
+<span class="material-symbols-outlined">add</span>
+                        Add Vehicle
+                    </button>
+</div>
+</div>
+<!-- Data Grid View (Bento/Card style for high-end look) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-gutter">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">
+<div class="relative h-48 w-full bg-surface-dim">
+<img alt="Vehicle Image" class="w-full h-full object-cover" data-alt="A sleek, modern silver Toyota Camry parked in a well-lit showroom floor with soft overhead lighting and a clean white floor, shot from a professional 3/4 front angle." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="absolute top-2 right-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded text-label-caps font-label-caps text-primary border border-outline-variant">
+                            NEW
+                        </div>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="text-title-sm font-title-sm text-primary group-hover:text-secondary transition-colors">Toyota Camry XLE</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">2024</p>
+</div>
+<span class="text-title-sm font-title-sm font-bold text-primary">$32,500</span>
+</div>
+<div class="grid grid-cols-2 gap-y-2 mb-4 mt-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+<span class="text-label-caps font-label-caps">15 MI</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+<span class="text-label-caps font-label-caps">AUTO</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant col-span-2">
+<span class="material-symbols-outlined text-[16px]">directions_car</span>
+<span class="text-label-caps font-label-caps">2.5L 4-CYL</span>
+</div>
+</div>
+<div class="mt-auto pt-3 border-t border-surface-container-highest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">MS</div>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Maria S.</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">
+<div class="relative h-48 w-full bg-surface-dim">
+<img alt="Vehicle Image" class="w-full h-full object-cover" data-alt="A dark blue Honda CR-V SUV parked outdoors on a sunny day in a dealership lot, showing the side profile and shiny exterior." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="text-title-sm font-title-sm text-primary group-hover:text-secondary transition-colors">Honda CR-V EX-L</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">2021</p>
+</div>
+<span class="text-title-sm font-title-sm font-bold text-primary">$26,900</span>
+</div>
+<div class="grid grid-cols-2 gap-y-2 mb-4 mt-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+<span class="text-label-caps font-label-caps">34K MI</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+<span class="text-label-caps font-label-caps">CVT</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant col-span-2">
+<span class="material-symbols-outlined text-[16px]">directions_car</span>
+<span class="text-label-caps font-label-caps">1.5L TURBO</span>
+</div>
+</div>
+<div class="mt-auto pt-3 border-t border-surface-container-highest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface">DR</div>
+<span class="text-body-sm font-body-sm text-on-surface-variant">David R.</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">
+<div class="relative h-48 w-full bg-surface-dim">
+<img alt="Vehicle Image" class="w-full h-full object-cover" data-alt="A white Ford F-150 pickup truck parked in a bright, modern studio setting with dramatic lighting highlighting its rugged design." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="absolute top-2 right-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded text-label-caps font-label-caps text-error border border-error/20">
+                            RESERVED
+                        </div>
+</div>
+<div class="p-4 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-2">
+<div>
+<h3 class="text-title-sm font-title-sm text-primary group-hover:text-secondary transition-colors">Ford F-150 Lariat</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">2023</p>
+</div>
+<span class="text-title-sm font-title-sm font-bold text-primary">$54,200</span>
+</div>
+<div class="grid grid-cols-2 gap-y-2 mb-4 mt-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+<span class="text-label-caps font-label-caps">12K MI</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+<span class="text-label-caps font-label-caps">10-SPD AUTO</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant col-span-2">
+<span class="material-symbols-outlined text-[16px]">directions_car</span>
+<span class="text-label-caps font-label-caps">3.5L V6 ECO</span>
+</div>
+</div>
+<div class="mt-auto pt-3 border-t border-surface-container-highest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">MS</div>
+<span class="text-body-sm font-body-sm text-on-surface-variant">Maria S.</span>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4 (Empty State / Add New) -->
+<div class="bg-surface-container-low rounded-xl border-2 border-dashed border-outline-variant hover:border-secondary transition-colors flex flex-col items-center justify-center p-6 cursor-pointer group min-h-[350px]">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center mb-4 group-hover:bg-secondary-container transition-colors">
+<span class="material-symbols-outlined text-[32px] text-on-surface-variant group-hover:text-on-secondary-container transition-colors">add</span>
+</div>
+<h3 class="text-title-sm font-title-sm text-primary mb-1">Add New Vehicle</h3>
+<p class="text-body-sm font-body-sm text-center text-on-surface-variant">Register a new vehicle into the dealership inventory.</p>
+</div>
+</div>
+</main>
+</div>
+</body></html>

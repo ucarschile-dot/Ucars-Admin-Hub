@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ucars Hub - Notifications</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#e7e1df",
+                    "surface-container-highest": "#d3e4fe",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#e4e2e1",
+                    "surface-bright": "#f8f9ff",
+                    "outline-variant": "#c4c7c7",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#0b1c30",
+                    "surface-dim": "#cbdbf5",
+                    "surface-tint": "#5f5e5e",
+                    "secondary-fixed": "#ffdf9c",
+                    "on-tertiary-fixed-variant": "#494645",
+                    "tertiary": "#151413",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#282828",
+                    "on-secondary-container": "#725500",
+                    "on-secondary-fixed-variant": "#5b4300",
+                    "on-tertiary": "#ffffff",
+                    "surface-container": "#e5eeff",
+                    "tertiary-fixed-dim": "#cac5c4",
+                    "on-primary-fixed-variant": "#474746",
+                    "on-error-container": "#93000a",
+                    "tertiary-container": "#2a2827",
+                    "on-surface-variant": "#444748",
+                    "secondary-container": "#fdcb52",
+                    "secondary": "#785a00",
+                    "on-error": "#ffffff",
+                    "outline": "#747878",
+                    "on-primary-fixed": "#1b1c1c",
+                    "on-surface": "#0b1c30",
+                    "on-tertiary-container": "#938f8d",
+                    "error": "#ba1a1a",
+                    "background": "#f8f9ff",
+                    "surface-container-high": "#dce9ff",
+                    "surface-container-low": "#eff4ff",
+                    "inverse-surface": "#213145",
+                    "on-tertiary-fixed": "#1d1b1a",
+                    "inverse-primary": "#c8c6c5",
+                    "on-primary-container": "#908f8e",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#f1c048",
+                    "inverse-on-surface": "#eaf1ff",
+                    "surface": "#f8f9ff",
+                    "primary": "#131414",
+                    "primary-fixed-dim": "#c8c6c5",
+                    "on-secondary-fixed": "#251a00",
+                    "surface-variant": "#d3e4fe"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "container-padding": "24px",
+                    "stack-md": "16px",
+                    "gutter": "16px",
+                    "card-gap": "20px",
+                    "unit": "4px",
+                    "stack-sm": "8px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "title-sm": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "display-lg-mobile": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "mono-data": ["Inter"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-caps": ["11px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "title-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "display-lg-mobile": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "mono-data": ["13px", {"lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+          font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-stack-md bg-primary dark:bg-primary-container fixed left-0 top-0 h-full w-[260px] shadow-md z-20">
+<div class="px-container-padding mb-stack-md flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden shrink-0">
+<img alt="Ucars Hub Admin Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a car dealership administrator in a modern, well-lit office setting. The lighting is soft and corporate, matching a clean light-mode aesthetic with subtle warm undertones." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div>
+<h1 class="text-headline-md font-headline-md font-bold text-secondary dark:text-secondary-fixed">Ucars Hub</h1>
+<p class="text-label-caps font-label-caps text-on-primary-container">Dealership Admin</p>
+</div>
+</div>
+<div class="px-container-padding mb-stack-md">
+<button class="w-full bg-secondary-container text-primary font-title-sm text-title-sm py-2 px-4 rounded hover:bg-secondary-fixed transition-colors">Add New Stock</button>
+</div>
+<ul class="flex-1 flex flex-col gap-1 px-container-padding">
+<li>
+<a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-body-md text-body-md">Stock</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="font-body-md text-body-md">Ucarianos</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-body-md text-body-md">Agenda</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-secondary dark:text-secondary-fixed border-l-4 border-secondary opacity-90 transition-all duration-150 bg-tertiary-container" href="#">
+<span class="material-symbols-outlined filled" data-icon="notifications" data-weight="fill">notifications</span>
+<span class="font-body-md text-body-md font-semibold">Notifications</span>
+</a>
+</li>
+</ul>
+<ul class="mt-auto flex flex-col gap-1 px-container-padding">
+<li>
+<a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="font-body-md text-body-md">Support</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-[260px] pt-16 md:pt-0 min-h-screen flex flex-col">
+<!-- TopAppBar (Mobile & Tablet mostly, but styling implies fixed top) -->
+<header class="md:hidden fixed top-0 right-0 left-0 h-16 bg-surface-lowest dark:bg-background border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding w-full z-20">
+<div class="flex items-center gap-3">
+<span class="text-title-sm font-title-sm font-bold text-primary dark:text-on-background">Ucars Hub</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant dark:text-outline hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="text-primary dark:text-on-background font-bold hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors p-2 rounded-full scale-95 transition-transform bg-surface-container">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant dark:text-outline hover:bg-surface-container dark:hover:bg-surface-container-high transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="apps">apps</span>
+</button>
+<img alt="Administrator Avatar" class="w-8 h-8 rounded-full object-cover" data-alt="A small circular avatar of an administrator in a professional dealership context." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 p-container-padding max-w-5xl mx-auto w-full md:mt-8">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-stack-md gap-4">
+<div>
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background mb-1">Notification Center</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Review and manage communications sent to Ucarianos.</p>
+</div>
+<div class="relative w-full sm:w-auto">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full sm:w-64 pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-sm font-body-sm" placeholder="Filter by Ucariano..." type="text"/>
+</div>
+</div>
+<!-- Notifications Feed Container -->
+<div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-[0_2px_4px_rgba(0,0,0,0.04)] overflow-hidden">
+<!-- Header Row -->
+<div class="grid grid-cols-12 gap-4 px-stack-md py-3 bg-[#F1F5F9] border-b border-outline-variant items-center text-label-caps font-label-caps text-on-surface-variant">
+<div class="col-span-1 text-center">Status</div>
+<div class="col-span-3">Recipient (Ucariano)</div>
+<div class="col-span-5">Message</div>
+<div class="col-span-3 text-right">Date &amp; Time</div>
+</div>
+<!-- Feed Items -->
+<div class="flex flex-col">
+<!-- Unread Item -->
+<div class="grid grid-cols-12 gap-4 px-stack-md py-4 border-b border-outline-variant items-start hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] transition-shadow bg-surface-bright group cursor-pointer">
+<div class="col-span-1 flex justify-center items-center h-full">
+<div class="w-2 h-2 rounded-full bg-secondary-container"></div>
+</div>
+<div class="col-span-3 flex items-center gap-3">
+<img alt="Carlos M." class="w-8 h-8 rounded-full object-cover" data-alt="A small profile picture of a young male professional wearing a polo shirt in a bright office." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div>
+<p class="text-body-md font-body-md font-semibold text-on-background">Carlos M.</p>
+<p class="text-label-caps font-label-caps text-outline">ID: UC-8492</p>
+</div>
+</div>
+<div class="col-span-5">
+<p class="text-body-sm font-body-sm text-on-background line-clamp-2"><strong>Schedule Update:</strong> Your shift for tomorrow has been modified to start at 09:00 AM. Please review your agenda.</p>
+</div>
+<div class="col-span-3 text-right">
+<p class="text-mono-data font-mono-data text-on-surface-variant">Today, 10:42 AM</p>
+</div>
+</div>
+<!-- Unread Item -->
+<div class="grid grid-cols-12 gap-4 px-stack-md py-4 border-b border-outline-variant items-start hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] transition-shadow bg-surface-bright group cursor-pointer">
+<div class="col-span-1 flex justify-center items-center h-full">
+<div class="w-2 h-2 rounded-full bg-secondary-container"></div>
+</div>
+<div class="col-span-3 flex items-center gap-3">
+<img alt="Ana R." class="w-8 h-8 rounded-full object-cover" data-alt="A small profile picture of a female professional in business casual attire smiling." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div>
+<p class="text-body-md font-body-md font-semibold text-on-background">Ana R.</p>
+<p class="text-label-caps font-label-caps text-outline">ID: UC-7731</p>
+</div>
+</div>
+<div class="col-span-5">
+<p class="text-body-sm font-body-sm text-on-background line-clamp-2"><strong>Stock Alert:</strong> New inventory (2024 Honda Civic) has been assigned to your lot sector. Verification required.</p>
+</div>
+<div class="col-span-3 text-right">
+<p class="text-mono-data font-mono-data text-on-surface-variant">Today, 09:15 AM</p>
+</div>
+</div>
+<!-- Read Item -->
+<div class="grid grid-cols-12 gap-4 px-stack-md py-4 border-b border-outline-variant items-start hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] transition-shadow bg-surface-container-lowest group cursor-pointer">
+<div class="col-span-1 flex justify-center items-center h-full">
+<span class="material-symbols-outlined text-outline text-[18px]">done_all</span>
+</div>
+<div class="col-span-3 flex items-center gap-3 opacity-75">
+<img alt="Luis G." class="w-8 h-8 rounded-full object-cover grayscale-[50%]" data-alt="A small profile picture of a mature male professional with glasses." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div>
+<p class="text-body-md font-body-md text-on-surface-variant">Luis G.</p>
+<p class="text-label-caps font-label-caps text-outline">ID: UC-2104</p>
+</div>
+</div>
+<div class="col-span-5 opacity-75">
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">System Maintenance: Ucars Hub will be offline for 15 minutes tonight at 2:00 AM for scheduled upgrades.</p>
+</div>
+<div class="col-span-3 text-right opacity-75">
+<p class="text-mono-data font-mono-data text-outline">Yesterday, 18:30 PM</p>
+</div>
+</div>
+<!-- Read Item -->
+<div class="grid grid-cols-12 gap-4 px-stack-md py-4 items-start hover:shadow-[0_4px_10px_rgba(0,0,0,0.08)] transition-shadow bg-surface-container-lowest group cursor-pointer">
+<div class="col-span-1 flex justify-center items-center h-full">
+<span class="material-symbols-outlined text-outline text-[18px]">done_all</span>
+</div>
+<div class="col-span-3 flex items-center gap-3 opacity-75">
+<div class="w-8 h-8 rounded-full bg-surface-dim flex items-center justify-center text-primary font-bold text-label-caps">MT</div>
+<div>
+<p class="text-body-md font-body-md text-on-surface-variant">Maria T.</p>
+<p class="text-label-caps font-label-caps text-outline">ID: UC-9920</p>
+</div>
+</div>
+<div class="col-span-5 opacity-75">
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">Document Request: Please upload the renewed insurance forms for unit #A492 by Friday.</p>
+</div>
+<div class="col-span-3 text-right opacity-75">
+<p class="text-mono-data font-mono-data text-outline">Oct 12, 14:00 PM</p>
+</div>
+</div>
+</div>
+<div class="px-stack-md py-4 bg-surface-bright border-t border-outline-variant flex justify-center">
+<button class="text-body-sm font-body-sm font-semibold text-primary hover:text-on-background transition-colors">Load More Notifications</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

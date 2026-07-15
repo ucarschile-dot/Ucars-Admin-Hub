@@ -235,7 +235,9 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
     extractFirstUrl(
       pickProperty(properties, ['Fotos URL', 'Foto URL', 'Fotos', 'Foto', 'Imagen', 'Image', 'Photos'])
     ) || PLACEHOLDER_IMAGE;
-  const priceNumber = getNumber(pickProperty(properties, ['Precio Actual', 'Precio', 'Price']));
+  const priceNumber = getNumber(
+    pickProperty(properties, ['Precio Publicado', 'Precio publicado', 'Precio Actual', 'Precio', 'Published Price', 'Price'])
+  );
   const status = getText(pickProperty(properties, ['Estado', 'Status'])) || 'Disponible';
 
   const composedName = [brand, model, version].filter(Boolean).join(' ').trim();

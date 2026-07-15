@@ -214,33 +214,23 @@
           var doc = frame.contentDocument;
           if (!doc) return;
 
+          if (doc.getElementById('ucars-embed-reset')) {
+            return;
+          }
+
           var style = doc.createElement('style');
+          style.id = 'ucars-embed-reset';
           style.textContent = [
             'nav.fixed.left-0, aside.fixed.left-0, nav[class*="left-0"][class*="fixed"], aside[class*="left-0"][class*="fixed"] { display: none !important; }',
             'header.fixed.top-0 { display: none !important; }',
-            'html, body { margin: 0 !important; background: #f8f9ff !important; }'
+            'html, body { margin: 0 !important; background: #f8f9ff !important; }',
+            '[class*="md:ml-[260px]"], [class*="ml-[260px]"] { margin-left: 0 !important; }',
+            '[class*="md:left-[260px]"], [class*="left-[260px]"] { left: 0 !important; }',
+            '[class*="md:w-[calc(100%-260px)]"], [class*="w-[calc(100%-260px)]"] { width: 100% !important; }',
+            '[class*="md:pl-[260px]"], [class*="pl-[260px]"] { padding-left: 0 !important; }',
+            '[class*="md:pt-16"], [class*="pt-16"] { padding-top: 0 !important; }'
           ].join(' ');
           doc.head.appendChild(style);
-
-          var nodes = doc.querySelectorAll('[class]');
-          nodes.forEach(function (node) {
-            if (!(node instanceof HTMLElement)) return;
-            var cls = node.className;
-            if (typeof cls !== 'string') return;
-
-            if (cls.indexOf('260px') >= 0 && cls.indexOf('ml-') >= 0) {
-              node.style.marginLeft = '0';
-            }
-            if (cls.indexOf('left-[260px]') >= 0) {
-              node.style.left = '0';
-            }
-            if (cls.indexOf('w-[calc(100%-260px)]') >= 0) {
-              node.style.width = '100%';
-            }
-            if (cls.indexOf('pt-16') >= 0) {
-              node.style.paddingTop = '0';
-            }
-          });
         } catch (_) {
           // Ignore sanitization errors and keep rendering the iframe as-is.
         }
@@ -277,6 +267,10 @@
         frame.addEventListener('load', function () {
           normalizeIframe(frame);
         });
+
+        if (frame.contentDocument && frame.contentDocument.readyState === 'complete') {
+          normalizeIframe(frame);
+        }
       });
 
       document.querySelectorAll('.nav-link').forEach(function (link) {

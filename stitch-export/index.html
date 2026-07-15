@@ -11,16 +11,18 @@
       color-scheme: light;
       --bg: #f8f9ff;
       --bar-bg: #282828;
-      --topbar-height: 72px;
-      --topbar-padding-x: 16px;
-      --topbar-padding-y: 12px;
-      --brand-width: 214px;
-      --brand-height: 44px;
-      --nav-gap: 8px;
-      --nav-link-height: 36px;
-      --nav-link-padding-x: 14px;
-      --nav-link-font-size: 0.92rem;
-      --sidebar-text: rgba(234, 241, 255, 0.76);
+      --topbar-height: 100px;
+      --topbar-padding-x: 20px;
+      --topbar-padding-y: 16px;
+      --brand-width: 200px;
+      --brand-height: 180px;
+      --nav-gap: 50px;
+      --nav-link-height: 55px;
+      --nav-link-padding-x: 16px;
+      --nav-link-font-size: 1.2rem;
+      --content-gap: 40px;
+      --content-top-offset: calc(var(--topbar-height) + var(--content-gap));
+      --sidebar-text: #F9F9F9;
       --sidebar-active: #f5c34b;
       --sidebar-active-bg: rgba(245, 195, 75, 0.13);
       --border: rgba(255, 255, 255, 0.08);
@@ -58,9 +60,10 @@
       z-index: 50;
       height: var(--topbar-height);
       padding: var(--topbar-padding-y) var(--topbar-padding-x);
+      overflow: hidden;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       gap: 10px;
       color: var(--sidebar-text);
       background: var(--bar-bg);
@@ -75,6 +78,10 @@
     }
 
     .brand {
+      position: absolute;
+      left: var(--topbar-padding-x);
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -110,7 +117,8 @@
       justify-content: center;
       gap: var(--nav-gap);
       flex-wrap: nowrap;
-      flex: 1;
+      flex: 0 0 auto;
+      margin: 0 auto;
     }
 
     .nav-link {
@@ -124,7 +132,7 @@
       text-decoration: none;
       border-left: 0;
       border-bottom: 2px solid transparent;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: var(--nav-link-font-size);
       transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
     }
@@ -143,7 +151,7 @@
     .content {
       position: relative;
       min-height: 100vh;
-      padding-top: var(--topbar-height);
+      padding-top: var(--content-top-offset);
       overflow: hidden;
       background: var(--bg);
     }

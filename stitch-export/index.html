@@ -8,7 +8,7 @@
     :root {
       color-scheme: light;
       --bg: #f8f9ff;
-      --sidebar-bg: #131414;
+      --bar-bg: #131414;
       --sidebar-text: rgba(234, 241, 255, 0.76);
       --sidebar-active: #f5c34b;
       --sidebar-active-bg: rgba(245, 195, 75, 0.13);
@@ -35,34 +35,39 @@
 
     .layout {
       min-height: 100vh;
-      display: grid;
-      grid-template-columns: 212px 1fr;
-    }
-
-    .sidebar {
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      padding: 18px 10px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      min-height: 76px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
       color: var(--sidebar-text);
-      background: linear-gradient(180deg, #131414 0%, #1f2021 100%);
-      border-right: 1px solid var(--border);
+      background: var(--bar-bg);
+      border-bottom: 1px solid var(--border);
     }
 
     .brand {
-      padding: 0;
-      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 280px;
+      background: var(--bar-bg);
     }
 
     .brand-logo-wrap {
-      width: 100%;
-      max-width: 100%;
+      width: 240px;
+      max-width: 240px;
       height: auto;
       overflow: visible;
-      background: transparent;
+      background: var(--bar-bg);
     }
 
     .brand-logo {
@@ -76,26 +81,31 @@
     }
 
     .brand p {
-      margin: 6px 0 0;
+      margin: 0;
       font-size: 0.8rem;
       opacity: 0.74;
+      white-space: nowrap;
     }
 
     .nav {
-      display: grid;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
       gap: 8px;
-      margin-top: 8px;
+      flex-wrap: nowrap;
     }
 
     .nav-link {
       display: flex;
       align-items: center;
-      gap: 10px;
-      min-height: 42px;
-      padding: 0 10px;
+      justify-content: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 14px;
       color: var(--sidebar-text);
       text-decoration: none;
-      border-left: 4px solid transparent;
+      border-left: 0;
+      border-bottom: 3px solid transparent;
       border-radius: 10px;
       transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
     }
@@ -108,12 +118,12 @@
     .nav-link.is-active {
       color: var(--sidebar-active);
       background: var(--sidebar-active-bg);
-      border-left-color: var(--sidebar-active);
+      border-bottom-color: var(--sidebar-active);
     }
 
     .content {
       position: relative;
-      min-height: 100vh;
+      min-height: calc(100vh - 76px);
       overflow: hidden;
       background: var(--bg);
     }
@@ -146,7 +156,7 @@
 </head>
 <body>
   <div class="layout">
-    <aside class="sidebar" aria-label="Navegacion principal">
+    <header class="topbar" aria-label="Navegacion principal">
       <div class="brand">
         <div class="brand-logo-wrap">
           <img class="brand-logo" src="/stitch-export/logo-sidebar.png" alt="Ucars" />
@@ -159,7 +169,7 @@
         <a class="nav-link" data-screen="agenda" href="#agenda">Agenda</a>
         <a class="nav-link" data-screen="notificaciones" href="#notificaciones">Notificaciones</a>
       </nav>
-    </aside>
+    </header>
 
     <main class="content" aria-live="polite">
       <section class="screen" data-screen="stock">

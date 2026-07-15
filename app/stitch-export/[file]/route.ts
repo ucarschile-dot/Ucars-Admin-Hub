@@ -10,7 +10,8 @@ const mimeTypes: Record<string, string> = {
 
 export async function GET(_: Request, context: { params: Promise<{ file: string }> }) {
   const { file } = await context.params;
-  const safeName = path.basename(file);
+  const decodedFile = decodeURIComponent(file);
+  const safeName = path.basename(decodedFile);
   const extension = path.extname(safeName).toLowerCase();
   const contentType = mimeTypes[extension];
 

@@ -201,43 +201,88 @@
   <script>
     (function () {
       var topbar = document.querySelector('.topbar');
-      var iframeEntries = [];
+      var iframeWindows = new Map();
       var validScreens = ['stock', 'ucarianos', 'agenda', 'notificaciones'];
       var defaultScreen = 'stock';
-      var lastScrollY = window.scrollY || 0;
+      var topbarVisible = true;
+      var lastScrollY = 0;
       var scrollRaf = 0;
-      var activeScrollSource = window;
+      var activeScrollSource = null;
+      var activeScreen = defaultScreen;
 
-      function syncTopbarVisibility() {
-        var currentScrollY = activeScrollSource && typeof activeScrollSource.scrollY === 'number' ? activeScrollSource.scrollY : 0;
-        var shouldHide = currentScrollY > 12 && currentScrollY > lastScrollY;
+      function getCurrentScrollY(source) {
+        if (!source) {
+          return 0;
+        }
+
+        try {
+          if (typeof source.scrollY === 'number') {
+            return source.scrollY;
+          }
+
+          if (source.document && source.document.documentElement) {
+            return source.document.documentElement.scrollTop || source.document.body.scrollTop || 0;
+          }
+        } catch (_) {
+          return 0;
+        }
+
+        return 0;
+      }
+
+      function applyTopbarVisibility(nextVisible) {
+        topbarVisible = nextVisible;
 
         if (topbar) {
-          topbar.classList.toggle('is-hidden', shouldHide);
+          topbar.classList.toggle('is-hidden', !nextVisible);
+        }
+
+      }
+
+      function syncTopbarVisibility() {
+        var currentScrollY = getCurrentScrollY(activeScrollSource);
+        var delta = currentScrollY - lastScrollY;
+        var hideThreshold = 18;
+        var showThreshold = 10;
+
+        if (delta > hideThreshold && topbarVisible) {
+          applyTopbarVisibility(false);
+        } else if (delta < -showThreshold && !topbarVisible) {
+          applyTopbarVisibility(true);
+        }
+
+        if (currentScrollY <= 0) {
+          applyTopbarVisibility(true);
         }
 
         lastScrollY = currentScrollY;
         scrollRaf = 0;
       }
 
-      function onScroll() {
+      function onScroll(source) {
         if (scrollRaf) {
           return;
         }
 
-        activeScrollSource = window;
+        if (source) {
+          activeScrollSource = source;
+        }
+
         scrollRaf = window.requestAnimationFrame(syncTopbarVisibility);
       }
 
-      function attachScrollSource(source) {
-        if (!source || iframeEntries.indexOf(source) >= 0) {
+      function attachScrollSource(screenName, source) {
+        if (!screenName || !source || iframeWindows.get(screenName) === source) {
           return;
         }
 
-        iframeEntries.push(source);
+        iframeWindows.set(screenName, source);
         source.addEventListener('scroll', function () {
-          activeScrollSource = source;
-          onScroll();
+          if (screenName !== activeScreen) {
+            return;
+          }
+
+          onScroll(source);
         }, { passive: true });
       }
 
@@ -329,6 +374,7 @@
 
       function setActive(screen, writeHash) {
         var current = validScreens.indexOf(screen) >= 0 ? screen : defaultScreen;
+        activeScreen = current;
 
         document.querySelectorAll('.screen').forEach(function (panel) {
           panel.classList.toggle('is-active', panel.getAttribute('data-screen') === current);
@@ -347,14 +393,32 @@
         if (writeHash) {
           history.replaceState(null, '', '#' + current);
         }
+
+        var activePanel = document.querySelector('.screen[data-screen="' + current + '"] iframe');
+        if (activePanel) {
+          try {
+            activeScrollSource = activePanel.contentWindow || null;
+            lastScrollY = getCurrentScrollY(activeScrollSource);
+            applyTopbarVisibility(true);
+          } catch (_) {
+            activeScrollSource = null;
+          }
+        }
       }
 
       document.querySelectorAll('.screen iframe').forEach(function (frame) {
+        var screenName = frame.closest('.screen') && frame.closest('.screen').getAttribute('data-screen');
+
         frame.addEventListener('load', function () {
           normalizeIframe(frame);
           try {
             if (frame.contentWindow) {
-              attachScrollSource(frame.contentWindow);
+              attachScrollSource(screenName, frame.contentWindow);
+
+              if (screenName === activeScreen) {
+                activeScrollSource = frame.contentWindow;
+                lastScrollY = getCurrentScrollY(activeScrollSource);
+              }
             }
           } catch (_) {
             // Ignore cross-window access errors and continue.
@@ -365,7 +429,12 @@
           normalizeIframe(frame);
           try {
             if (frame.contentWindow) {
-              attachScrollSource(frame.contentWindow);
+              attachScrollSource(screenName, frame.contentWindow);
+
+              if (screenName === activeScreen) {
+                activeScrollSource = frame.contentWindow;
+                lastScrollY = getCurrentScrollY(activeScrollSource);
+              }
             }
           } catch (_) {
             // Ignore cross-window access errors and continue.
@@ -385,7 +454,9 @@
         setActive(getScreenFromHash(), false);
       });
 
-      window.addEventListener('scroll', onScroll, { passive: true });
+      if (topbar) {
+        topbar.classList.remove('is-hidden');
+      }
 
       syncTopbarVisibility();
 

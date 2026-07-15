@@ -3,7 +3,9 @@ import path from 'node:path';
 
 const mimeTypes: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
-  '.png': 'image/png'
+  '.png': 'image/png',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8'
 };
 
 export async function GET(_: Request, context: { params: Promise<{ file: string }> }) {
@@ -20,11 +22,15 @@ export async function GET(_: Request, context: { params: Promise<{ file: string 
     const filePath = path.join(process.cwd(), 'stitch-export', safeName);
     const body = await readFile(filePath);
 
+    const cacheControl = extension === '.png'
+      ? 'public, max-age=31536000, immutable'
+      : 'public, max-age=300, stale-while-revalidate=600';
+
     return new Response(body, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'no-store'
+        'Cache-Control': cacheControl
       }
     });
   } catch {

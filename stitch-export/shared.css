@@ -1,0 +1,58 @@
+html {
+  background: #f8f9ff;
+}
+
+body {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+body.stitch-ready {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body.stitch-leaving {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* Keep side navigation visually consistent across exported Stitch screens. */
+body > nav.fixed.left-0,
+body > aside.fixed.left-0,
+body > nav[class*="fixed"][class*="left-0"],
+body > aside[class*="fixed"][class*="left-0"] {
+  width: 260px !important;
+  background: #131414 !important;
+  color: #eaf1ff !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body > nav.fixed.left-0 a[href^="/stitch-export/"],
+body > aside.fixed.left-0 a[href^="/stitch-export/"],
+body > nav[class*="fixed"][class*="left-0"] a[href^="/stitch-export/"],
+body > aside[class*="fixed"][class*="left-0"] a[href^="/stitch-export/"] {
+  border-left: 4px solid transparent !important;
+  border-radius: 10px !important;
+  color: rgba(234, 241, 255, 0.78) !important;
+  background: transparent !important;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease !important;
+}
+
+body > nav.fixed.left-0 a[href^="/stitch-export/"]:hover,
+body > aside.fixed.left-0 a[href^="/stitch-export/"]:hover,
+body > nav[class*="fixed"][class*="left-0"] a[href^="/stitch-export/"]:hover,
+body > aside[class*="fixed"][class*="left-0"] a[href^="/stitch-export/"]:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+body > nav.fixed.left-0 a.stitch-active,
+body > aside.fixed.left-0 a.stitch-active,
+body > nav[class*="fixed"][class*="left-0"] a.stitch-active,
+body > aside[class*="fixed"][class*="left-0"] a.stitch-active {
+  color: #f5c34b !important;
+  background: rgba(245, 195, 75, 0.13) !important;
+  border-left-color: #f5c34b !important;
+}

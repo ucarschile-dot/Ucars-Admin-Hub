@@ -42,51 +42,57 @@
     }
 
     .topbar {
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      right: 0;
       z-index: 50;
-      min-height: 54px;
-      padding: 6px 10px;
+      min-height: 46px;
+      padding: 4px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       color: var(--sidebar-text);
       background: var(--bar-bg);
       border-bottom: 1px solid var(--border);
+      transition: transform 220ms ease, box-shadow 220ms ease;
+      transform: translateY(0);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+    }
+
+    .topbar.is-hidden {
+      transform: translateY(-110%);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
-      min-width: 170px;
+      gap: 6px;
+      min-width: 154px;
       background: var(--bar-bg);
     }
 
     .brand-logo-wrap {
-      width: 148px;
-      max-width: 148px;
-      height: auto;
-      overflow: visible;
+      width: 154px;
+      max-width: 154px;
+      height: 28px;
+      overflow: hidden;
       background: var(--bar-bg);
     }
 
     .brand-logo {
       display: block;
       width: 100%;
-      height: auto;
-      object-fit: contain;
-      object-position: center;
+      height: 180%;
+      object-fit: cover;
+      object-position: center 46%;
       transform: none;
       transform-origin: center;
     }
 
     .brand p {
-      margin: 0;
-      font-size: 0.7rem;
-      opacity: 0.68;
-      white-space: nowrap;
+      display: none;
     }
 
     .nav {
@@ -102,14 +108,14 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      min-height: 30px;
-      padding: 0 9px;
+      min-height: 26px;
+      padding: 0 8px;
       color: var(--sidebar-text);
       text-decoration: none;
       border-left: 0;
-      border-bottom: 3px solid transparent;
-      border-radius: 7px;
-      font-size: 0.88rem;
+      border-bottom: 2px solid transparent;
+      border-radius: 6px;
+      font-size: 0.82rem;
       transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
     }
 
@@ -126,7 +132,8 @@
 
     .content {
       position: relative;
-      min-height: calc(100vh - 54px);
+      min-height: 100vh;
+      padding-top: 46px;
       overflow: hidden;
       background: var(--bg);
     }
@@ -192,8 +199,31 @@
 
   <script>
     (function () {
+      var topbar = document.querySelector('.topbar');
       var validScreens = ['stock', 'ucarianos', 'agenda', 'notificaciones'];
       var defaultScreen = 'stock';
+      var lastScrollY = window.scrollY || 0;
+      var scrollRaf = 0;
+
+      function syncTopbarVisibility() {
+        var currentScrollY = window.scrollY || 0;
+        var shouldHide = currentScrollY > 24 && currentScrollY > lastScrollY;
+
+        if (topbar) {
+          topbar.classList.toggle('is-hidden', shouldHide);
+        }
+
+        lastScrollY = currentScrollY;
+        scrollRaf = 0;
+      }
+
+      function onScroll() {
+        if (scrollRaf) {
+          return;
+        }
+
+        scrollRaf = window.requestAnimationFrame(syncTopbarVisibility);
+      }
 
       function normalizeIframe(frame) {
         try {
@@ -324,6 +354,10 @@
       window.addEventListener('hashchange', function () {
         setActive(getScreenFromHash(), false);
       });
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      syncTopbarVisibility();
 
       setActive(getScreenFromHash(), true);
     })();

@@ -1,5 +1,10 @@
+import { StitchShell } from '@/components/stitch-shell';
 import { StitchScreenFrame } from '@/components/stitch-screen-frame';
 
 export default function UcarianosPage() {
-  return <StitchScreenFrame screen="ucarianos" />;
+  return (
+    <StitchShell activePath="/ucarianos">
+      <StitchScreenFrame screen="ucarianos" />
+    </StitchShell>
+  );
 }

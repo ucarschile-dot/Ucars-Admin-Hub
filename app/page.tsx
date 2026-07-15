@@ -1,5 +1,10 @@
+import { StitchShell } from '@/components/stitch-shell';
 import { StitchScreenFrame } from '@/components/stitch-screen-frame';
 
 export default function StockPage() {
-  return <StitchScreenFrame screen="stock" />;
+  return (
+    <StitchShell activePath="/">
+      <StitchScreenFrame screen="stock" />
+    </StitchShell>
+  );
 }

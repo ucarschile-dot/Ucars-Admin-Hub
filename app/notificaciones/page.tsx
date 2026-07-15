@@ -1,5 +1,10 @@
+import { StitchShell } from '@/components/stitch-shell';
 import { StitchScreenFrame } from '@/components/stitch-screen-frame';
 
 export default function NotificationsPage() {
-  return <StitchScreenFrame screen="notificaciones" />;
+  return (
+    <StitchShell activePath="/notificaciones">
+      <StitchScreenFrame screen="notificaciones" />
+    </StitchShell>
+  );
 }

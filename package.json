@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "ship": "scripts\\git-ship.cmd"
   },
   "dependencies": {
     "@notionhq/client": "^5.1.0",

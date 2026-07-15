@@ -32,6 +32,7 @@ type UcarianoCard = {
   profileType: string;
   branch: string;
   status: string;
+  approvalState: 'approved' | 'pending' | 'rejected' | 'unknown';
   assignedCars: number;
   avatarUrl: string;
 };
@@ -122,7 +123,7 @@ function extractAvatar(property?: NotionProperty | null) {
 function isActiveStatus(value: string) {
   const normalized = (value || '').toLowerCase().trim();
   if (!normalized) {
-    return true;
+    return false;
   }
 
   if (isApplicantStatus(normalized)) {
@@ -149,6 +150,44 @@ function isApplicantCard(card: UcarianoCard) {
   return isApplicantStatus(card.status) || isApplicantStatus(card.role) || isApplicantStatus(card.profileType);
 }
 
+function getApprovalState(properties: Record<string, NotionProperty>): UcarianoCard['approvalState'] {
+  const approvalFlag = pickProperty(properties, ['Aprobado', 'Approved', 'Perfil Aprobado', 'Aprobacion OK']);
+  if (typeof approvalFlag?.checkbox === 'boolean') {
+    return approvalFlag.checkbox ? 'approved' : 'rejected';
+  }
+
+  const approvalText = getText(
+    pickProperty(properties, [
+      'Aprobación',
+      'Aprobacion',
+      'Approval',
+      'Estado Aprobación',
+      'Estado Aprobacion',
+      'Estado de aprobación',
+      'Resultado',
+      'Decision'
+    ])
+  ).toLowerCase();
+
+  if (!approvalText.trim()) {
+    return 'unknown';
+  }
+
+  if (/(aprob|approved|aceptad|admitid)/i.test(approvalText)) {
+    return 'approved';
+  }
+
+  if (/(rechaz|deneg|reject|declin|no aprobado)/i.test(approvalText)) {
+    return 'rejected';
+  }
+
+  if (/(pend|proceso|review|revision|evalu|entrevist|postul)/i.test(approvalText)) {
+    return 'pending';
+  }
+
+  return 'unknown';
+}
+
 function normalizeStatus(properties: Record<string, NotionProperty>) {
   const status = getText(
     pickProperty(properties, ['Estado', 'Status', 'Estado Ucariano', 'Estado asesor']) ||
@@ -161,13 +200,14 @@ function normalizeStatus(properties: Record<string, NotionProperty>) {
     return activeFlag.checkbox ? 'Activo' : 'Pausado';
   }
 
-  return status || 'Activo';
+  return status || '';
 }
 
 function toCard(row: NotionRow): UcarianoCard | null {
   const properties = row.properties;
 
   const status = normalizeStatus(properties);
+  const approvalState = getApprovalState(properties);
 
   const name =
     getText(pickProperty(properties, ['Nombre', 'Name', 'Ucariano'])) ||
@@ -205,6 +245,7 @@ function toCard(row: NotionRow): UcarianoCard | null {
     profileType,
     branch,
     status,
+    approvalState,
     assignedCars,
     avatarUrl
   };
@@ -259,6 +300,7 @@ function fallbackCards() {
       profileType: 'Ucariano',
       branch: item.branch,
       status: item.status,
+      approvalState: 'approved' as const,
       assignedCars: item.activeDeals,
       avatarUrl: PLACEHOLDER_IMAGE
     }));
@@ -276,6 +318,7 @@ function fallbackApplicants() {
       profileType: 'Postulante',
       branch: item.branch,
       status: item.status,
+      approvalState: 'pending' as const,
       assignedCars: 0,
       avatarUrl: PLACEHOLDER_IMAGE
     }));
@@ -306,8 +349,12 @@ export async function GET() {
       .map(toCard)
       .filter((item): item is UcarianoCard => item !== null);
 
-    const postulantes = cards.filter((item) => isApplicantCard(item));
-    const ucarianos = cards.filter((item) => isActiveStatus(item.status) && !isApplicantCard(item));
+    const postulantes = cards.filter(
+      (item) => isApplicantCard(item) || item.approvalState === 'pending'
+    );
+    const ucarianos = cards.filter(
+      (item) => item.approvalState === 'approved' && isActiveStatus(item.status) && !isApplicantCard(item)
+    );
 
     return Response.json(
       { source: 'notion', ucarianos, postulantes },

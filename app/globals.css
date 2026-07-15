@@ -477,70 +477,12 @@ textarea {
 
 .stitch-screen-page {
   min-height: 100vh;
-  padding: 24px;
-  background: var(--bg);
-  display: grid;
-  gap: 16px;
-}
-
-.stitch-screen-meta {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 20px 24px;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-strong);
-}
-
-.stitch-screen-meta h1 {
-  margin: 4px 0;
-  font-family: var(--font-display-face);
-  font-size: 1.5rem;
-  line-height: 1.1;
-}
-
-.stitch-screen-meta p {
-  margin: 0;
-  color: var(--muted);
-}
-
-.stitch-screen-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.stitch-screen-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.stitch-screen-actions a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0 16px;
-  border: 1px solid var(--card-border);
-  border-radius: 999px;
-  background: var(--surface-strong);
-}
-
-.stitch-screen-canvas {
-  overflow: auto;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-strong);
-  box-shadow: var(--card-shadow);
+  background: #f8f9ff;
 }
 
 .stitch-screen-iframe {
   width: 100%;
-  min-width: 1280px;
+  min-height: 100vh;
   border: 0;
   display: block;
   background: #f8f9ff;
@@ -568,12 +510,7 @@ textarea {
   }
 
   .stitch-screen-page {
-    padding: 16px;
-  }
-
-  .stitch-screen-meta {
-    padding: 16px;
-    flex-direction: column;
+    min-height: 100vh;
   }
 
   .page-head {

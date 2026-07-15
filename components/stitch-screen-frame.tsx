@@ -1,18 +1,24 @@
 import type { StitchScreenKey } from '@/lib/stitch-screen-data';
-import { getStitchScreenDocument } from '@/lib/stitch-screen-data';
 
 type StitchScreenFrameProps = {
   screen: StitchScreenKey;
 };
 
-export async function StitchScreenFrame({ screen }: StitchScreenFrameProps) {
-  const document = await getStitchScreenDocument(screen);
+const screenTitles: Record<StitchScreenKey, string> = {
+  stock: 'Stock - Ucars Hub',
+  ucarianos: 'Ucarianos - Ucars Hub',
+  agenda: 'Agenda - Ucars Hub',
+  notificaciones: 'Notificaciones - Ucars Hub'
+};
+
+export function StitchScreenFrame({ screen }: StitchScreenFrameProps) {
+  const title = screenTitles[screen];
 
   return (
     <main className="stitch-screen-page">
       <iframe
-        title={document.title}
-        src={`/stitch-export/${document.fileName}`}
+        title={title}
+        src={`/stitch-export/index.html#${screen}`}
         className="stitch-screen-iframe"
       />
     </main>

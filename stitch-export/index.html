@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ucars Hub Admin</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8f9ff;
+      --sidebar-bg: #131414;
+      --sidebar-text: rgba(234, 241, 255, 0.76);
+      --sidebar-active: #f5c34b;
+      --sidebar-active-bg: rgba(245, 195, 75, 0.13);
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow: 0 10px 30px rgba(11, 28, 48, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", sans-serif;
+      color: #0b1c30;
+      background: var(--bg);
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      color: var(--sidebar-text);
+      background: linear-gradient(180deg, #131414 0%, #1f2021 100%);
+      border-right: 1px solid var(--border);
+    }
+
+    .brand {
+      padding: 0 8px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #f5c34b;
+      letter-spacing: 0.01em;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      font-size: 0.82rem;
+      opacity: 0.8;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 46px;
+      padding: 0 14px;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      border-left: 4px solid transparent;
+      border-radius: 10px;
+      transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-link.is-active {
+      color: var(--sidebar-active);
+      background: var(--sidebar-active-bg);
+      border-left-color: var(--sidebar-active);
+    }
+
+    .content {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transform: translateY(6px);
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+
+    .screen.is-active {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    .screen iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: var(--bg);
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: auto;
+        z-index: 20;
+        padding: 12px;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .brand {
+        display: none;
+      }
+
+      .nav {
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 8px;
+      }
+
+      .nav-link {
+        justify-content: center;
+        border-left: 0;
+        border-bottom: 3px solid transparent;
+        border-radius: 8px;
+        font-size: 0.9rem;
+      }
+
+      .nav-link.is-active {
+        border-bottom-color: var(--sidebar-active);
+      }
+
+      .content {
+        min-height: calc(100vh - 76px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Navegacion principal">
+      <div class="brand">
+        <h1>Ucars Hub</h1>
+        <p>Dealership Admin</p>
+      </div>
+      <nav class="nav">
+        <a class="nav-link" data-screen="stock" href="#stock">Stock</a>
+        <a class="nav-link" data-screen="ucarianos" href="#ucarianos">Ucarianos</a>
+        <a class="nav-link" data-screen="agenda" href="#agenda">Agenda</a>
+        <a class="nav-link" data-screen="notificaciones" href="#notificaciones">Notificaciones</a>
+      </nav>
+    </aside>
+
+    <main class="content" aria-live="polite">
+      <section class="screen" data-screen="stock">
+        <iframe src="/stitch-export/stock.html" title="Stock"></iframe>
+      </section>
+      <section class="screen" data-screen="ucarianos">
+        <iframe src="/stitch-export/ucarianos.html" title="Ucarianos"></iframe>
+      </section>
+      <section class="screen" data-screen="agenda">
+        <iframe src="/stitch-export/agenda.html" title="Agenda"></iframe>
+      </section>
+      <section class="screen" data-screen="notificaciones">
+        <iframe src="/stitch-export/notificaciones.html" title="Notificaciones"></iframe>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      var validScreens = ['stock', 'ucarianos', 'agenda', 'notificaciones'];
+      var defaultScreen = 'stock';
+
+      function normalizeIframe(frame) {
+        try {
+          var doc = frame.contentDocument;
+          if (!doc) return;
+
+          var style = doc.createElement('style');
+          style.textContent = [
+            'nav.fixed.left-0, aside.fixed.left-0, nav[class*="left-0"][class*="fixed"], aside[class*="left-0"][class*="fixed"] { display: none !important; }',
+            'header.fixed.top-0 { display: none !important; }',
+            'html, body { margin: 0 !important; background: #f8f9ff !important; }'
+          ].join(' ');
+          doc.head.appendChild(style);
+
+          var nodes = doc.querySelectorAll('[class]');
+          nodes.forEach(function (node) {
+            if (!(node instanceof HTMLElement)) return;
+            var cls = node.className;
+            if (typeof cls !== 'string') return;
+
+            if (cls.indexOf('260px') >= 0 && cls.indexOf('ml-') >= 0) {
+              node.style.marginLeft = '0';
+            }
+            if (cls.indexOf('left-[260px]') >= 0) {
+              node.style.left = '0';
+            }
+            if (cls.indexOf('w-[calc(100%-260px)]') >= 0) {
+              node.style.width = '100%';
+            }
+            if (cls.indexOf('pt-16') >= 0) {
+              node.style.paddingTop = '0';
+            }
+          });
+        } catch (_) {
+          // Ignore sanitization errors and keep rendering the iframe as-is.
+        }
+      }
+
+      function getScreenFromHash() {
+        var hash = window.location.hash.replace('#', '').trim();
+        return validScreens.indexOf(hash) >= 0 ? hash : defaultScreen;
+      }
+
+      function setActive(screen, writeHash) {
+        var current = validScreens.indexOf(screen) >= 0 ? screen : defaultScreen;
+
+        document.querySelectorAll('.screen').forEach(function (panel) {
+          panel.classList.toggle('is-active', panel.getAttribute('data-screen') === current);
+        });
+
+        document.querySelectorAll('.nav-link').forEach(function (link) {
+          var active = link.getAttribute('data-screen') === current;
+          link.classList.toggle('is-active', active);
+          if (active) {
+            link.setAttribute('aria-current', 'page');
+          } else {
+            link.removeAttribute('aria-current');
+          }
+        });
+
+        if (writeHash) {
+          history.replaceState(null, '', '#' + current);
+        }
+      }
+
+      document.querySelectorAll('.screen iframe').forEach(function (frame) {
+        frame.addEventListener('load', function () {
+          normalizeIframe(frame);
+        });
+      });
+
+      document.querySelectorAll('.nav-link').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+          event.preventDefault();
+          var screen = link.getAttribute('data-screen') || defaultScreen;
+          setActive(screen, true);
+        });
+      });
+
+      window.addEventListener('hashchange', function () {
+        setActive(getScreenFromHash(), false);
+      });
+
+      setActive(getScreenFromHash(), true);
+    })();
+  </script>
+</body>
+</html>

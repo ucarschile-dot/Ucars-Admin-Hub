@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ucars Hub Admin</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
   <style>
     :root {
       color-scheme: light;
@@ -43,12 +45,12 @@
       position: sticky;
       top: 0;
       z-index: 50;
-      min-height: 76px;
-      padding: 12px 18px;
+      min-height: 62px;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 18px;
+      gap: 12px;
       color: var(--sidebar-text);
       background: var(--bar-bg);
       border-bottom: 1px solid var(--border);
@@ -57,14 +59,14 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      min-width: 280px;
+      gap: 10px;
+      min-width: 210px;
       background: var(--bar-bg);
     }
 
     .brand-logo-wrap {
-      width: 240px;
-      max-width: 240px;
+      width: 176px;
+      max-width: 176px;
       height: auto;
       overflow: visible;
       background: var(--bar-bg);
@@ -82,8 +84,8 @@
 
     .brand p {
       margin: 0;
-      font-size: 0.8rem;
-      opacity: 0.74;
+      font-size: 0.74rem;
+      opacity: 0.68;
       white-space: nowrap;
     }
 
@@ -91,7 +93,7 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: nowrap;
     }
 
@@ -100,13 +102,14 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      min-height: 40px;
-      padding: 0 14px;
+      min-height: 34px;
+      padding: 0 11px;
       color: var(--sidebar-text);
       text-decoration: none;
       border-left: 0;
       border-bottom: 3px solid transparent;
-      border-radius: 10px;
+      border-radius: 8px;
+      font-size: 0.94rem;
       transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
     }
 
@@ -123,7 +126,7 @@
 
     .content {
       position: relative;
-      min-height: calc(100vh - 76px);
+      min-height: calc(100vh - 62px);
       overflow: hidden;
       background: var(--bg);
     }

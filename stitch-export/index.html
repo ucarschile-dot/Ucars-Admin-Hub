@@ -35,35 +35,35 @@
     .layout {
       min-height: 100vh;
       display: grid;
-      grid-template-columns: 260px 1fr;
+      grid-template-columns: 212px 1fr;
     }
 
     .sidebar {
       position: sticky;
       top: 0;
       height: 100vh;
-      padding: 24px 16px;
+      padding: 18px 10px;
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 14px;
       color: var(--sidebar-text);
       background: linear-gradient(180deg, #131414 0%, #1f2021 100%);
       border-right: 1px solid var(--border);
     }
 
     .brand {
-      padding: 0 8px;
+      padding: 0 6px;
     }
 
-    .brand h1 {
-      margin: 0;
-      font-size: 1.3rem;
-      color: #f5c34b;
-      letter-spacing: 0.01em;
+    .brand-logo {
+      display: block;
+      width: 100%;
+      max-width: 160px;
+      height: auto;
     }
 
     .brand p {
-      margin: 4px 0 0;
+      margin: 6px 0 0;
       font-size: 0.82rem;
       opacity: 0.8;
     }
@@ -78,8 +78,8 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      min-height: 46px;
-      padding: 0 14px;
+      min-height: 42px;
+      padding: 0 10px;
       color: var(--sidebar-text);
       text-decoration: none;
       border-left: 4px solid transparent;
@@ -177,7 +177,7 @@
   <div class="layout">
     <aside class="sidebar" aria-label="Navegacion principal">
       <div class="brand">
-        <h1>Ucars Hub</h1>
+        <img class="brand-logo" src="/stitch-export/Ucars%20-%20logo%20(2).png" alt="Ucars" />
         <p>Dealership Admin</p>
       </div>
       <nav class="nav">

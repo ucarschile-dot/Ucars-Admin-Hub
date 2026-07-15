@@ -190,6 +190,19 @@
             background-color: #c4c7c7;
             border-radius: 4px;
         }
+
+                #brand-filter,
+                #advisor-filter {
+                        appearance: none;
+                        -webkit-appearance: none;
+                        -moz-appearance: none;
+                        background-image: none !important;
+                }
+
+                #brand-filter::-ms-expand,
+                #advisor-filter::-ms-expand {
+                        display: none;
+                }
     </style>
 <link href="/stitch-export/shared.css" rel="stylesheet"/>
 <script defer src="/stitch-export/shared.js"></script>
@@ -302,7 +315,7 @@
 </div>
 </div>
 <!-- Data Grid View (Bento/Card style for high-end look) -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-gutter" id="stock-cards-grid">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 md:gap-gutter" id="stock-cards-grid">
 <!-- Card 1 -->
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">
 <div class="relative h-48 w-full bg-surface-dim">

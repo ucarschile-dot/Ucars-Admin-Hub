@@ -19,14 +19,21 @@ export async function GET(_: Request, context: { params: Promise<{ file: string 
   }
 
   try {
-    const filePath = path.join(process.cwd(), 'stitch-export', safeName);
-    const body = await readFile(filePath);
+    const stitchExportPath = path.join(process.cwd(), 'stitch-export', safeName);
+    let body: Buffer;
+
+    try {
+      body = await readFile(stitchExportPath);
+    } catch {
+      const rootPath = path.join(process.cwd(), safeName);
+      body = await readFile(rootPath);
+    }
 
     const cacheControl = extension === '.png'
       ? 'public, max-age=31536000, immutable'
       : 'public, max-age=300, stale-while-revalidate=600';
 
-    return new Response(body, {
+    return new Response(new Uint8Array(body), {
       status: 200,
       headers: {
         'Content-Type': contentType,

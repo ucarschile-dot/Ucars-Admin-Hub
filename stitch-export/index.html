@@ -47,12 +47,12 @@
       left: 0;
       right: 0;
       z-index: 50;
-      min-height: 42px;
-      padding: 3px 8px;
+      min-height: 50px;
+      padding: 5px 10px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      justify-content: flex-start;
+      gap: 10px;
       color: var(--sidebar-text);
       background: var(--bar-bg);
       border-bottom: 1px solid var(--border);
@@ -68,15 +68,15 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 4px;
-      min-width: 156px;
+      gap: 6px;
+      min-width: 176px;
       background: var(--bar-bg);
     }
 
     .brand-logo-wrap {
-      width: 156px;
-      max-width: 156px;
-      height: 22px;
+      width: 168px;
+      max-width: 168px;
+      height: 28px;
       overflow: hidden;
       background: var(--bar-bg);
     }
@@ -84,9 +84,9 @@
     .brand-logo {
       display: block;
       width: 100%;
-      height: 260%;
+      height: 210%;
       object-fit: cover;
-      object-position: center 50%;
+      object-position: center 48%;
       transform: none;
       transform-origin: center;
     }
@@ -98,9 +98,10 @@
     .nav {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 4px;
       flex-wrap: nowrap;
+      flex: 1;
     }
 
     .nav-link {
@@ -133,7 +134,7 @@
     .content {
       position: relative;
       min-height: 100vh;
-      padding-top: 42px;
+      padding-top: 50px;
       overflow: hidden;
       background: var(--bg);
     }
@@ -208,7 +209,7 @@
       var activeScrollSource = window;
 
       function syncTopbarVisibility() {
-        var currentScrollY = activeScrollSource && activeScrollSource.scrollY ? activeScrollSource.scrollY : 0;
+        var currentScrollY = activeScrollSource && typeof activeScrollSource.scrollY === 'number' ? activeScrollSource.scrollY : 0;
         var shouldHide = currentScrollY > 12 && currentScrollY > lastScrollY;
 
         if (topbar) {
@@ -224,6 +225,7 @@
           return;
         }
 
+        activeScrollSource = window;
         scrollRaf = window.requestAnimationFrame(syncTopbarVisibility);
       }
 

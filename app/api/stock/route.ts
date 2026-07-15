@@ -240,7 +240,7 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
   );
   const status = getText(pickProperty(properties, ['Estado', 'Status'])) || 'Disponible';
 
-  const composedName = [brand, model, version].filter(Boolean).join(' ').trim();
+  const composedName = [model, version].filter(Boolean).join(' ').trim();
 
   return {
     id: row.id,

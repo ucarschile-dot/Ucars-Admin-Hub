@@ -29,6 +29,7 @@ type UcarianoCard = {
   email: string;
   phone: string;
   role: string;
+  profileType: string;
   branch: string;
   status: string;
   assignedCars: number;
@@ -144,6 +145,10 @@ function isApplicantStatus(value: string) {
   return /(postul|applicant|onboard|candidat|proceso|entrevist|selecci)/i.test(normalized);
 }
 
+function isApplicantCard(card: UcarianoCard) {
+  return isApplicantStatus(card.status) || isApplicantStatus(card.role) || isApplicantStatus(card.profileType);
+}
+
 function normalizeStatus(properties: Record<string, NotionProperty>) {
   const status = getText(
     pickProperty(properties, ['Estado', 'Status', 'Estado Ucariano', 'Estado asesor']) ||
@@ -172,6 +177,9 @@ function toCard(row: NotionRow): UcarianoCard | null {
   const email = getText(pickProperty(properties, ['Email', 'Correo', 'Mail'])) || 'Sin correo';
   const phone = getText(pickProperty(properties, ['Teléfono', 'Telefono', 'Phone', 'Celular'])) || 'Sin teléfono';
   const role = getText(pickProperty(properties, ['Cargo', 'Rol', 'Role', 'Puesto'])) || 'Ucariano';
+  const profileType = getText(
+    pickProperty(properties, ['Tipo', 'Type', 'Categoria', 'Categoría', 'Perfil', 'Etapa', 'Stage'])
+  );
   const branch = getText(pickProperty(properties, ['Sucursal', 'Branch', 'Sede'])) || 'Sin sucursal';
   const assignedCars = getNumber(
     pickProperty(properties, [
@@ -194,6 +202,7 @@ function toCard(row: NotionRow): UcarianoCard | null {
     email,
     phone,
     role,
+    profileType,
     branch,
     status,
     assignedCars,
@@ -247,6 +256,7 @@ function fallbackCards() {
       email: item.email,
       phone: item.phone,
       role: 'Ucariano',
+      profileType: 'Ucariano',
       branch: item.branch,
       status: item.status,
       assignedCars: item.activeDeals,
@@ -263,6 +273,7 @@ function fallbackApplicants() {
       email: item.email,
       phone: item.phone,
       role: 'Postulante',
+      profileType: 'Postulante',
       branch: item.branch,
       status: item.status,
       assignedCars: 0,
@@ -295,8 +306,8 @@ export async function GET() {
       .map(toCard)
       .filter((item): item is UcarianoCard => item !== null);
 
-    const ucarianos = cards.filter((item) => isActiveStatus(item.status));
-    const postulantes = cards.filter((item) => isApplicantStatus(item.status));
+    const postulantes = cards.filter((item) => isApplicantCard(item));
+    const ucarianos = cards.filter((item) => isActiveStatus(item.status) && !isApplicantCard(item));
 
     return Response.json(
       { source: 'notion', ucarianos, postulantes },

@@ -124,11 +124,24 @@ function isActiveStatus(value: string) {
     return true;
   }
 
-  if (/(paus|inact|leave|vacac|suspend|desactiv|onboarding)/i.test(normalized)) {
+  if (isApplicantStatus(normalized)) {
+    return false;
+  }
+
+  if (/(paus|inact|leave|vacac|suspend|desactiv)/i.test(normalized)) {
     return false;
   }
 
   return /(activo|active|habilitado|disponible|vigente)/i.test(normalized);
+}
+
+function isApplicantStatus(value: string) {
+  const normalized = (value || '').toLowerCase().trim();
+  if (!normalized) {
+    return false;
+  }
+
+  return /(postul|applicant|onboard|candidat|proceso|entrevist|selecci)/i.test(normalized);
 }
 
 function normalizeStatus(properties: Record<string, NotionProperty>) {
@@ -150,9 +163,6 @@ function toCard(row: NotionRow): UcarianoCard | null {
   const properties = row.properties;
 
   const status = normalizeStatus(properties);
-  if (!isActiveStatus(status)) {
-    return null;
-  }
 
   const name =
     getText(pickProperty(properties, ['Nombre', 'Name', 'Ucariano'])) ||
@@ -244,13 +254,33 @@ function fallbackCards() {
     }));
 }
 
+function fallbackApplicants() {
+  return mockDataset.ucarianos
+    .filter((item) => item.status === 'Onboarding')
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      email: item.email,
+      phone: item.phone,
+      role: 'Postulante',
+      branch: item.branch,
+      status: item.status,
+      assignedCars: 0,
+      avatarUrl: PLACEHOLDER_IMAGE
+    }));
+}
+
 export async function GET() {
   const usersDb = process.env.NOTION_USERS_DATABASE_ID;
   const notionToken = process.env.NOTION_API_KEY;
 
   if (!usersDb || !notionToken) {
     return Response.json(
-      { source: 'mock', ucarianos: fallbackCards() },
+      {
+        source: 'mock',
+        ucarianos: fallbackCards(),
+        postulantes: fallbackApplicants()
+      },
       {
         headers: {
           'Cache-Control': 'no-store'
@@ -265,8 +295,11 @@ export async function GET() {
       .map(toCard)
       .filter((item): item is UcarianoCard => item !== null);
 
+    const ucarianos = cards.filter((item) => isActiveStatus(item.status));
+    const postulantes = cards.filter((item) => isApplicantStatus(item.status));
+
     return Response.json(
-      { source: 'notion', ucarianos: cards },
+      { source: 'notion', ucarianos, postulantes },
       {
         headers: {
           'Cache-Control': 'no-store'
@@ -277,7 +310,11 @@ export async function GET() {
     console.error('Error al consultar Ucarianos en Notion. Se usa fallback mock.', error);
 
     return Response.json(
-      { source: 'mock', ucarianos: fallbackCards() },
+      {
+        source: 'mock',
+        ucarianos: fallbackCards(),
+        postulantes: fallbackApplicants()
+      },
       {
         headers: {
           'Cache-Control': 'no-store'

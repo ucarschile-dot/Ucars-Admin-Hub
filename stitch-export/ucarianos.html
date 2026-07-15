@@ -289,16 +289,36 @@
 </div>
 </div>
 <!-- Bento Grid Layout -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-primary">Ucarianos Activos <span class="text-on-surface-variant" id="active-count">(0)</span></h3>
+<span class="text-label-caps font-label-caps text-on-surface-variant">Directorio operativo</span>
+</div>
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-card-gap" id="ucarianos-grid">
 <div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">
 <p class="text-body-sm font-body-sm text-on-surface-variant">Cargando ucarianos activos desde Notion...</p>
 </div>
 </div>
+</section>
+<section class="space-y-4 mt-8">
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-primary">Postulantes <span class="text-on-surface-variant" id="applicant-count">(0)</span></h3>
+<span class="text-label-caps font-label-caps text-on-surface-variant">Proceso de ingreso</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-card-gap" id="postulantes-grid">
+<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">
+<p class="text-body-sm font-body-sm text-on-surface-variant">Cargando postulantes desde Notion...</p>
+</div>
+</div>
+</section>
 </main>
 <script>
         (function () {
-                var grid = document.getElementById('ucarianos-grid');
-                if (!grid) {
+                var activeGrid = document.getElementById('ucarianos-grid');
+                var applicantsGrid = document.getElementById('postulantes-grid');
+                var activeCount = document.getElementById('active-count');
+                var applicantCount = document.getElementById('applicant-count');
+                if (!activeGrid || !applicantsGrid || !activeCount || !applicantCount) {
                         return;
                 }
 
@@ -380,6 +400,42 @@
                         ].join('');
                 }
 
+                function applicantCardHtml(profile) {
+                        var avatar = profile.avatarUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+                        var phone = profile.phone || 'Sin telefono';
+                        var email = profile.email || 'Sin correo';
+
+                        return [
+                                '<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col group relative">',
+                                '  <div class="absolute top-0 left-0 w-full h-1 bg-surface-container-high"></div>',
+                                '  <div class="p-5 flex items-start gap-4">',
+                                '    <img alt="Perfil de postulante" class="w-14 h-14 rounded-full object-cover border border-outline-variant shrink-0" src="' + escapeHtml(avatar) + '"/>',
+                                '    <div class="flex-1 min-w-0">',
+                                '      <div class="flex justify-between items-start">',
+                                '        <h3 class="text-title-sm font-title-sm text-on-surface truncate pr-2">' + escapeHtml(profile.name || 'Sin nombre') + '</h3>',
+                                         statusBadge(profile.status || 'Postulante'),
+                                '      </div>',
+                                '      <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 truncate">' + escapeHtml(profile.role || 'Postulante') + '</p>',
+                                '      <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 truncate">' + escapeHtml(profile.branch || 'Sin sucursal') + '</p>',
+                                '    </div>',
+                                '  </div>',
+                                '  <div class="px-5 py-4 border-t border-outline-variant/50 bg-surface-bright grid grid-cols-1 gap-3">',
+                                '    <a class="text-mono-data font-mono-data text-on-surface hover:text-primary transition-colors truncate" href="mailto:' + escapeHtml(email) + '"><span class="material-symbols-outlined text-[14px] align-middle mr-1">mail</span>' + escapeHtml(email) + '</a>',
+                                '    <a class="text-mono-data font-mono-data text-on-surface hover:text-primary transition-colors truncate" href="tel:' + escapeHtml(phone) + '"><span class="material-symbols-outlined text-[14px] align-middle mr-1">phone</span>' + escapeHtml(phone) + '</a>',
+                                '  </div>',
+                                '</div>'
+                        ].join('');
+                }
+
+                function emptyApplicantsHtml() {
+                        return [
+                                '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
+                                '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No hay postulantes</h3>',
+                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Cuando existan perfiles en proceso de ingreso apareceran aqui.</p>',
+                                '</div>'
+                        ].join('');
+                }
+
                 fetch('/api/ucarianos', { cache: 'no-store' })
                         .then(function (response) {
                                 if (!response.ok) {
@@ -389,17 +445,26 @@
                                 return response.json();
                         })
                         .then(function (payload) {
-                                var profiles = Array.isArray(payload.ucarianos) ? payload.ucarianos : [];
-                                if (profiles.length === 0) {
-                                        grid.innerHTML = emptyStateHtml();
-                                        return;
-                                }
+                                var activeProfiles = Array.isArray(payload.ucarianos) ? payload.ucarianos : [];
+                                var applicants = Array.isArray(payload.postulantes) ? payload.postulantes : [];
 
-                                grid.innerHTML = profiles.map(cardHtml).join('');
+                                activeCount.textContent = '(' + activeProfiles.length + ')';
+                                applicantCount.textContent = '(' + applicants.length + ')';
+
+                                activeGrid.innerHTML = activeProfiles.length === 0
+                                        ? emptyStateHtml()
+                                        : activeProfiles.map(cardHtml).join('');
+
+                                applicantsGrid.innerHTML = applicants.length === 0
+                                        ? emptyApplicantsHtml()
+                                        : applicants.map(applicantCardHtml).join('');
                         })
                         .catch(function (error) {
                                 console.error(error);
-                                grid.innerHTML = emptyStateHtml();
+                                activeCount.textContent = '(0)';
+                                applicantCount.textContent = '(0)';
+                                activeGrid.innerHTML = emptyStateHtml();
+                                applicantsGrid.innerHTML = emptyApplicantsHtml();
                         });
         })();
 </script>

@@ -28,6 +28,7 @@ type UcarianoCard = {
   name: string;
   email: string;
   phone: string;
+  rut: string;
   role: string;
   profileType: string;
   branch: string;
@@ -164,6 +165,7 @@ function toCard(row: NotionRow): UcarianoCard | null {
 
   const email = getText(pickProperty(properties, ['Email', 'Correo', 'Mail'])) || 'Sin correo';
   const phone = getText(pickProperty(properties, ['Teléfono', 'Telefono', 'Phone', 'Celular'])) || 'Sin teléfono';
+  const rut = getText(pickProperty(properties, ['RUT', 'Rut', 'RUN', 'Run', 'Documento'])) || '';
   const role = getText(pickProperty(properties, ['Cargo', 'Rol', 'Role', 'Puesto'])) || 'Ucariano';
   const profileType = getText(
     pickProperty(properties, ['Tipo', 'Type', 'Categoria', 'Categoría', 'Perfil', 'Etapa', 'Stage'])
@@ -189,6 +191,7 @@ function toCard(row: NotionRow): UcarianoCard | null {
     name,
     email,
     phone,
+    rut,
     role,
     profileType,
     branch,
@@ -244,6 +247,7 @@ function fallbackCards() {
       name: item.name,
       email: item.email,
       phone: item.phone,
+      rut: '',
       role: 'Ucariano',
       profileType: 'Ucariano',
       branch: item.branch,
@@ -262,6 +266,7 @@ function fallbackApplicants() {
       name: item.name,
       email: item.email,
       phone: item.phone,
+      rut: '',
       role: 'Postulante',
       profileType: 'Postulante',
       branch: item.branch,
@@ -280,6 +285,7 @@ export async function GET() {
     return Response.json(
       {
         source: 'mock',
+        profiles: [...fallbackCards(), ...fallbackApplicants()],
         ucarianos: fallbackCards(),
         postulantes: fallbackApplicants()
       },
@@ -305,7 +311,7 @@ export async function GET() {
     );
 
     return Response.json(
-      { source: 'notion', ucarianos, postulantes },
+      { source: 'notion', profiles: cards, ucarianos, postulantes },
       {
         headers: {
           'Cache-Control': 'no-store'
@@ -318,6 +324,7 @@ export async function GET() {
     return Response.json(
       {
         source: 'mock',
+        profiles: [...fallbackCards(), ...fallbackApplicants()],
         ucarianos: fallbackCards(),
         postulantes: fallbackApplicants()
       },

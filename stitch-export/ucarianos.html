@@ -279,10 +279,17 @@
 <h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background">Ucarianos Directory</h2>
 <p class="text-body-md font-body-md text-on-surface-variant mt-1">Manage and track your sales team performance and assignments.</p>
 </div>
-<div class="flex items-center gap-3">
-<button class="bg-surface-container-lowest border border-outline-variant text-on-surface py-2 px-4 rounded text-title-sm font-title-sm flex items-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
-<span class="material-symbols-outlined text-[18px]">filter_list</span> Filter
-                </button>
+<div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+<div class="relative min-w-[190px]">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant text-body-md font-body-md py-2 pl-3 pr-8 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="postulation-status-filter">
+<option value="">Todos los estados</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
+</div>
+<div class="relative min-w-[230px] grow md:grow-0">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant text-body-md font-body-md py-2 pl-9 pr-3 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="ucarianos-search" placeholder="Buscar por nombre, correo o RUT" type="text"/>
+</div>
 <button class="bg-[#282828] text-white py-2 px-4 rounded text-title-sm font-title-sm flex items-center gap-2 hover:bg-tertiary-container transition-colors shadow-sm">
 <span class="material-symbols-outlined text-[18px]">person_add</span> Add Ucariano
                 </button>
@@ -291,34 +298,25 @@
 <!-- Bento Grid Layout -->
 <section class="space-y-4">
 <div class="flex items-center justify-between">
-<h3 class="text-title-sm font-title-sm text-primary">Ucarianos Activos <span class="text-on-surface-variant" id="active-count">(0)</span></h3>
-<span class="text-label-caps font-label-caps text-on-surface-variant">Directorio operativo</span>
+<h3 class="text-title-sm font-title-sm text-primary">Directorio Ucarianos <span class="text-on-surface-variant" id="visible-count">(0)</span></h3>
+<span class="text-label-caps font-label-caps text-on-surface-variant">Filtrado por Estado Postulacion</span>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-card-gap" id="ucarianos-grid">
 <div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">
-<p class="text-body-sm font-body-sm text-on-surface-variant">Cargando ucarianos activos desde Notion...</p>
-</div>
-</div>
-</section>
-<section class="space-y-4 mt-8">
-<div class="flex items-center justify-between">
-<h3 class="text-title-sm font-title-sm text-primary">Postulantes <span class="text-on-surface-variant" id="applicant-count">(0)</span></h3>
-<span class="text-label-caps font-label-caps text-on-surface-variant">Proceso de ingreso</span>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-card-gap" id="postulantes-grid">
-<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">
-<p class="text-body-sm font-body-sm text-on-surface-variant">Cargando postulantes desde Notion...</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Cargando perfiles desde Notion...</p>
 </div>
 </div>
 </section>
 </main>
 <script>
         (function () {
-                var activeGrid = document.getElementById('ucarianos-grid');
-                var applicantsGrid = document.getElementById('postulantes-grid');
-                var activeCount = document.getElementById('active-count');
-                var applicantCount = document.getElementById('applicant-count');
-                if (!activeGrid || !applicantsGrid || !activeCount || !applicantCount) {
+                var grid = document.getElementById('ucarianos-grid');
+                var visibleCount = document.getElementById('visible-count');
+                var statusFilter = document.getElementById('postulation-status-filter');
+                var searchInput = document.getElementById('ucarianos-search');
+                var allProfiles = [];
+
+                if (!grid || !visibleCount || !statusFilter || !searchInput) {
                         return;
                 }
 
@@ -333,7 +331,7 @@
 
                 function statusBadge(status) {
                         var normalized = String(status || '').toLowerCase();
-                        var tone = normalized.indexOf('activo') >= 0 || normalized.indexOf('active') >= 0
+                        var tone = /(aprob|approved|activo|active|ingresad)/i.test(normalized)
                                 ? 'bg-green-500'
                                 : 'bg-outline';
 
@@ -348,7 +346,9 @@
                         var avatar = profile.avatarUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
                         var phone = profile.phone || 'Sin telefono';
                         var email = profile.email || 'Sin correo';
+                        var rut = profile.rut || 'Sin RUT';
                         var assignedCars = Number(profile.assignedCars || 0);
+                        var postulationStatus = profile.postulationStatus || 'Sin estado';
 
                         return [
                                 '<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col group relative">',
@@ -358,9 +358,10 @@
                                 '    <div class="flex-1 min-w-0">',
                                 '      <div class="flex justify-between items-start">',
                                 '        <h3 class="text-title-sm font-title-sm text-on-surface truncate pr-2">' + escapeHtml(profile.name || 'Sin nombre') + '</h3>',
-                                         statusBadge(profile.status),
+                                         statusBadge(postulationStatus),
                                 '      </div>',
                                 '      <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 truncate">' + escapeHtml(profile.role || profile.branch || 'Ucariano') + '</p>',
+                                '      <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 truncate">Estado: ' + escapeHtml(postulationStatus) + '</p>',
                                 '    </div>',
                                 '  </div>',
                                 '  <div class="px-5 py-4 border-t border-outline-variant/50 bg-surface-bright grid grid-cols-2 gap-4 flex-1">',
@@ -371,6 +372,10 @@
                                 '    <div class="flex flex-col">',
                                 '      <span class="text-label-caps font-label-caps text-on-surface-variant flex items-center gap-1.5 mb-1"><span class="material-symbols-outlined text-[14px]">mail</span> Email</span>',
                                 '      <a class="text-mono-data font-mono-data text-on-surface hover:text-primary transition-colors truncate" href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a>',
+                                '    </div>',
+                                '    <div class="flex flex-col col-span-2">',
+                                '      <span class="text-label-caps font-label-caps text-on-surface-variant flex items-center gap-1.5 mb-1"><span class="material-symbols-outlined text-[14px]">badge</span> RUT</span>',
+                                '      <span class="text-mono-data font-mono-data text-on-surface truncate">' + escapeHtml(rut) + '</span>',
                                 '    </div>',
                                 '  </div>',
                                 '  <div class="px-5 py-4 border-t border-outline-variant/50 flex justify-between items-center bg-surface-container-lowest">',
@@ -394,46 +399,54 @@
                 function emptyStateHtml() {
                         return [
                                 '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
-                                '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No hay ucarianos activos</h3>',
-                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Revisa la base de Notion o el estado de tus perfiles.</p>',
+                                '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No hay resultados</h3>',
+                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Ajusta el filtro de estado o el texto de busqueda.</p>',
                                 '</div>'
                         ].join('');
                 }
 
-                function applicantCardHtml(profile) {
-                        var avatar = profile.avatarUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
-                        var phone = profile.phone || 'Sin telefono';
-                        var email = profile.email || 'Sin correo';
-
-                        return [
-                                '<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 flex flex-col group relative">',
-                                '  <div class="absolute top-0 left-0 w-full h-1 bg-surface-container-high"></div>',
-                                '  <div class="p-5 flex items-start gap-4">',
-                                '    <img alt="Perfil de postulante" class="w-14 h-14 rounded-full object-cover border border-outline-variant shrink-0" src="' + escapeHtml(avatar) + '"/>',
-                                '    <div class="flex-1 min-w-0">',
-                                '      <div class="flex justify-between items-start">',
-                                '        <h3 class="text-title-sm font-title-sm text-on-surface truncate pr-2">' + escapeHtml(profile.name || 'Sin nombre') + '</h3>',
-                                         statusBadge(profile.status || 'Postulante'),
-                                '      </div>',
-                                '      <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 truncate">' + escapeHtml(profile.role || 'Postulante') + '</p>',
-                                '      <p class="text-body-sm font-body-sm text-on-surface-variant mt-0.5 truncate">' + escapeHtml(profile.branch || 'Sin sucursal') + '</p>',
-                                '    </div>',
-                                '  </div>',
-                                '  <div class="px-5 py-4 border-t border-outline-variant/50 bg-surface-bright grid grid-cols-1 gap-3">',
-                                '    <a class="text-mono-data font-mono-data text-on-surface hover:text-primary transition-colors truncate" href="mailto:' + escapeHtml(email) + '"><span class="material-symbols-outlined text-[14px] align-middle mr-1">mail</span>' + escapeHtml(email) + '</a>',
-                                '    <a class="text-mono-data font-mono-data text-on-surface hover:text-primary transition-colors truncate" href="tel:' + escapeHtml(phone) + '"><span class="material-symbols-outlined text-[14px] align-middle mr-1">phone</span>' + escapeHtml(phone) + '</a>',
-                                '  </div>',
-                                '</div>'
-                        ].join('');
+                function normalizeText(value) {
+                        return String(value || '').toLowerCase().trim();
                 }
 
-                function emptyApplicantsHtml() {
-                        return [
-                                '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
-                                '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No hay postulantes</h3>',
-                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Cuando existan perfiles en proceso de ingreso apareceran aqui.</p>',
-                                '</div>'
-                        ].join('');
+                function applyFilters() {
+                        var selectedStatus = statusFilter.value;
+                        var query = normalizeText(searchInput.value);
+
+                        var filtered = allProfiles.filter(function (profile) {
+                                var status = String(profile.postulationStatus || 'Sin estado');
+                                var matchesStatus = !selectedStatus || status === selectedStatus;
+                                if (!matchesStatus) {
+                                        return false;
+                                }
+
+                                if (!query) {
+                                        return true;
+                                }
+
+                                var haystack = [profile.name, profile.email, profile.rut]
+                                        .map(normalizeText)
+                                        .join(' ');
+
+                                return haystack.indexOf(query) >= 0;
+                        });
+
+                        visibleCount.textContent = '(' + filtered.length + ')';
+                        grid.innerHTML = filtered.length === 0 ? emptyStateHtml() : filtered.map(cardHtml).join('');
+                }
+
+                function fillStatusOptions() {
+                        var statuses = Array.from(new Set(allProfiles.map(function (profile) {
+                                return String(profile.postulationStatus || 'Sin estado').trim();
+                        }).filter(Boolean))).sort(function (a, b) {
+                                return a.localeCompare(b, 'es');
+                        });
+
+                        statusFilter.innerHTML = ['<option value="">Todos los estados</option>']
+                                .concat(statuses.map(function (status) {
+                                        return '<option value="' + escapeHtml(status) + '">' + escapeHtml(status) + '</option>';
+                                }))
+                                .join('');
                 }
 
                 fetch('/api/ucarianos', { cache: 'no-store' })
@@ -445,26 +458,24 @@
                                 return response.json();
                         })
                         .then(function (payload) {
-                                var activeProfiles = Array.isArray(payload.ucarianos) ? payload.ucarianos : [];
-                                var applicants = Array.isArray(payload.postulantes) ? payload.postulantes : [];
+                                var profiles = Array.isArray(payload.profiles)
+                                        ? payload.profiles
+                                        : [].concat(
+                                                Array.isArray(payload.ucarianos) ? payload.ucarianos : [],
+                                                Array.isArray(payload.postulantes) ? payload.postulantes : []
+                                        );
 
-                                activeCount.textContent = '(' + activeProfiles.length + ')';
-                                applicantCount.textContent = '(' + applicants.length + ')';
+                                allProfiles = profiles;
+                                fillStatusOptions();
+                                applyFilters();
 
-                                activeGrid.innerHTML = activeProfiles.length === 0
-                                        ? emptyStateHtml()
-                                        : activeProfiles.map(cardHtml).join('');
-
-                                applicantsGrid.innerHTML = applicants.length === 0
-                                        ? emptyApplicantsHtml()
-                                        : applicants.map(applicantCardHtml).join('');
+                                statusFilter.addEventListener('change', applyFilters);
+                                searchInput.addEventListener('input', applyFilters);
                         })
                         .catch(function (error) {
                                 console.error(error);
-                                activeCount.textContent = '(0)';
-                                applicantCount.textContent = '(0)';
-                                activeGrid.innerHTML = emptyStateHtml();
-                                applicantsGrid.innerHTML = emptyApplicantsHtml();
+                                visibleCount.textContent = '(0)';
+                                grid.innerHTML = emptyStateHtml();
                         });
         })();
 </script>

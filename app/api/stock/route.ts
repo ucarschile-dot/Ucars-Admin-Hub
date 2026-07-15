@@ -7,6 +7,9 @@ type NotionProperty = Record<string, unknown> & {
   select?: { name?: string };
   status?: { name?: string };
   multi_select?: Array<{ name?: string }>;
+  people?: Array<{ name?: string; person?: { email?: string } }>;
+  relation?: Array<{ id?: string }>;
+  formula?: { string?: string | null; number?: number | null; boolean?: boolean | null } | null;
   number?: number | null;
   url?: string | null;
   files?: Array<{
@@ -23,6 +26,7 @@ type NotionRow = {
 
 type StockCardItem = {
   id: string;
+  brand: string;
   name: string;
   year: string;
   mileage: string;
@@ -61,6 +65,32 @@ function getText(property?: NotionProperty | null) {
     return property.multi_select.map((item) => item.name || '').filter(Boolean).join(', ');
   }
 
+  if (Array.isArray(property.people) && property.people.length > 0) {
+    const peopleNames = property.people
+      .map((item) => item.name || item.person?.email || '')
+      .filter(Boolean)
+      .join(', ')
+      .trim();
+
+    if (peopleNames) {
+      return peopleNames;
+    }
+  }
+
+  if (property.formula) {
+    if (typeof property.formula.string === 'string' && property.formula.string.trim()) {
+      return property.formula.string.trim();
+    }
+
+    if (typeof property.formula.number === 'number') {
+      return String(property.formula.number);
+    }
+
+    if (typeof property.formula.boolean === 'boolean') {
+      return property.formula.boolean ? 'Si' : 'No';
+    }
+  }
+
   if (typeof property.url === 'string') {
     return property.url;
   }
@@ -84,6 +114,10 @@ function getNumber(property?: NotionProperty | null) {
 
 function pickProperty(properties: Record<string, NotionProperty>, candidates: string[]) {
   return candidates.map((candidate) => properties[candidate]).find(Boolean);
+}
+
+function getPropertyNameByType(properties: Record<string, NotionProperty>, type: string) {
+  return Object.keys(properties).find((key) => properties[key]?.type === type);
 }
 
 function extractFirstUrl(property?: NotionProperty | null) {
@@ -110,7 +144,83 @@ function extractFirstUrl(property?: NotionProperty | null) {
   return matched ? matched[0] : '';
 }
 
-function toCard(row: NotionRow): StockCardItem {
+function buildUserNameMap(rows: NotionRow[]) {
+  const map = new Map<string, string>();
+
+  rows.forEach((row) => {
+    const name =
+      getText(pickProperty(row.properties, ['Nombre', 'Name', 'Ucariano'])) ||
+      getText(row.properties[getPropertyNameByType(row.properties, 'title') || '']) ||
+      'Sin nombre';
+
+    map.set(row.id, name);
+  });
+
+  return map;
+}
+
+function resolveAssignedUcariano(properties: Record<string, NotionProperty>, userNameMap: Map<string, string>) {
+  const explicit = pickProperty(properties, [
+    'Ucariano Asignado',
+    'Ucariano',
+    'Advisor',
+    'Ejecutivo',
+    'Asignado',
+    'Asignado a',
+    'Assigned Ucariano',
+    'Assigned Advisor'
+  ]);
+
+  if (explicit) {
+    const explicitText = getText(explicit);
+    if (explicitText) {
+      return explicitText;
+    }
+
+    if (Array.isArray(explicit.people) && explicit.people.length > 0) {
+      const names = explicit.people
+        .map((person) => person.name || person.person?.email || '')
+        .filter(Boolean)
+        .join(', ')
+        .trim();
+
+      if (names) {
+        return names;
+      }
+    }
+
+    if (Array.isArray(explicit.relation) && explicit.relation.length > 0) {
+      const relationNames = explicit.relation
+        .map((item) => userNameMap.get(item.id || '') || '')
+        .filter(Boolean)
+        .join(', ')
+        .trim();
+
+      if (relationNames) {
+        return relationNames;
+      }
+    }
+  }
+
+  // Fallback: find any relation field and attempt to map it with the users database.
+  const relationPropertyName = getPropertyNameByType(properties, 'relation');
+  const relationProperty = relationPropertyName ? properties[relationPropertyName] : undefined;
+  if (relationProperty && Array.isArray(relationProperty.relation) && relationProperty.relation.length > 0) {
+    const relationNames = relationProperty.relation
+      .map((item) => userNameMap.get(item.id || '') || '')
+      .filter(Boolean)
+      .join(', ')
+      .trim();
+
+    if (relationNames) {
+      return relationNames;
+    }
+  }
+
+  return 'Sin asignar';
+}
+
+function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem {
   const properties = row.properties;
 
   const brand = getText(pickProperty(properties, ['Marca', 'Brand']));
@@ -120,8 +230,7 @@ function toCard(row: NotionRow): StockCardItem {
   const mileageNumber = getNumber(pickProperty(properties, ['Kilometraje', 'Km', 'Mileage']));
   const engine = getText(pickProperty(properties, ['Motor', 'Engine', 'Motorización', 'Motorizacion'])) || 'No especificado';
   const transmission = getText(pickProperty(properties, ['Transmisión', 'Transmision', 'Transmission', 'Caja'])) || 'No especificada';
-  const assignedUcariano =
-    getText(pickProperty(properties, ['Ucariano Asignado', 'Ucariano', 'Advisor', 'Ejecutivo', 'Asignado'])) || 'Sin asignar';
+  const assignedUcariano = resolveAssignedUcariano(properties, userNameMap);
   const photoUrl =
     extractFirstUrl(
       pickProperty(properties, ['Fotos URL', 'Foto URL', 'Fotos', 'Foto', 'Imagen', 'Image', 'Photos'])
@@ -133,6 +242,7 @@ function toCard(row: NotionRow): StockCardItem {
 
   return {
     id: row.id,
+    brand: brand || 'Sin marca',
     name: composedName || model || 'Vehiculo sin nombre',
     year: yearNumber > 0 ? String(yearNumber) : '-',
     mileage: mileageNumber > 0 ? `${mileageNumber.toLocaleString('es-CL')} km` : '-',
@@ -185,6 +295,7 @@ async function queryStockRows(databaseId: string) {
 function fallbackCards(): StockCardItem[] {
   return mockDataset.stock.map((item) => ({
     id: item.id,
+    brand: item.brand || 'Sin marca',
     name: [item.brand, item.model, item.version].filter(Boolean).join(' '),
     year: String(item.year),
     mileage: `${item.mileage.toLocaleString('es-CL')} km`,
@@ -199,6 +310,7 @@ function fallbackCards(): StockCardItem[] {
 
 export async function GET() {
   const stockDb = process.env.NOTION_STOCK_DATABASE_ID;
+  const usersDb = process.env.NOTION_USERS_DATABASE_ID;
   const notionToken = process.env.NOTION_API_KEY;
 
   if (!stockDb || !notionToken) {
@@ -213,8 +325,12 @@ export async function GET() {
   }
 
   try {
-    const rows = await queryStockRows(stockDb);
-    const cards = rows.map(toCard);
+    const [rows, userRows] = await Promise.all([
+      queryStockRows(stockDb),
+      usersDb ? queryStockRows(usersDb) : Promise.resolve([] as NotionRow[])
+    ]);
+    const userNameMap = buildUserNameMap(userRows);
+    const cards = rows.map((row) => toCard(row, userNameMap));
 
     return Response.json(
       { source: 'notion', vehicles: cards },

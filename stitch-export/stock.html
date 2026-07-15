@@ -302,7 +302,7 @@
 </div>
 </div>
 <!-- Data Grid View (Bento/Card style for high-end look) -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-gutter">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-gutter" id="stock-cards-grid">
 <!-- Card 1 -->
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">
 <div class="relative h-48 w-full bg-surface-dim">
@@ -434,4 +434,132 @@
 </div>
 </main>
 </div>
+<script>
+        (function () {
+                var grid = document.getElementById('stock-cards-grid');
+                if (!grid) {
+                        return;
+                }
+
+                function escapeHtml(value) {
+                        return String(value || '')
+                                .replaceAll('&', '&amp;')
+                                .replaceAll('<', '&lt;')
+                                .replaceAll('>', '&gt;')
+                                .replaceAll('"', '&quot;')
+                                .replaceAll("'", '&#39;');
+                }
+
+                function initials(name) {
+                        var parts = String(name || 'Sin asignar').trim().split(/\s+/).filter(Boolean);
+                        if (parts.length === 0) return 'SA';
+                        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+                        return (parts[0][0] + parts[1][0]).toUpperCase();
+                }
+
+                function statusBadge(status) {
+                        var normalized = String(status || '').toLowerCase();
+                        if (!normalized || normalized.indexOf('dispon') >= 0) {
+                                return '';
+                        }
+
+                        var cls = 'text-primary border-outline-variant';
+                        if (normalized.indexOf('reserv') >= 0) {
+                                cls = 'text-error border-error/20';
+                        }
+
+                        return '<div class="absolute top-2 right-2 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded text-label-caps font-label-caps ' + cls + ' border">' +
+                                escapeHtml(status) +
+                                '</div>';
+                }
+
+                function cardHtml(vehicle) {
+                        var photoUrl = vehicle.photoUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+                        var price = vehicle.price ? '<span class="text-title-sm font-title-sm font-bold text-primary">' + escapeHtml(vehicle.price) + '</span>' : '';
+                        var ucariano = vehicle.assignedUcariano || 'Sin asignar';
+
+                        return [
+                                '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">',
+                                '  <div class="relative h-48 w-full bg-surface-dim">',
+                                '    <img alt="Vehicle Image" class="w-full h-full object-cover" src="' + escapeHtml(photoUrl) + '"/>',
+                                                 statusBadge(vehicle.status),
+                                '  </div>',
+                                '  <div class="p-4 flex flex-col flex-1">',
+                                '    <div class="flex justify-between items-start mb-2 gap-2">',
+                                '      <div>',
+                                '        <h3 class="text-title-sm font-title-sm text-primary group-hover:text-secondary transition-colors">' + escapeHtml(vehicle.name || 'Vehiculo sin nombre') + '</h3>',
+                                '        <p class="text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(vehicle.year || '-') + '</p>',
+                                '      </div>',
+                                                         price,
+                                '    </div>',
+                                '    <div class="grid grid-cols-2 gap-y-2 mb-4 mt-2">',
+                                '      <div class="flex items-center gap-1.5 text-on-surface-variant">',
+                                '        <span class="material-symbols-outlined text-[16px]">speed</span>',
+                                '        <span class="text-label-caps font-label-caps">' + escapeHtml(vehicle.mileage || '-') + '</span>',
+                                '      </div>',
+                                '      <div class="flex items-center gap-1.5 text-on-surface-variant">',
+                                '        <span class="material-symbols-outlined text-[16px]">settings</span>',
+                                '        <span class="text-label-caps font-label-caps">' + escapeHtml(vehicle.transmission || '-') + '</span>',
+                                '      </div>',
+                                '      <div class="flex items-center gap-1.5 text-on-surface-variant col-span-2">',
+                                '        <span class="material-symbols-outlined text-[16px]">directions_car</span>',
+                                '        <span class="text-label-caps font-label-caps">' + escapeHtml(vehicle.engine || '-') + '</span>',
+                                '      </div>',
+                                '    </div>',
+                                '    <div class="mt-auto pt-3 border-t border-surface-container-highest flex items-center justify-between">',
+                                '      <div class="flex items-center gap-2">',
+                                '        <div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">' + escapeHtml(initials(ucariano)) + '</div>',
+                                '        <span class="text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(ucariano) + '</span>',
+                                '      </div>',
+                                '      <button class="text-on-surface-variant hover:text-primary transition-colors">',
+                                '        <span class="material-symbols-outlined text-[20px]">more_vert</span>',
+                                '      </button>',
+                                '    </div>',
+                                '  </div>',
+                                '</div>'
+                        ].join('');
+                }
+
+                function emptyStateHtml() {
+                        return [
+                                '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
+                                '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No hay vehiculos en Stock</h3>',
+                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Revisa la base de datos de Notion o las variables de entorno de la app.</p>',
+                                '</div>'
+                        ].join('');
+                }
+
+                function loadingStateHtml() {
+                        return [
+                                '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
+                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Cargando stock desde Notion...</p>',
+                                '</div>'
+                        ].join('');
+                }
+
+                grid.innerHTML = loadingStateHtml();
+
+                fetch('/api/stock', { cache: 'no-store' })
+                        .then(function (response) {
+                                if (!response.ok) {
+                                        throw new Error('No se pudo consultar /api/stock');
+                                }
+
+                                return response.json();
+                        })
+                        .then(function (payload) {
+                                var vehicles = Array.isArray(payload.vehicles) ? payload.vehicles : [];
+                                if (vehicles.length === 0) {
+                                        grid.innerHTML = emptyStateHtml();
+                                        return;
+                                }
+
+                                grid.innerHTML = vehicles.map(cardHtml).join('');
+                        })
+                        .catch(function (error) {
+                                console.error(error);
+                                grid.innerHTML = emptyStateHtml();
+                        });
+        })();
+</script>
 </body></html>

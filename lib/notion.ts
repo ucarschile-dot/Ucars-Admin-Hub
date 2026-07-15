@@ -95,14 +95,32 @@ async function queryDatabase(databaseId?: string) {
   let cursor: string | undefined;
 
   do {
-    const response = await notion.databases.query({
-      database_id: databaseId,
-      start_cursor: cursor,
-      page_size: 100
+    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        start_cursor: cursor,
+        page_size: 100
+      })
     });
 
-    rows.push(...(response.results as unknown as NotionRow[]));
-    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
+    const payload = (await response.json()) as {
+      results?: NotionRow[];
+      has_more?: boolean;
+      next_cursor?: string | null;
+      message?: string;
+    };
+
+    if (!response.ok || !Array.isArray(payload.results)) {
+      throw new Error(payload.message || `No se pudo consultar la base ${databaseId} en Notion.`);
+    }
+
+    rows.push(...payload.results);
+    cursor = payload.has_more ? payload.next_cursor ?? undefined : undefined;
   } while (cursor);
 
   return rows;

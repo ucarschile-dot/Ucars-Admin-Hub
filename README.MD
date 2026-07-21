@@ -27,10 +27,21 @@ NOTION_STOCK_DATABASE_ID=
 NOTION_USERS_DATABASE_ID=
 NOTION_AGENDA_DATABASE_ID=
 NOTION_NOTIFICATIONS_DATABASE_ID=
+AUTH_SECRET=
 NEXT_PUBLIC_APP_NAME=Ucars Admin Hub
 ```
 
-Si estas variables no existen o fallan las consultas, la app entra en modo demo con datos mock para no bloquear desarrollo ni despliegue inicial.
+Si estas variables no existen o fallan las consultas, la app entra en modo demo con datos mock para no bloquear desarrollo ni despliegue inicial. La autenticacion administrativa requiere `NOTION_API_KEY`, `NOTION_USERS_DATABASE_ID` y un `AUTH_SECRET` estable para firmar la sesion.
+
+## Acceso administrativo
+
+La entrada al panel ahora valida estas propiedades en la base de Ucarianos de Notion:
+
+- `Email`
+- `PIN`
+- `Rol` con la opcion `Administrador` en la lista
+
+Si el usuario no tiene `Administrador` dentro de `Rol`, el acceso se rechaza aunque tenga otros roles como `Vendedor`.
 
 ## Desarrollo local
 

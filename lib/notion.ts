@@ -7,6 +7,7 @@ type NotionProperty = Record<string, unknown> & {
   rich_text?: Array<{ plain_text?: string }>;
   title?: Array<{ plain_text?: string }>;
   select?: { name?: string };
+  multi_select?: Array<{ name?: string }>;
   status?: { name?: string };
   number?: number | null;
   email?: string | null;
@@ -18,6 +19,13 @@ type NotionProperty = Record<string, unknown> & {
 type NotionRow = {
   id: string;
   properties: Record<string, NotionProperty>;
+};
+
+export type AdminLoginProfile = {
+  id: string;
+  name: string;
+  email: string;
+  roles: string[];
 };
 
 const notion = process.env.NOTION_API_KEY ? new Client({ auth: process.env.NOTION_API_KEY }) : null;
@@ -58,6 +66,10 @@ function getText(property?: NotionProperty | null) {
     return property.select.name;
   }
 
+  if (Array.isArray(property.multi_select) && property.multi_select.length > 0) {
+    return property.multi_select.map((item) => item.name || '').filter(Boolean).join(', ');
+  }
+
   if (property.status?.name) {
     return property.status.name;
   }
@@ -84,6 +96,37 @@ function getNumber(property?: NotionProperty | null) {
 
 function pickProperty(properties: Record<string, NotionProperty>, candidates: string[]) {
   return candidates.map((candidate) => properties[candidate]).find(Boolean);
+}
+
+function getRoleNames(property?: NotionProperty | null) {
+  if (!property) {
+    return [] as string[];
+  }
+
+  if (Array.isArray(property.multi_select) && property.multi_select.length > 0) {
+    return property.multi_select.map((item) => (item.name || '').trim()).filter(Boolean);
+  }
+
+  if (property.select?.name) {
+    return [property.select.name.trim()].filter(Boolean);
+  }
+
+  return getText(property)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function hasAdministratorRole(roles: string[]) {
+  return roles.some((role) => role.localeCompare('Administrador', 'es', { sensitivity: 'accent' }) === 0);
+}
+
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+function normalizePin(pin: string) {
+  return pin.trim();
 }
 
 async function queryDatabase(databaseId?: string) {
@@ -223,6 +266,52 @@ function hasNotionConfig() {
       databaseIds.agenda &&
       databaseIds.notifications
   );
+}
+
+export function hasAdminAuthConfig() {
+  return Boolean(notion && databaseIds.users);
+}
+
+export async function authenticateAdminByCredentials(
+  email: string,
+  pin: string
+): Promise<AdminLoginProfile | null> {
+  if (!hasAdminAuthConfig()) {
+    return null;
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPin = normalizePin(pin);
+
+  if (!normalizedEmail || !normalizedPin) {
+    return null;
+  }
+
+  const userRows = await queryDatabase(databaseIds.users);
+
+  for (const row of userRows) {
+    const properties = row.properties;
+    const userEmail = normalizeEmail(getText(pickProperty(properties, ['Email', 'Correo', 'Mail'])));
+    const userPin = normalizePin(getText(pickProperty(properties, ['PIN', 'Pin'])));
+    const roles = getRoleNames(pickProperty(properties, ['Rol', 'Roles', 'Role', 'Cargo']));
+
+    if (userEmail !== normalizedEmail || userPin !== normalizedPin) {
+      continue;
+    }
+
+    if (!hasAdministratorRole(roles)) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      name: getText(pickProperty(properties, ['Nombre', 'Name'])) || 'Administrador',
+      email: userEmail,
+      roles
+    };
+  }
+
+  return null;
 }
 
 export async function getAdminDataset(): Promise<AdminDataset> {

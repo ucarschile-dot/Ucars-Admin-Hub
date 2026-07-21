@@ -1,11 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 
-export function AdminLoginForm() {
-  const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/';
+type AdminLoginFormProps = {
+  nextPath: string;
+};
+
+export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');

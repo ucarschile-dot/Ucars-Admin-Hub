@@ -1,6 +1,15 @@
 import { AdminLoginForm } from '@/components/admin-login-form';
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{
+    next?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const nextPath = resolvedSearchParams?.next || '/';
+
   return (
     <main className="login-shell">
       <section className="login-panel">
@@ -13,7 +22,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <AdminLoginForm />
+        <AdminLoginForm nextPath={nextPath} />
       </section>
     </main>
   );

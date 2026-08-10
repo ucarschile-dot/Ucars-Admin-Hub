@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ucars Hub - Leads</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#131414',
+            secondary: '#785a00',
+            background: '#f8f9ff',
+            surface: '#ffffff',
+            'surface-soft': '#eff4ff',
+            outline: '#c4c7c7',
+            'text-muted': '#444748'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      font-family: Inter, 'Segoe UI', sans-serif;
+      background: #f8f9ff;
+      color: #0b1c30;
+    }
+  </style>
+</head>
+<body class="antialiased min-h-screen">
+  <main class="max-w-[1400px] mx-auto px-6 py-10">
+    <header class="flex flex-col gap-2 mb-8">
+      <h1 class="text-3xl font-bold text-primary">Leads Dashboard</h1>
+      <p class="text-sm text-text-muted">Proximamente: visor de campanas Meta Ads y desempeno de ventas por vehiculo.</p>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <article class="bg-surface rounded-xl border border-outline p-5">
+        <p class="text-xs uppercase tracking-wide text-text-muted">Leads del dia</p>
+        <p class="text-3xl font-bold mt-2">--</p>
+      </article>
+      <article class="bg-surface rounded-xl border border-outline p-5">
+        <p class="text-xs uppercase tracking-wide text-text-muted">Costo por lead</p>
+        <p class="text-3xl font-bold mt-2">--</p>
+      </article>
+      <article class="bg-surface rounded-xl border border-outline p-5">
+        <p class="text-xs uppercase tracking-wide text-text-muted">Conversion a cita</p>
+        <p class="text-3xl font-bold mt-2">--</p>
+      </article>
+      <article class="bg-surface rounded-xl border border-outline p-5">
+        <p class="text-xs uppercase tracking-wide text-text-muted">Vehiculo top</p>
+        <p class="text-3xl font-bold mt-2">--</p>
+      </article>
+    </section>
+
+    <section class="bg-surface rounded-xl border border-outline p-6">
+      <h2 class="text-lg font-semibold text-primary mb-3">Estado de integracion</h2>
+      <ul class="space-y-2 text-sm text-text-muted">
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-base">schedule</span> Conectar API de Meta Ads.</li>
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-base">schedule</span> Definir modelo de atribucion por vehiculo.</li>
+        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-base">schedule</span> Activar KPIs por campana y sucursal.</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

@@ -195,6 +195,7 @@
         <a class="nav-link" data-screen="stock" href="#stock">Stock</a>
         <a class="nav-link" data-screen="ucarianos" href="#ucarianos">Ucarianos</a>
         <a class="nav-link" data-screen="agenda" href="#agenda">Agenda</a>
+        <a class="nav-link" data-screen="leads" href="#leads">Leads</a>
         <a class="nav-link" data-screen="notificaciones" href="#notificaciones">Notificaciones</a>
       </nav>
     </header>
@@ -209,6 +210,9 @@
       <section class="screen" data-screen="agenda">
         <iframe src="/stitch-export/agenda.html" title="Agenda"></iframe>
       </section>
+      <section class="screen" data-screen="leads">
+        <iframe src="/stitch-export/leads.html" title="Leads"></iframe>
+      </section>
       <section class="screen" data-screen="notificaciones">
         <iframe src="/stitch-export/notificaciones.html" title="Notificaciones"></iframe>
       </section>
@@ -219,7 +223,7 @@
     (function () {
       var topbar = document.querySelector('.topbar');
       var iframeWindows = new Map();
-      var validScreens = ['stock', 'ucarianos', 'agenda', 'notificaciones'];
+      var validScreens = ['stock', 'ucarianos', 'agenda', 'leads', 'notificaciones'];
       var defaultScreen = 'stock';
       var topbarVisible = true;
       var lastScrollY = 0;
@@ -348,6 +352,7 @@
           ['Search...', 'Buscar...'],
           ["Today's Agenda", 'Agenda de hoy'],
           ['Ucarianos Directory', 'Directorio de ucarianos'],
+          ['Leads Dashboard', 'Panel de Leads'],
           ['Review and manage communications sent to Ucarianos.', 'Revisa y administra las comunicaciones enviadas a los ucarianos.'],
           ['Load More Notifications', 'Cargar mas notificaciones']
         ];

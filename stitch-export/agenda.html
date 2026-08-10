@@ -208,8 +208,8 @@
 <!-- Page Header & Controls -->
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface-lowest p-6 rounded-xl border border-outline-variant shadow-[0_2px_4px_rgba(0,0,0,0.04)]">
 <div>
-<h2 class="text-display-lg font-display-lg text-on-background">October 2023</h2>
-<p class="text-body-md font-body-md text-on-surface-variant mt-1">42 Scheduled Test Drives</p>
+<h2 class="text-display-lg font-display-lg text-on-background" id="agenda-month-label">Agenda Comercial</h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1" id="agenda-total-label">Cargando agenda desde Notion...</p>
 </div>
 <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
 <div class="flex bg-surface-container rounded-lg p-1">
@@ -397,48 +397,10 @@
 </div>
 <!-- Today's Agenda List -->
 <div class="bg-surface-lowest border border-outline-variant rounded-xl p-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)] flex-1">
-<h3 class="text-title-sm font-title-sm text-primary mb-4">Today's Agenda</h3>
-<div class="flex flex-col gap-3">
-<!-- Item 1 (Completed) -->
-<div class="flex gap-3 items-start p-2 rounded-lg hover:bg-surface-container transition-colors group cursor-pointer opacity-70">
-<div class="flex flex-col items-center mt-1">
-<span class="text-label-caps font-label-caps text-outline">09:00</span>
-<div class="w-0.5 h-full bg-outline-variant my-1"></div>
-</div>
-<div class="flex-1 bg-surface-bright p-3 rounded border border-outline-variant">
-<div class="flex justify-between items-start">
-<p class="text-body-sm font-body-sm text-on-background font-medium line-through">BMW M3</p>
-<span class="material-symbols-outlined text-sm text-outline">check_circle</span>
-</div>
-<p class="text-label-caps font-label-caps text-on-surface-variant mt-1">Luis Martinez</p>
-</div>
-</div>
-<!-- Item 2 (Active/Next) -->
-<div class="flex gap-3 items-start p-2 rounded-lg bg-surface-container-low border border-outline-variant group cursor-pointer">
-<div class="flex flex-col items-center mt-1">
-<span class="text-label-caps font-label-caps text-secondary font-bold">11:30</span>
-<div class="w-0.5 h-full bg-[#F5C34B] my-1"></div>
-</div>
-<div class="flex-1 bg-[#F5C34B] p-3 rounded border border-secondary shadow-sm">
-<div class="flex justify-between items-start">
-<p class="text-body-sm font-body-sm text-primary font-bold">Porsche Taycan</p>
-<span class="material-symbols-outlined text-sm text-secondary animate-pulse">directions_car</span>
-</div>
-<p class="text-label-caps font-label-caps text-secondary mt-1 font-semibold">Carlos Ruiz</p>
-</div>
-</div>
-<!-- Item 3 (Upcoming) -->
-<div class="flex gap-3 items-start p-2 rounded-lg hover:bg-surface-container transition-colors group cursor-pointer">
-<div class="flex flex-col items-center mt-1">
-<span class="text-label-caps font-label-caps text-on-surface-variant">14:00</span>
-<div class="w-0.5 h-4 bg-outline-variant my-1 opacity-0 group-hover:opacity-100"></div>
-</div>
-<div class="flex-1 bg-surface-lowest p-3 rounded border-l-4 border-l-primary border-y border-r border-outline-variant group-hover:shadow-md transition-all">
-<div class="flex justify-between items-start">
-<p class="text-body-sm font-body-sm text-on-background font-medium">Audi RS6</p>
-</div>
-<p class="text-label-caps font-label-caps text-on-surface-variant mt-1">Elena Gomez</p>
-</div>
+<h3 class="text-title-sm font-title-sm text-primary mb-4">Agenda de hoy <span class="text-on-surface-variant" id="agenda-today-count">(0)</span></h3>
+<div class="flex flex-col gap-3" id="agenda-today-list">
+<div class="bg-surface-container-low rounded-lg border border-outline-variant p-3">
+<p class="text-body-sm font-body-sm text-on-surface-variant">Cargando eventos...</p>
 </div>
 </div>
 </div>
@@ -446,4 +408,131 @@
 </div>
 </main>
 </div>
+<script>
+            (function () {
+                var monthLabel = document.getElementById('agenda-month-label');
+                var totalLabel = document.getElementById('agenda-total-label');
+                var todayCount = document.getElementById('agenda-today-count');
+                var todayList = document.getElementById('agenda-today-list');
+
+                if (!monthLabel || !totalLabel || !todayCount || !todayList) {
+                    return;
+                }
+
+                function escapeHtml(value) {
+                    return String(value || '')
+                        .replaceAll('&', '&amp;')
+                        .replaceAll('<', '&lt;')
+                        .replaceAll('>', '&gt;')
+                        .replaceAll('"', '&quot;')
+                        .replaceAll("'", '&#39;');
+                }
+
+                function statusTone(status) {
+                    var normalized = String(status || '').toLowerCase();
+                    if (/(finaliz|confirm|completed|done)/i.test(normalized)) {
+                        return { row: 'opacity-70', dot: 'text-outline', badge: 'check_circle' };
+                    }
+
+                    if (/(reagend|pend|pending)/i.test(normalized)) {
+                        return { row: '', dot: 'text-secondary', badge: 'schedule' };
+                    }
+
+                    return { row: '', dot: 'text-primary', badge: 'event' };
+                }
+
+                function formatDateLabel(dateValue) {
+                    var date = new Date(dateValue);
+                    if (Number.isNaN(date.getTime())) {
+                        return 'Sin fecha';
+                    }
+
+                    return date.toLocaleDateString('es-CL', { weekday: 'long', day: '2-digit', month: 'long' });
+                }
+
+                function formatTime(dateValue) {
+                    var date = new Date(dateValue);
+                    if (Number.isNaN(date.getTime())) {
+                        return '--:--';
+                    }
+
+                    return date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+                }
+
+                function isToday(dateValue) {
+                    var date = new Date(dateValue);
+                    if (Number.isNaN(date.getTime())) {
+                        return false;
+                    }
+
+                    var now = new Date();
+                    return date.getFullYear() === now.getFullYear() &&
+                        date.getMonth() === now.getMonth() &&
+                        date.getDate() === now.getDate();
+                }
+
+                function renderItem(item) {
+                    var tone = statusTone(item.status);
+                    return [
+                        '<div class="flex gap-3 items-start p-2 rounded-lg hover:bg-surface-container transition-colors group cursor-pointer ' + tone.row + '">',
+                        '  <div class="flex flex-col items-center mt-1">',
+                        '    <span class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatTime(item.date)) + '</span>',
+                        '    <div class="w-0.5 h-full bg-outline-variant my-1"></div>',
+                        '  </div>',
+                        '  <div class="flex-1 bg-surface-bright p-3 rounded border border-outline-variant">',
+                        '    <div class="flex justify-between items-start gap-2">',
+                        '      <p class="text-body-sm font-body-sm text-on-background font-medium">' + escapeHtml(item.vehicleLabel || 'Vehiculo') + '</p>',
+                        '      <span class="material-symbols-outlined text-sm ' + tone.dot + '">' + tone.badge + '</span>',
+                        '    </div>',
+                        '    <p class="text-label-caps font-label-caps text-on-surface-variant mt-1">' + escapeHtml(item.customerName || 'Cliente') + '</p>',
+                        '    <p class="text-label-caps font-label-caps text-on-surface-variant mt-1">' + escapeHtml(item.status || 'Pendiente') + ' · ' + escapeHtml(item.location || 'Por definir') + '</p>',
+                        '  </div>',
+                        '</div>'
+                    ].join('');
+                }
+
+                function emptyHtml(message) {
+                    return [
+                        '<div class="bg-surface-container-low rounded-lg border border-outline-variant p-3">',
+                        '  <p class="text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(message) + '</p>',
+                        '</div>'
+                    ].join('');
+                }
+
+                fetch('/api/agenda', { cache: 'no-store' })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('No se pudo consultar /api/agenda');
+                        }
+
+                        return response.json();
+                    })
+                    .then(function (payload) {
+                        var agenda = Array.isArray(payload.agenda) ? payload.agenda : [];
+                        totalLabel.textContent = agenda.length + ' eventos cargados';
+
+                        if (agenda.length > 0) {
+                            monthLabel.textContent = formatDateLabel(agenda[0].date);
+                        }
+
+                        var today = agenda.filter(function (item) {
+                            return isToday(item.date);
+                        });
+
+                        var renderItems = today.length > 0 ? today : agenda.slice(0, 6);
+                        todayCount.textContent = '(' + renderItems.length + ')';
+
+                        todayList.innerHTML = renderItems.length > 0
+                            ? renderItems.map(renderItem).join('')
+                            : emptyHtml('No hay eventos en agenda para mostrar.');
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                        monthLabel.textContent = 'Agenda Comercial';
+                        totalLabel.textContent = 'No fue posible cargar la agenda.';
+                        todayCount.textContent = '(0)';
+                        todayList.innerHTML = emptyHtml('No fue posible conectar con Notion para cargar la agenda.');
+                    });
+            })();
+        </script>
 </body></html>

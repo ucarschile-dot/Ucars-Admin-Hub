@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 
-<html class="light" lang="en"><head>
+<html class="light" lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Ucars Hub - Notifications</title>
+<title>Ucars Hub - Notificaciones</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -120,11 +120,11 @@
 </div>
 <div>
 <h1 class="text-headline-md font-headline-md font-bold text-secondary dark:text-secondary-fixed">Ucars Hub</h1>
-<p class="text-label-caps font-label-caps text-on-primary-container">Dealership Admin</p>
+<p class="text-label-caps font-label-caps text-on-primary-container">Panel administrativo</p>
 </div>
 </div>
 <div class="px-container-padding mb-stack-md">
-<button class="w-full bg-secondary-container text-primary font-title-sm text-title-sm py-2 px-4 rounded hover:bg-secondary-fixed transition-colors">Add New Stock</button>
+<button class="w-full bg-secondary-container text-primary font-title-sm text-title-sm py-2 px-4 rounded hover:bg-secondary-fixed transition-colors">Agregar vehiculo</button>
 </div>
 <ul class="flex-1 flex flex-col gap-1 px-container-padding">
 <li>
@@ -148,7 +148,7 @@
 <li>
 <a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-secondary dark:text-secondary-fixed border-l-4 border-secondary opacity-90 transition-all duration-150 bg-tertiary-container" href="/stitch-export/notificaciones.html">
 <span class="material-symbols-outlined filled" data-icon="notifications" data-weight="fill">notifications</span>
-<span class="font-body-md text-body-md font-semibold">Notifications</span>
+<span class="font-body-md text-body-md font-semibold">Notificaciones</span>
 </a>
 </li>
 </ul>
@@ -156,13 +156,13 @@
 <li>
 <a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
 <span class="material-symbols-outlined" data-icon="settings">settings</span>
-<span class="font-body-md text-body-md">Settings</span>
+<span class="font-body-md text-body-md">Configuracion</span>
 </a>
 </li>
 <li>
 <a class="flex items-center gap-3 py-2 px-3 rounded hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200 text-on-primary-container dark:text-on-primary-fixed-variant" href="#">
 <span class="material-symbols-outlined" data-icon="help">help</span>
-<span class="font-body-md text-body-md">Support</span>
+<span class="font-body-md text-body-md">Soporte</span>
 </a>
 </li>
 </ul>
@@ -191,22 +191,22 @@
 <div class="flex-1 p-container-padding max-w-5xl mx-auto w-full md:mt-8">
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-stack-md gap-4">
 <div>
-<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background mb-1">Notification Center</h2>
-<p class="text-body-md font-body-md text-on-surface-variant">Review and manage communications sent to Ucarianos.</p>
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background mb-1">Centro de notificaciones</h2>
+<p class="text-body-md font-body-md text-on-surface-variant">Revisa y administra las comunicaciones enviadas a los ucarianos.</p>
 </div>
 <div class="relative w-full sm:w-auto">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-<input class="w-full sm:w-64 pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-sm font-body-sm" placeholder="Filter by Ucariano..." type="text"/>
+<input class="w-full sm:w-64 pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-sm font-body-sm" placeholder="Filtrar por ucariano..." type="text"/>
 </div>
 </div>
 <!-- Notifications Feed Container -->
 <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-[0_2px_4px_rgba(0,0,0,0.04)] overflow-hidden">
 <!-- Header Row -->
 <div class="grid grid-cols-12 gap-4 px-stack-md py-3 bg-[#F1F5F9] border-b border-outline-variant items-center text-label-caps font-label-caps text-on-surface-variant">
-<div class="col-span-1 text-center">Status</div>
-<div class="col-span-3">Recipient (Ucariano)</div>
-<div class="col-span-5">Message</div>
-<div class="col-span-3 text-right">Date &amp; Time</div>
+<div class="col-span-1 text-center">Estado</div>
+<div class="col-span-3">Destinatario (Ucariano)</div>
+<div class="col-span-5">Mensaje</div>
+<div class="col-span-3 text-right">Fecha y hora</div>
 </div>
 <!-- Feed Items -->
 <div class="flex flex-col">
@@ -223,10 +223,10 @@
 </div>
 </div>
 <div class="col-span-5">
-<p class="text-body-sm font-body-sm text-on-background line-clamp-2"><strong>Schedule Update:</strong> Your shift for tomorrow has been modified to start at 09:00 AM. Please review your agenda.</p>
+<p class="text-body-sm font-body-sm text-on-background line-clamp-2"><strong>Actualizacion de turno:</strong> Tu turno de manana fue modificado para iniciar a las 09:00. Revisa tu agenda.</p>
 </div>
 <div class="col-span-3 text-right">
-<p class="text-mono-data font-mono-data text-on-surface-variant">Today, 10:42 AM</p>
+<p class="text-mono-data font-mono-data text-on-surface-variant">Hoy, 10:42</p>
 </div>
 </div>
 <!-- Unread Item -->
@@ -242,10 +242,10 @@
 </div>
 </div>
 <div class="col-span-5">
-<p class="text-body-sm font-body-sm text-on-background line-clamp-2"><strong>Stock Alert:</strong> New inventory (2024 Honda Civic) has been assigned to your lot sector. Verification required.</p>
+<p class="text-body-sm font-body-sm text-on-background line-clamp-2"><strong>Alerta de stock:</strong> Se asigno nuevo inventario (Honda Civic 2024) a tu sector de patio. Verificacion requerida.</p>
 </div>
 <div class="col-span-3 text-right">
-<p class="text-mono-data font-mono-data text-on-surface-variant">Today, 09:15 AM</p>
+<p class="text-mono-data font-mono-data text-on-surface-variant">Hoy, 09:15</p>
 </div>
 </div>
 <!-- Read Item -->
@@ -261,10 +261,10 @@
 </div>
 </div>
 <div class="col-span-5 opacity-75">
-<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">System Maintenance: Ucars Hub will be offline for 15 minutes tonight at 2:00 AM for scheduled upgrades.</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">Mantenimiento del sistema: Ucars Hub estara fuera de servicio por 15 minutos hoy a las 02:00 por mejoras programadas.</p>
 </div>
 <div class="col-span-3 text-right opacity-75">
-<p class="text-mono-data font-mono-data text-outline">Yesterday, 18:30 PM</p>
+<p class="text-mono-data font-mono-data text-outline">Ayer, 18:30</p>
 </div>
 </div>
 <!-- Read Item -->
@@ -280,15 +280,15 @@
 </div>
 </div>
 <div class="col-span-5 opacity-75">
-<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">Document Request: Please upload the renewed insurance forms for unit #A492 by Friday.</p>
+<p class="text-body-sm font-body-sm text-on-surface-variant line-clamp-2">Solicitud de documento: Sube los formularios de seguro renovados de la unidad #A492 antes del viernes.</p>
 </div>
 <div class="col-span-3 text-right opacity-75">
-<p class="text-mono-data font-mono-data text-outline">Oct 12, 14:00 PM</p>
+<p class="text-mono-data font-mono-data text-outline">12 Oct, 14:00</p>
 </div>
 </div>
 </div>
 <div class="px-stack-md py-4 bg-surface-bright border-t border-outline-variant flex justify-center">
-<button class="text-body-sm font-body-sm font-semibold text-primary hover:text-on-background transition-colors">Load More Notifications</button>
+<button class="text-body-sm font-body-sm font-semibold text-primary hover:text-on-background transition-colors">Cargar mas notificaciones</button>
 </div>
 </div>
 </div>

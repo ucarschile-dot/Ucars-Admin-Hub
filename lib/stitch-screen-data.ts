@@ -26,7 +26,7 @@ export const stitchScreens: Record<StitchScreenKey, StitchScreenMeta> = {
   leads: {
     fileName: 'leads.html',
     imageName: 'leads.png',
-    title: 'Leads - Ucars Hub',
+    title: 'Prospectos - Ucars Hub',
     projectId,
     screenId: 'leads-placeholder',
     height: 2048

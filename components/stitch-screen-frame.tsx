@@ -8,7 +8,7 @@ const screenTitles: Record<StitchScreenKey, string> = {
   stock: 'Stock - Ucars Hub',
   ucarianos: 'Ucarianos - Ucars Hub',
   agenda: 'Agenda - Ucars Hub',
-  leads: 'Leads - Ucars Hub',
+  leads: 'Prospectos - Ucars Hub',
   notificaciones: 'Notificaciones - Ucars Hub'
 };
 

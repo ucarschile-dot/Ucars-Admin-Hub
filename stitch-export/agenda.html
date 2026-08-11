@@ -235,40 +235,40 @@
 <div class="p-3 text-center border-r border-outline-variant flex items-center justify-center text-label-caps font-label-caps text-on-surface-variant uppercase">
                             Time
                         </div>
-<div class="p-3 text-center border-r border-outline-variant">
-<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block">Mon</span>
-<span class="text-title-sm font-title-sm text-on-background">16</span>
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="0">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Mon</span>
+<span class="text-title-sm font-title-sm text-on-background day-number">16</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant">
-<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block">Tue</span>
-<span class="text-title-sm font-title-sm text-on-background">17</span>
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="1">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Tue</span>
+<span class="text-title-sm font-title-sm text-on-background day-number">17</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant bg-surface-container-highest relative">
-<div class="absolute top-0 left-0 right-0 h-1 bg-[#F5C34B]"></div>
-<span class="text-label-caps font-label-caps text-primary uppercase block font-bold">Wed</span>
-<span class="text-title-sm font-title-sm text-primary font-bold">18</span>
+<div class="p-3 text-center border-r border-outline-variant bg-surface-container-highest relative calendar-day-header" data-day-index="2">
+<div class="absolute top-0 left-0 right-0 h-1 bg-[#F5C34B] day-highlight-bar"></div>
+<span class="text-label-caps font-label-caps text-primary uppercase block font-bold day-name">Wed</span>
+<span class="text-title-sm font-title-sm text-primary font-bold day-number">18</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant">
-<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block">Thu</span>
-<span class="text-title-sm font-title-sm text-on-background">19</span>
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="3">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Thu</span>
+<span class="text-title-sm font-title-sm text-on-background day-number">19</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant">
-<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block">Fri</span>
-<span class="text-title-sm font-title-sm text-on-background">20</span>
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="4">
+<span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Fri</span>
+<span class="text-title-sm font-title-sm text-on-background day-number">20</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant bg-surface-bright">
-<span class="text-label-caps font-label-caps text-outline uppercase block">Sat</span>
-<span class="text-title-sm font-title-sm text-outline">21</span>
+<div class="p-3 text-center border-r border-outline-variant bg-surface-bright calendar-day-header" data-day-index="5">
+<span class="text-label-caps font-label-caps text-outline uppercase block day-name">Sat</span>
+<span class="text-title-sm font-title-sm text-outline day-number">21</span>
 </div>
-<div class="p-3 text-center bg-surface-bright">
-<span class="text-label-caps font-label-caps text-outline uppercase block">Sun</span>
-<span class="text-title-sm font-title-sm text-outline">22</span>
+<div class="p-3 text-center bg-surface-bright calendar-day-header" data-day-index="6">
+<span class="text-label-caps font-label-caps text-outline uppercase block day-name">Sun</span>
+<span class="text-title-sm font-title-sm text-outline day-number">22</span>
 </div>
 </div>
 <!-- Calendar Body (Grid) -->
 <div class="flex-1 overflow-y-auto relative min-h-[600px]">
 <!-- Current Time Indicator -->
-<div class="absolute top-[210px] left-[12.5%] right-0 border-t-2 border-[#F5C34B] z-20 pointer-events-none">
+<div class="absolute top-[210px] left-[12.5%] right-0 border-t-2 border-[#F5C34B] z-20 pointer-events-none" id="agenda-now-indicator">
 <div class="absolute -top-2 -left-2 w-4 h-4 bg-[#F5C34B] rounded-full"></div>
 </div>
 <!-- Grid Background -->
@@ -296,43 +296,7 @@
 <div class="day-column relative bg-surface-bright"><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div><div class="time-slot"></div></div>
 </div>
 <!-- Events overlay -->
-<!-- Mon 10:00 - 11:30 (Scheduled) -->
-<div class="absolute top-[60px] left-[calc(12.5%+4px)] w-[calc(12.5%-8px)] h-[90px] bg-surface-container rounded border-l-4 border-primary p-2 calendar-event cursor-pointer overflow-hidden">
-<p class="text-label-caps font-label-caps text-on-surface-variant">10:00 - 11:30</p>
-<p class="text-title-sm font-title-sm text-primary truncate leading-tight mt-1">Audi e-tron GT</p>
-<p class="text-body-sm font-body-sm text-on-surface-variant truncate">Maria Garcia</p>
-</div>
-<!-- Tue 13:00 - 14:00 (Completed) -->
-<div class="absolute top-[240px] left-[calc(25%+4px)] w-[calc(12.5%-8px)] h-[60px] bg-tertiary-fixed opacity-60 rounded border-l-4 border-outline p-2 calendar-event cursor-pointer overflow-hidden">
-<div class="flex items-center gap-1 mb-1">
-<span class="material-symbols-outlined text-[12px] text-outline">check_circle</span>
-<p class="text-label-caps font-label-caps text-outline">13:00 - 14:00</p>
-</div>
-<p class="text-body-sm font-body-sm text-outline truncate leading-tight">BMW X5 M</p>
-</div>
-<!-- Wed 11:30 - 13:00 (High Priority / Active) -->
-<div class="absolute top-[150px] left-[calc(37.5%+4px)] w-[calc(12.5%-8px)] h-[90px] bg-[#F5C34B] rounded border border-secondary shadow-md p-2 calendar-event cursor-pointer overflow-hidden z-10">
-<p class="text-label-caps font-label-caps text-secondary font-bold">11:30 - 13:00</p>
-<p class="text-title-sm font-title-sm text-primary truncate leading-tight mt-1">Porsche Taycan</p>
-<div class="flex items-center gap-2 mt-1">
-<div class="w-5 h-5 rounded-full bg-white overflow-hidden">
-<img class="w-full h-full object-cover" data-alt="Small circular avatar of a distinguished older gentleman with silver hair, wearing a tailored suit, looking directly at the camera with a confident expression. Studio lighting, professional portrait." src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
-</div>
-<p class="text-body-sm font-body-sm text-primary font-medium truncate">Carlos Ruiz</p>
-</div>
-</div>
-<!-- Wed 14:30 - 15:30 (Cancelled) -->
-<div class="absolute top-[330px] left-[calc(37.5%+4px)] w-[calc(12.5%-8px)] h-[60px] bg-error-container rounded border-l-4 border-error p-2 calendar-event cursor-pointer overflow-hidden">
-<p class="text-label-caps font-label-caps text-error line-through">14:30 - 15:30</p>
-<p class="text-body-sm font-body-sm text-on-error-container truncate leading-tight mt-0.5">Tesla Model S</p>
-<p class="text-label-caps font-label-caps text-error mt-0.5">Cancelled</p>
-</div>
-<!-- Thu 09:30 - 11:00 (Scheduled) -->
-<div class="absolute top-[30px] left-[calc(50%+4px)] w-[calc(12.5%-8px)] h-[90px] bg-surface-container rounded border-l-4 border-primary p-2 calendar-event cursor-pointer overflow-hidden">
-<p class="text-label-caps font-label-caps text-on-surface-variant">09:30 - 11:00</p>
-<p class="text-title-sm font-title-sm text-primary truncate leading-tight mt-1">Mercedes EQS</p>
-<p class="text-body-sm font-body-sm text-on-surface-variant truncate">Ana Lopez</p>
-</div>
+<div class="absolute inset-0 pointer-events-none" id="agenda-events-overlay"></div>
 </div>
 </div>
 <!-- Sidebar: Legend & Upcoming -->
@@ -340,10 +304,10 @@
 <!-- Mini Calendar / Picker -->
 <div class="bg-surface-lowest border border-outline-variant rounded-xl p-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)]">
 <div class="flex justify-between items-center mb-4">
-<span class="text-title-sm font-title-sm text-primary font-bold">October 2023</span>
+<span class="text-title-sm font-title-sm text-primary font-bold" id="agenda-mini-month">Mes</span>
 <div class="flex gap-1">
-<button class="p-1 text-on-surface-variant hover:bg-surface-container rounded"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
-<button class="p-1 text-on-surface-variant hover:bg-surface-container rounded"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+<button class="p-1 text-on-surface-variant hover:bg-surface-container rounded" id="agenda-mini-prev" title="Anterior: semana (Shift = mes)"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="p-1 text-on-surface-variant hover:bg-surface-container rounded" id="agenda-mini-next" title="Siguiente: semana (Shift = mes)"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
 </div>
 </div>
 <div class="grid grid-cols-7 gap-1 text-center mb-2">
@@ -355,18 +319,8 @@
 <div class="text-label-caps font-label-caps text-outline">S</div>
 <div class="text-label-caps font-label-caps text-outline">S</div>
 </div>
-<div class="grid grid-cols-7 gap-1 text-center">
-<!-- Dummy days -->
-<div class="p-1 text-body-sm text-outline">25</div><div class="p-1 text-body-sm text-outline">26</div><div class="p-1 text-body-sm text-outline">27</div><div class="p-1 text-body-sm text-outline">28</div><div class="p-1 text-body-sm text-outline">29</div><div class="p-1 text-body-sm text-outline">30</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">1</div>
-<div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">2</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">3</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">4</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">5</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">6</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">7</div><div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer">8</div>
-<!-- Current Week -->
-<div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer bg-surface-container-low font-medium">16</div>
-<div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer bg-surface-container-low font-medium">17</div>
-<div class="p-1 text-body-sm text-primary bg-[#F5C34B] rounded cursor-pointer font-bold shadow-sm">18</div>
-<div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer bg-surface-container-low font-medium">19</div>
-<div class="p-1 text-body-sm text-on-background hover:bg-surface-container rounded cursor-pointer bg-surface-container-low font-medium">20</div>
-<div class="p-1 text-body-sm text-outline bg-surface-bright rounded cursor-pointer">21</div>
-<div class="p-1 text-body-sm text-outline bg-surface-bright rounded cursor-pointer">22</div>
+<div class="grid grid-cols-7 gap-1 text-center" id="agenda-mini-grid">
+<div class="p-1 text-body-sm text-on-surface-variant">-</div>
 </div>
 </div>
 <!-- Legend & Filters -->
@@ -397,7 +351,7 @@
 </div>
 <!-- Today's Agenda List -->
 <div class="bg-surface-lowest border border-outline-variant rounded-xl p-4 shadow-[0_2px_4px_rgba(0,0,0,0.04)] flex-1">
-<h3 class="text-title-sm font-title-sm text-primary mb-4">Agenda de hoy <span class="text-on-surface-variant" id="agenda-today-count">(0)</span></h3>
+<h3 class="text-title-sm font-title-sm text-primary mb-4"><span id="agenda-today-title">Agenda de hoy</span> <span class="text-on-surface-variant" id="agenda-today-count">(0)</span></h3>
 <div class="flex flex-col gap-3" id="agenda-today-list">
 <div class="bg-surface-container-low rounded-lg border border-outline-variant p-3">
 <p class="text-body-sm font-body-sm text-on-surface-variant">Cargando eventos...</p>
@@ -413,9 +367,19 @@
                 var monthLabel = document.getElementById('agenda-month-label');
                 var totalLabel = document.getElementById('agenda-total-label');
                 var todayCount = document.getElementById('agenda-today-count');
+                var todayTitle = document.getElementById('agenda-today-title');
                 var todayList = document.getElementById('agenda-today-list');
+                var eventsOverlay = document.getElementById('agenda-events-overlay');
+                var dayHeaders = Array.from(document.querySelectorAll('.calendar-day-header'));
+                var nowIndicator = document.getElementById('agenda-now-indicator');
+                var miniMonthLabel = document.getElementById('agenda-mini-month');
+                var miniGrid = document.getElementById('agenda-mini-grid');
+                var miniPrevBtn = document.getElementById('agenda-mini-prev');
+                var miniNextBtn = document.getElementById('agenda-mini-next');
+                var agendaItems = [];
+                var referenceDate = new Date();
 
-                if (!monthLabel || !totalLabel || !todayCount || !todayList) {
+                if (!monthLabel || !totalLabel || !todayCount || !todayList || !eventsOverlay || dayHeaders.length === 0) {
                     return;
                 }
 
@@ -471,6 +435,346 @@
                         date.getDate() === now.getDate();
                 }
 
+                function addDays(date, days) {
+                    var next = new Date(date);
+                    next.setDate(next.getDate() + days);
+                    return next;
+                }
+
+                function addMonths(date, months) {
+                    var next = new Date(date);
+                    next.setMonth(next.getMonth() + months);
+                    return next;
+                }
+
+                function startOfWeek(date) {
+                    var d = new Date(date);
+                    d.setHours(0, 0, 0, 0);
+                    var day = d.getDay();
+                    var diff = day === 0 ? -6 : 1 - day;
+                    d.setDate(d.getDate() + diff);
+                    return d;
+                }
+
+                function inSameDay(a, b) {
+                    return a.getFullYear() === b.getFullYear() &&
+                        a.getMonth() === b.getMonth() &&
+                        a.getDate() === b.getDate();
+                }
+
+                function formatDayName(date) {
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                }
+
+                function normalizeDateKey(date) {
+                    return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+                }
+
+                function parseDateKey(value) {
+                    var parts = String(value || '').split('-');
+                    if (parts.length !== 3) {
+                        return null;
+                    }
+
+                    var year = Number(parts[0]);
+                    var month = Number(parts[1]);
+                    var day = Number(parts[2]);
+
+                    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+                        return null;
+                    }
+
+                    var date = new Date(year, month - 1, day);
+                    if (Number.isNaN(date.getTime())) {
+                        return null;
+                    }
+
+                    return date;
+                }
+
+                function capitalize(value) {
+                    if (!value) {
+                        return '';
+                    }
+
+                    return value.charAt(0).toUpperCase() + value.slice(1);
+                }
+
+                function renderWeekHeaders(referenceDate) {
+                    var weekStart = startOfWeek(referenceDate);
+
+                    dayHeaders.forEach(function (header, index) {
+                        var date = new Date(weekStart);
+                        date.setDate(weekStart.getDate() + index);
+
+                        var nameEl = header.querySelector('.day-name');
+                        var numberEl = header.querySelector('.day-number');
+                        var highlight = header.querySelector('.day-highlight-bar');
+
+                        var today = inSameDay(date, new Date());
+
+                        if (nameEl) {
+                            nameEl.textContent = formatDayName(date);
+                        }
+
+                        if (numberEl) {
+                            numberEl.textContent = String(date.getDate());
+                        }
+
+                        header.classList.remove('bg-surface-container-highest', 'bg-surface-bright');
+
+                        if (index >= 5) {
+                            header.classList.add('bg-surface-bright');
+                        }
+
+                        if (nameEl) {
+                            nameEl.classList.remove('text-primary', 'text-outline', 'text-on-surface-variant', 'font-bold');
+                            nameEl.classList.add(index >= 5 ? 'text-outline' : 'text-on-surface-variant');
+                        }
+
+                        if (numberEl) {
+                            numberEl.classList.remove('text-primary', 'text-outline', 'text-on-background', 'font-bold');
+                            numberEl.classList.add(index >= 5 ? 'text-outline' : 'text-on-background');
+                        }
+
+                        if (today) {
+                            header.classList.add('bg-surface-container-highest');
+                            if (nameEl) {
+                                nameEl.classList.remove('text-outline', 'text-on-surface-variant');
+                                nameEl.classList.add('text-primary', 'font-bold');
+                            }
+
+                            if (numberEl) {
+                                numberEl.classList.remove('text-outline', 'text-on-background');
+                                numberEl.classList.add('text-primary', 'font-bold');
+                            }
+
+                            if (highlight) {
+                                highlight.classList.remove('hidden');
+                            }
+                        } else if (highlight) {
+                            highlight.classList.add('hidden');
+                        }
+                    });
+                }
+
+                function setNowIndicator(weekReferenceDate) {
+                    if (!nowIndicator) {
+                        return;
+                    }
+
+                    var now = new Date();
+                    var weekStart = startOfWeek(weekReferenceDate || now);
+                    var weekEnd = addDays(weekStart, 7);
+
+                    if (!(now >= weekStart && now < weekEnd)) {
+                        nowIndicator.classList.add('hidden');
+                        return;
+                    }
+
+                    var minutes = now.getHours() * 60 + now.getMinutes();
+                    var startMinutes = 9 * 60;
+                    var endMinutes = 19 * 60;
+
+                    if (minutes < startMinutes || minutes > endMinutes) {
+                        nowIndicator.classList.add('hidden');
+                        return;
+                    }
+
+                    var top = ((minutes - startMinutes) / 60) * 60;
+                    nowIndicator.classList.remove('hidden');
+                    nowIndicator.style.top = top + 'px';
+                }
+
+                function renderTodayPanel(agenda, selectedDate) {
+                    var targetDate = selectedDate || new Date();
+                    var daily = agenda.filter(function (item) {
+                        var date = new Date(item.date);
+                        return !Number.isNaN(date.getTime()) && inSameDay(date, targetDate);
+                    });
+
+                    var renderItems = daily.length > 0 ? daily : agenda.slice(0, 6);
+                    todayCount.textContent = '(' + renderItems.length + ')';
+
+                    if (todayTitle) {
+                        todayTitle.textContent = isToday(targetDate)
+                            ? 'Agenda de hoy'
+                            : 'Agenda del ' + targetDate.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' });
+                    }
+
+                    todayList.innerHTML = renderItems.length > 0
+                        ? renderItems.map(renderItem).join('')
+                        : emptyHtml('No hay eventos en agenda para mostrar.');
+                }
+
+                function renderMiniCalendar(referenceDate, agenda) {
+                    if (!miniMonthLabel || !miniGrid) {
+                        return;
+                    }
+
+                    var monthDate = new Date(referenceDate);
+                    monthDate.setDate(1);
+                    monthDate.setHours(0, 0, 0, 0);
+
+                    miniMonthLabel.textContent = capitalize(monthDate.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' }));
+
+                    var firstCellDate = startOfWeek(monthDate);
+                    var selectedWeekStart = startOfWeek(referenceDate);
+                    var today = new Date();
+                    var eventDaySet = new Set(
+                        (Array.isArray(agenda) ? agenda : []).map(function (item) {
+                            var d = new Date(item.date);
+                            return Number.isNaN(d.getTime()) ? '' : normalizeDateKey(d);
+                        }).filter(Boolean)
+                    );
+
+                    var cells = [];
+
+                    for (var i = 0; i < 42; i += 1) {
+                        var date = new Date(firstCellDate);
+                        date.setDate(firstCellDate.getDate() + i);
+
+                        var inCurrentMonth = date.getMonth() === monthDate.getMonth();
+                        var isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                        var isSelectedWeek = date >= selectedWeekStart && date < new Date(selectedWeekStart.getFullYear(), selectedWeekStart.getMonth(), selectedWeekStart.getDate() + 7);
+                        var isCurrentDay = inSameDay(date, today);
+                        var hasEvents = eventDaySet.has(normalizeDateKey(date));
+
+                        var classes = ['p-1', 'text-body-sm', 'rounded', 'cursor-pointer'];
+
+                        if (!inCurrentMonth) {
+                            classes.push('text-outline');
+                        } else {
+                            classes.push('text-on-background', 'hover:bg-surface-container');
+                        }
+
+                        if (isWeekend) {
+                            classes.push('bg-surface-bright');
+                        }
+
+                        if (isSelectedWeek && inCurrentMonth) {
+                            classes.push('bg-surface-container-low', 'font-medium');
+                        }
+
+                        if (hasEvents && inCurrentMonth) {
+                            classes.push('ring-1', 'ring-outline-variant');
+                        }
+
+                        if (isCurrentDay) {
+                            classes = ['p-1', 'text-body-sm', 'text-primary', 'bg-[#F5C34B]', 'rounded', 'cursor-pointer', 'font-bold', 'shadow-sm'];
+                        }
+
+                        cells.push(
+                            '<button type="button" class="agenda-mini-day ' + classes.join(' ') + '" data-date="' + normalizeDateKey(date) + '" aria-label="Ir al ' + date.toLocaleDateString('es-CL') + '">' +
+                            date.getDate() +
+                            '</button>'
+                        );
+                    }
+
+                    miniGrid.innerHTML = cells.join('');
+                }
+
+                function renderAgendaViews() {
+                    monthLabel.textContent = formatDateLabel(referenceDate);
+                    totalLabel.textContent = agendaItems.length + ' eventos cargados';
+                    renderWeekHeaders(referenceDate);
+                    renderWeekEvents(agendaItems, referenceDate);
+                    renderMiniCalendar(referenceDate, agendaItems);
+                    renderTodayPanel(agendaItems, referenceDate);
+                    setNowIndicator(referenceDate);
+                }
+
+                function shiftReference(direction, useMonthStep) {
+                    referenceDate = useMonthStep
+                        ? addMonths(referenceDate, direction)
+                        : addDays(referenceDate, direction * 7);
+                    renderAgendaViews();
+                }
+
+                if (miniPrevBtn) {
+                    miniPrevBtn.addEventListener('click', function (event) {
+                        shiftReference(-1, Boolean(event.shiftKey));
+                    });
+                }
+
+                if (miniNextBtn) {
+                    miniNextBtn.addEventListener('click', function (event) {
+                        shiftReference(1, Boolean(event.shiftKey));
+                    });
+                }
+
+                if (miniGrid) {
+                    miniGrid.addEventListener('click', function (event) {
+                        var target = event.target;
+
+                        while (target && target !== miniGrid && !target.classList.contains('agenda-mini-day')) {
+                            target = target.parentElement;
+                        }
+
+                        if (!target || target === miniGrid) {
+                            return;
+                        }
+
+                        var nextDate = parseDateKey(target.getAttribute('data-date'));
+                        if (!nextDate) {
+                            return;
+                        }
+
+                        referenceDate = nextDate;
+                        renderAgendaViews();
+                    });
+                }
+
+                function eventStyle(status) {
+                    var normalized = String(status || '').toLowerCase();
+
+                    if (/(cancel|cancelad)/i.test(normalized)) {
+                        return 'bg-error-container border-l-4 border-error';
+                    }
+
+                    if (/(finaliz|confirm|completed|done)/i.test(normalized)) {
+                        return 'bg-tertiary-fixed opacity-60 border-l-4 border-outline';
+                    }
+
+                    if (/(reagend|pend|pending)/i.test(normalized)) {
+                        return 'bg-[#F5C34B] border border-secondary shadow-md';
+                    }
+
+                    return 'bg-surface-container border-l-4 border-primary';
+                }
+
+                function renderWeekEvents(agenda, referenceDate) {
+                    var weekStart = startOfWeek(referenceDate);
+                    var weekEnd = new Date(weekStart);
+                    weekEnd.setDate(weekStart.getDate() + 7);
+
+                    var items = agenda.filter(function (item) {
+                        var date = new Date(item.date);
+                        return !Number.isNaN(date.getTime()) && date >= weekStart && date < weekEnd;
+                    });
+
+                    eventsOverlay.innerHTML = items.map(function (item) {
+                        var date = new Date(item.date);
+                        var dayIndex = (date.getDay() + 6) % 7;
+                        var hour = date.getHours();
+                        var minutes = date.getMinutes();
+                        var startHour = 9;
+                        var totalMinutesFromStart = ((hour - startHour) * 60) + minutes;
+                        var top = Math.max(0, Math.min(totalMinutesFromStart, 9 * 60));
+                        var height = 60;
+                        var left = 'calc((12.5% * ' + (dayIndex + 1) + ') + 4px)';
+                        var styleClass = eventStyle(item.status);
+
+                        return [
+                            '<div class="absolute w-[calc(12.5%-8px)] p-2 rounded calendar-event cursor-pointer overflow-hidden pointer-events-auto ' + styleClass + '" style="top:' + top + 'px;left:' + left + ';height:' + height + 'px;">',
+                            '  <p class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatTime(item.date)) + '</p>',
+                            '  <p class="text-body-sm font-body-sm text-on-background truncate leading-tight mt-1">' + escapeHtml(item.vehicleLabel || 'Vehiculo') + '</p>',
+                            '  <p class="text-label-caps font-label-caps text-on-surface-variant truncate mt-1">' + escapeHtml(item.customerName || 'Cliente') + '</p>',
+                            '</div>'
+                        ].join('');
+                    }).join('');
+                }
+
                 function renderItem(item) {
                     var tone = statusTone(item.status);
                     return [
@@ -508,29 +812,19 @@
                         return response.json();
                     })
                     .then(function (payload) {
-                        var agenda = Array.isArray(payload.agenda) ? payload.agenda : [];
-                        totalLabel.textContent = agenda.length + ' eventos cargados';
-
-                        if (agenda.length > 0) {
-                            monthLabel.textContent = formatDateLabel(agenda[0].date);
-                        }
-
-                        var today = agenda.filter(function (item) {
-                            return isToday(item.date);
-                        });
-
-                        var renderItems = today.length > 0 ? today : agenda.slice(0, 6);
-                        todayCount.textContent = '(' + renderItems.length + ')';
-
-                        todayList.innerHTML = renderItems.length > 0
-                            ? renderItems.map(renderItem).join('')
-                            : emptyHtml('No hay eventos en agenda para mostrar.');
+                        agendaItems = Array.isArray(payload.agenda) ? payload.agenda : [];
+                        referenceDate = agendaItems.length > 0 ? new Date(agendaItems[0].date) : new Date();
+                        renderAgendaViews();
                     })
                     .catch(function (error) {
                         console.error(error);
                         monthLabel.textContent = 'Agenda Comercial';
                         totalLabel.textContent = 'No fue posible cargar la agenda.';
                         todayCount.textContent = '(0)';
+                        renderWeekHeaders(new Date());
+                        renderWeekEvents([], new Date());
+                        renderMiniCalendar(new Date(), []);
+                        setNowIndicator(new Date());
                         todayList.innerHTML = emptyHtml('No fue posible conectar con Notion para cargar la agenda.');
                     });
             })();

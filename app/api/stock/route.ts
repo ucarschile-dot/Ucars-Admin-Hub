@@ -33,12 +33,24 @@ type StockCardItem = {
   engine: string;
   transmission: string;
   assignedUcariano: string;
+  assignedUcarianoId: string | null;
   photoUrl: string;
   price: string;
   status: string;
 };
 
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+
+const ASSIGNED_UCARIANO_CANDIDATES = [
+  'Ucariano Asignado',
+  'Ucariano',
+  'Advisor',
+  'Ejecutivo',
+  'Asignado',
+  'Asignado a',
+  'Assigned Ucariano',
+  'Assigned Advisor'
+];
 
 function getText(property?: NotionProperty | null) {
   if (!property) {
@@ -159,17 +171,25 @@ function buildUserNameMap(rows: NotionRow[]) {
   return map;
 }
 
+function resolveAssignedUcarianoId(properties: Record<string, NotionProperty>) {
+  const explicit = pickProperty(properties, ASSIGNED_UCARIANO_CANDIDATES);
+
+  if (explicit && Array.isArray(explicit.relation) && explicit.relation.length > 0) {
+    return explicit.relation[0]?.id || null;
+  }
+
+  const relationPropertyName = getPropertyNameByType(properties, 'relation');
+  const relationProperty = relationPropertyName ? properties[relationPropertyName] : undefined;
+
+  if (relationProperty && Array.isArray(relationProperty.relation) && relationProperty.relation.length > 0) {
+    return relationProperty.relation[0]?.id || null;
+  }
+
+  return null;
+}
+
 function resolveAssignedUcariano(properties: Record<string, NotionProperty>, userNameMap: Map<string, string>) {
-  const explicit = pickProperty(properties, [
-    'Ucariano Asignado',
-    'Ucariano',
-    'Advisor',
-    'Ejecutivo',
-    'Asignado',
-    'Asignado a',
-    'Assigned Ucariano',
-    'Assigned Advisor'
-  ]);
+  const explicit = pickProperty(properties, ASSIGNED_UCARIANO_CANDIDATES);
 
   if (explicit) {
     const explicitText = getText(explicit);
@@ -251,6 +271,7 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
     engine,
     transmission,
     assignedUcariano,
+    assignedUcarianoId: resolveAssignedUcarianoId(properties),
     photoUrl,
     price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
     status
@@ -304,6 +325,7 @@ function fallbackCards(): StockCardItem[] {
     engine: 'No especificado',
     transmission: 'No especificada',
     assignedUcariano: item.assignedAdvisor,
+    assignedUcarianoId: null,
     photoUrl: PLACEHOLDER_IMAGE,
     price: item.price > 0 ? `$${item.price.toLocaleString('es-CL')}` : '',
     status: item.status
@@ -352,6 +374,127 @@ export async function GET() {
           'Cache-Control': 'no-store'
         }
       }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  const stockDb = process.env.NOTION_STOCK_DATABASE_ID;
+  const notionToken = process.env.NOTION_API_KEY;
+
+  if (!stockDb || !notionToken) {
+    return Response.json({ error: 'Notion no esta configurado en esta app.' }, { status: 503 });
+  }
+
+  let body: { vehicleId?: string; ucarianoId?: string | null; ucarianoName?: string | null };
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Cuerpo de solicitud invalido.' }, { status: 400 });
+  }
+
+  const vehicleId = body.vehicleId?.trim();
+  const ucarianoId = body.ucarianoId?.trim() || null;
+  const ucarianoName = body.ucarianoName?.trim() || '';
+
+  if (!vehicleId) {
+    return Response.json({ error: 'Falta el identificador del vehiculo.' }, { status: 400 });
+  }
+
+  try {
+    const schemaResponse = await fetch(`https://api.notion.com/v1/databases/${stockDb}`, {
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28'
+      },
+      cache: 'no-store'
+    });
+
+    const schema = (await schemaResponse.json()) as {
+      properties?: Record<string, { type?: string }>;
+      message?: string;
+    };
+
+    if (!schemaResponse.ok || !schema.properties) {
+      throw new Error(schema.message || 'No se pudo leer el esquema de Stock en Notion.');
+    }
+
+    const properties = schema.properties;
+    const propertyName =
+      ASSIGNED_UCARIANO_CANDIDATES.find((candidate) => Boolean(properties[candidate])) ||
+      Object.keys(properties).find((key) => {
+        const type = properties[key]?.type;
+        return (
+          (type === 'relation' || type === 'select' || type === 'multi_select' || type === 'rich_text') &&
+          /ucariano|advisor|ejecutivo|asignad/i.test(key)
+        );
+      });
+
+    if (!propertyName) {
+      return Response.json(
+        { error: 'No se encontro la propiedad de Ucariano Asignado en la base de Stock de Notion.' },
+        { status: 422 }
+      );
+    }
+
+    const propertyType = properties[propertyName]?.type;
+    let propertyValue: Record<string, unknown>;
+
+    switch (propertyType) {
+      case 'relation':
+        propertyValue = { relation: ucarianoId ? [{ id: ucarianoId }] : [] };
+        break;
+      case 'select':
+        propertyValue = { select: ucarianoName ? { name: ucarianoName } : null };
+        break;
+      case 'multi_select':
+        propertyValue = { multi_select: ucarianoName ? [{ name: ucarianoName }] : [] };
+        break;
+      case 'rich_text':
+        propertyValue = { rich_text: ucarianoName ? [{ type: 'text', text: { content: ucarianoName } }] : [] };
+        break;
+      default:
+        return Response.json(
+          { error: `El tipo de propiedad "${propertyType}" no esta soportado para asignar ucarianos.` },
+          { status: 422 }
+        );
+    }
+
+    const updateResponse = await fetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        properties: {
+          [propertyName]: propertyValue
+        }
+      })
+    });
+
+    const updatePayload = (await updateResponse.json()) as { message?: string };
+
+    if (!updateResponse.ok) {
+      throw new Error(updatePayload.message || 'No se pudo actualizar el vehiculo en Notion.');
+    }
+
+    return Response.json(
+      {
+        vehicleId,
+        assignedUcariano: ucarianoName || 'Sin asignar',
+        assignedUcarianoId: ucarianoId
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  } catch (error) {
+    console.error('Error al asignar ucariano en Notion.', error);
+
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Error desconocido al asignar ucariano.' },
+      { status: 500 }
     );
   }
 }

@@ -453,6 +453,7 @@
                 var brandFilter = document.getElementById('brand-filter');
                 var advisorFilter = document.getElementById('advisor-filter');
                 var allVehicles = [];
+                var allUcarianos = [];
                 if (!grid) {
                         return;
                 }
@@ -489,13 +490,40 @@
                                 '</div>';
                 }
 
+                function ucarianoOptionsHtml(vehicle) {
+                        var currentId = vehicle.assignedUcarianoId || '';
+                        var currentName = vehicle.assignedUcariano || 'Sin asignar';
+                        var options = ['<option value="">Sin asignar</option>'];
+                        var matchedById = false;
+
+                        allUcarianos.forEach(function (ucariano) {
+                                var selected = currentId && ucariano.id === currentId;
+                                if (selected) {
+                                        matchedById = true;
+                                }
+                                options.push(
+                                        '<option value="' + escapeHtml(ucariano.id) + '" data-name="' + escapeHtml(ucariano.name) + '"' +
+                                                (selected ? ' selected' : '') +
+                                                '>' + escapeHtml(ucariano.name) + '</option>'
+                                );
+                        });
+
+                        if (!matchedById && currentName && currentName !== 'Sin asignar') {
+                                options.push(
+                                        '<option value="" data-name="' + escapeHtml(currentName) + '" selected>' + escapeHtml(currentName) + '</option>'
+                                );
+                        }
+
+                        return options.join('');
+                }
+
                 function cardHtml(vehicle) {
                         var photoUrl = vehicle.photoUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
                         var price = vehicle.price ? '<span class="text-title-sm font-title-sm font-bold text-primary">' + escapeHtml(vehicle.price) + '</span>' : '';
                         var ucariano = vehicle.assignedUcariano || 'Sin asignar';
 
                         return [
-                                '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer">',
+                                '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer" data-vehicle-id="' + escapeHtml(vehicle.id) + '">',
                                 '  <div class="relative h-48 w-full bg-surface-dim">',
                                 '    <img alt="Imagen del vehiculo" class="w-full h-full object-cover" src="' + escapeHtml(photoUrl) + '"/>',
                                                  statusBadge(vehicle.status),
@@ -526,14 +554,13 @@
                                 '        <span class="text-label-caps font-label-caps truncate">' + escapeHtml(vehicle.transmission || '-') + '</span>',
                                 '      </div>',
                                 '    </div>',
-                                '    <div class="mt-auto pt-3 border-t border-surface-container-highest flex items-center justify-between">',
-                                '      <div class="flex items-center gap-2">',
-                                '        <div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container">' + escapeHtml(initials(ucariano)) + '</div>',
-                                '        <span class="text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(ucariano) + '</span>',
-                                '      </div>',
-                                '      <button class="text-on-surface-variant hover:text-primary transition-colors">',
-                                '        <span class="material-symbols-outlined text-[20px]">more_vert</span>',
-                                '      </button>',
+                                '    <div class="mt-auto pt-3 border-t border-surface-container-highest">',
+                                '      <label class="flex items-center gap-2 cursor-pointer" onclick="event.stopPropagation()">',
+                                '        <div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container shrink-0">' + escapeHtml(initials(ucariano)) + '</div>',
+                                '        <select class="ucariano-assign-select flex-1 min-w-0 bg-transparent border border-transparent hover:border-outline-variant focus:border-primary focus:outline-none rounded-md text-body-sm font-body-sm text-on-surface-variant py-1 px-1" data-vehicle-id="' + escapeHtml(vehicle.id) + '">',
+                                            ucarianoOptionsHtml(vehicle),
+                                '        </select>',
+                                '      </label>',
                                 '    </div>',
                                 '  </div>',
                                 '</div>'
@@ -604,18 +631,88 @@
                         grid.innerHTML = filtered.map(cardHtml).join('');
                 }
 
+                function assignUcariano(vehicleId, ucarianoId, ucarianoName, selectEl) {
+                        selectEl.disabled = true;
+
+                        return fetch('/api/stock', {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                        vehicleId: vehicleId,
+                                        ucarianoId: ucarianoId || null,
+                                        ucarianoName: ucarianoName || ''
+                                })
+                        })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudo asignar el ucariano.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (payload) {
+                                        var vehicle = allVehicles.find(function (item) { return item.id === vehicleId; });
+                                        if (vehicle) {
+                                                vehicle.assignedUcariano = payload.assignedUcariano || 'Sin asignar';
+                                                vehicle.assignedUcarianoId = payload.assignedUcarianoId || null;
+                                        }
+
+                                        fillFilterOptions();
+                                        renderFilteredVehicles();
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        window.alert(error.message || 'No se pudo asignar el ucariano.');
+                                        selectEl.disabled = false;
+                                });
+                }
+
+                grid.addEventListener('change', function (event) {
+                        var selectEl = event.target.closest('.ucariano-assign-select');
+                        if (!selectEl) {
+                                return;
+                        }
+
+                        var vehicleId = selectEl.getAttribute('data-vehicle-id');
+                        var option = selectEl.options[selectEl.selectedIndex];
+                        var ucarianoId = option ? option.value : '';
+                        var ucarianoName = option ? (option.getAttribute('data-name') || option.textContent || '') : '';
+
+                        assignUcariano(vehicleId, ucarianoId, ucarianoName, selectEl);
+                });
+
                 grid.innerHTML = loadingStateHtml();
 
-                fetch('/api/stock', { cache: 'no-store' })
-                        .then(function (response) {
+                Promise.all([
+                        fetch('/api/stock', { cache: 'no-store' }).then(function (response) {
                                 if (!response.ok) {
                                         throw new Error('No se pudo consultar /api/stock');
                                 }
 
                                 return response.json();
-                        })
-                        .then(function (payload) {
-                                var vehicles = Array.isArray(payload.vehicles) ? payload.vehicles : [];
+                        }),
+                        fetch('/api/ucarianos', { cache: 'no-store' })
+                                .then(function (response) {
+                                        if (!response.ok) {
+                                                throw new Error('No se pudo consultar /api/ucarianos');
+                                        }
+
+                                        return response.json();
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        return { ucarianos: [] };
+                                })
+                ])
+                        .then(function (results) {
+                                var stockPayload = results[0];
+                                var ucarianosPayload = results[1];
+
+                                allUcarianos = Array.isArray(ucarianosPayload.ucarianos) ? ucarianosPayload.ucarianos : [];
+
+                                var vehicles = Array.isArray(stockPayload.vehicles) ? stockPayload.vehicles : [];
                                 if (vehicles.length === 0) {
                                         grid.innerHTML = emptyStateHtml();
                                         return;

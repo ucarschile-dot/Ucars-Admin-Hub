@@ -109,6 +109,21 @@ function buildUserNameMap(rows: NotionRow[]) {
   return map;
 }
 
+function buildVehicleNameMap(rows: NotionRow[]) {
+  const map = new Map<string, string>();
+
+  rows.forEach((row) => {
+    const brand = getText(pickProperty(row.properties, ['Marca', 'Brand']));
+    const model = getText(pickProperty(row.properties, ['Vehículo', 'Vehiculo', 'Modelo', 'Model', 'Vehicle', 'Nombre', 'Name']));
+    const version = getText(pickProperty(row.properties, ['Versión', 'Version', 'Trim']));
+    const name = [brand, model, version].filter(Boolean).join(' ').trim();
+
+    map.set(row.id, name || 'Vehiculo sin nombre');
+  });
+
+  return map;
+}
+
 type VehicleAdvisorInfo = { id: string | null; name: string };
 
 function buildVehicleAdvisorMap(rows: NotionRow[], userNameMap: Map<string, string>) {
@@ -153,7 +168,11 @@ function combineDateAndTime(dateRaw: string, timeRaw: string) {
   return dateRaw;
 }
 
-function toAgendaItem(row: NotionRow, vehicleAdvisorMap: Map<string, VehicleAdvisorInfo>): AgendaItem {
+function toAgendaItem(
+  row: NotionRow,
+  vehicleAdvisorMap: Map<string, VehicleAdvisorInfo>,
+  vehicleNameMap: Map<string, string>
+): AgendaItem {
   const properties = row.properties;
 
   const customerName = getText(pickProperty(properties, CLIENT_CANDIDATES)) || 'Cliente sin nombre';
@@ -161,7 +180,10 @@ function toAgendaItem(row: NotionRow, vehicleAdvisorMap: Map<string, VehicleAdvi
   const vehicleId = Array.isArray(vehicleProperty?.relation) && vehicleProperty.relation.length > 0
     ? vehicleProperty.relation[0]?.id || null
     : null;
-  const vehicleLabel = getText(vehicleProperty) || (vehicleId ? 'Vehiculo asignado' : 'Vehiculo no informado');
+  const vehicleLabel =
+    getText(vehicleProperty) ||
+    (vehicleId ? vehicleNameMap.get(vehicleId) : undefined) ||
+    'Vehiculo no informado';
 
   const directAdvisor = pickProperty(properties, ASSIGNED_UCARIANO_CANDIDATES);
   const directAdvisorName = getText(directAdvisor);
@@ -280,7 +302,8 @@ export async function GET() {
 
     const userNameMap = buildUserNameMap(userRows);
     const vehicleAdvisorMap = buildVehicleAdvisorMap(stockRows, userNameMap);
-    const agenda = sortByDate(agendaRows.map((row) => toAgendaItem(row, vehicleAdvisorMap)));
+    const vehicleNameMap = buildVehicleNameMap(stockRows);
+    const agenda = sortByDate(agendaRows.map((row) => toAgendaItem(row, vehicleAdvisorMap, vehicleNameMap)));
 
     return Response.json(
       { source: 'notion', agenda },

@@ -233,36 +233,36 @@
 <!-- Main Calendar View -->
 <div class="flex-1 bg-surface-lowest border border-outline-variant rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
 <!-- Calendar Header (Days) -->
-<div class="grid grid-cols-8 border-b border-outline-variant bg-surface-container-low">
+<div class="calendar-grid border-b border-outline-variant bg-surface-container-low">
 <div class="p-3 text-center border-r border-outline-variant flex items-center justify-center text-label-caps font-label-caps text-on-surface-variant uppercase">
                             Hora
                         </div>
-<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="0">
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header cursor-pointer" data-day-index="0">
 <span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Mon</span>
 <span class="text-title-sm font-title-sm text-on-background day-number">16</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="1">
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header cursor-pointer" data-day-index="1">
 <span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Tue</span>
 <span class="text-title-sm font-title-sm text-on-background day-number">17</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant bg-surface-container-highest relative calendar-day-header" data-day-index="2">
+<div class="p-3 text-center border-r border-outline-variant bg-surface-container-highest relative calendar-day-header cursor-pointer" data-day-index="2">
 <div class="absolute top-0 left-0 right-0 h-1 bg-[#F5C34B] day-highlight-bar"></div>
 <span class="text-label-caps font-label-caps text-primary uppercase block font-bold day-name">Wed</span>
 <span class="text-title-sm font-title-sm text-primary font-bold day-number">18</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="3">
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header cursor-pointer" data-day-index="3">
 <span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Thu</span>
 <span class="text-title-sm font-title-sm text-on-background day-number">19</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant calendar-day-header" data-day-index="4">
+<div class="p-3 text-center border-r border-outline-variant calendar-day-header cursor-pointer" data-day-index="4">
 <span class="text-label-caps font-label-caps text-on-surface-variant uppercase block day-name">Fri</span>
 <span class="text-title-sm font-title-sm text-on-background day-number">20</span>
 </div>
-<div class="p-3 text-center border-r border-outline-variant bg-surface-bright calendar-day-header" data-day-index="5">
+<div class="p-3 text-center border-r border-outline-variant bg-surface-bright calendar-day-header cursor-pointer" data-day-index="5">
 <span class="text-label-caps font-label-caps text-outline uppercase block day-name">Sat</span>
 <span class="text-title-sm font-title-sm text-outline day-number">21</span>
 </div>
-<div class="p-3 text-center bg-surface-bright calendar-day-header" data-day-index="6">
+<div class="p-3 text-center bg-surface-bright calendar-day-header cursor-pointer" data-day-index="6">
 <span class="text-label-caps font-label-caps text-outline uppercase block day-name">Sun</span>
 <span class="text-title-sm font-title-sm text-outline day-number">22</span>
 </div>
@@ -270,7 +270,7 @@
 <!-- Calendar Body (Grid) -->
 <div class="flex-1 overflow-y-auto relative min-h-[600px]">
 <!-- Current Time Indicator -->
-<div class="absolute top-[210px] left-[12.5%] right-0 border-t-2 border-[#F5C34B] z-20 pointer-events-none" id="agenda-now-indicator">
+<div class="absolute top-[210px] left-[80px] right-0 border-t-2 border-[#F5C34B] z-20 pointer-events-none" id="agenda-now-indicator">
 <div class="absolute -top-2 -left-2 w-4 h-4 bg-[#F5C34B] rounded-full"></div>
 </div>
 <!-- Grid Background -->
@@ -875,6 +875,20 @@
                     });
                 }
 
+                dayHeaders.forEach(function (header) {
+                    header.addEventListener('click', function () {
+                        var index = Number(header.getAttribute('data-day-index'));
+                        if (!Number.isFinite(index)) {
+                            return;
+                        }
+
+                        var weekStart = startOfWeek(referenceDate);
+                        var nextDate = addDays(weekStart, index);
+                        referenceDate = nextDate;
+                        renderAgendaViews();
+                    });
+                });
+
                 function eventStyle(status) {
                     var normalized = String(status || '').toLowerCase();
 
@@ -912,11 +926,12 @@
                         var totalMinutesFromStart = ((hour - startHour) * 60) + minutes;
                         var top = Math.max(0, Math.min(totalMinutesFromStart, 9 * 60));
                         var height = 60;
-                        var left = 'calc((12.5% * ' + (dayIndex + 1) + ') + 4px)';
+                        var left = 'calc(80px + ((100% - 80px) / 7 * ' + dayIndex + ') + 4px)';
+                        var width = 'calc((100% - 80px) / 7 - 8px)';
                         var styleClass = eventStyle(item.status);
 
                         return [
-                            '<div class="absolute w-[calc(12.5%-8px)] p-2 rounded calendar-event cursor-pointer overflow-hidden pointer-events-auto ' + styleClass + '" style="top:' + top + 'px;left:' + left + ';height:' + height + 'px;" data-agenda-id="' + escapeHtml(item.id) + '">',
+                            '<div class="absolute p-2 rounded calendar-event cursor-pointer overflow-hidden pointer-events-auto ' + styleClass + '" style="top:' + top + 'px;left:' + left + ';width:' + width + ';height:' + height + 'px;" data-agenda-id="' + escapeHtml(item.id) + '">',
                             '  <p class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatShortDate(item.date)) + ' · ' + escapeHtml(formatTime(item.date)) + '</p>',
                             '  <p class="text-body-sm font-body-sm text-on-background truncate leading-tight mt-1">' + escapeHtml(item.vehicleLabel || 'Vehiculo') + '</p>',
                             '  <p class="text-label-caps font-label-caps text-on-surface-variant truncate mt-1">' + escapeHtml(item.customerName || 'Cliente') + '</p>',

@@ -329,8 +329,8 @@ export async function GET() {
 
 type AgendaSchemaProperty = { type?: string; select?: { options?: Array<{ name?: string }> } };
 
-async function getAgendaSchema(agendaDb: string, notionToken: string) {
-  const response = await fetch(`https://api.notion.com/v1/databases/${agendaDb}`, {
+async function getNotionDatabaseSchema(databaseId: string, notionToken: string) {
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
     headers: {
       Authorization: `Bearer ${notionToken}`,
       'Notion-Version': '2022-06-28'
@@ -344,7 +344,7 @@ async function getAgendaSchema(agendaDb: string, notionToken: string) {
   };
 
   if (!response.ok || !schema.properties) {
-    throw new Error(schema.message || 'No se pudo leer el esquema de Agenda en Notion.');
+    throw new Error(schema.message || 'No se pudo leer el esquema de la base en Notion.');
   }
 
   return schema.properties;
@@ -352,6 +352,115 @@ async function getAgendaSchema(agendaDb: string, notionToken: string) {
 
 function findPropertyName(properties: Record<string, AgendaSchemaProperty>, candidates: string[]) {
   return candidates.find((candidate) => Boolean(properties[candidate]));
+}
+
+function getTitlePropertyName(properties: Record<string, AgendaSchemaProperty>) {
+  return Object.keys(properties).find((key) => properties[key]?.type === 'title');
+}
+
+const NOTIFICATION_MESSAGE_CANDIDATES = ['Mensaje', 'Message', 'Descripcion', 'Descripción'];
+const NOTIFICATION_DATE_CANDIDATES = ['Fecha', 'Date'];
+const NOTIFICATION_PERSONA_CANDIDATES = ['Persona', 'Ucariano', 'Asesor'];
+const NOTIFICATION_VEHICLE_CANDIDATES = ['Vehículo', 'Vehiculo', 'Auto', 'Auto de interés'];
+
+async function getVehicleInfo(vehicleId: string, notionToken: string) {
+  try {
+    const response = await fetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28'
+      },
+      cache: 'no-store'
+    });
+
+    const page = (await response.json()) as { properties?: Record<string, NotionProperty> };
+
+    if (!response.ok || !page.properties) {
+      return { advisorId: null as string | null, name: '' };
+    }
+
+    const explicit = pickProperty(page.properties, ASSIGNED_UCARIANO_CANDIDATES);
+    const advisorId =
+      explicit && Array.isArray(explicit.relation) && explicit.relation.length > 0
+        ? explicit.relation[0]?.id || null
+        : null;
+
+    const brand = getText(pickProperty(page.properties, ['Marca', 'Brand']));
+    const model = getText(pickProperty(page.properties, ['Vehículo', 'Vehiculo', 'Modelo', 'Model', 'Vehicle', 'Nombre', 'Name']));
+    const version = getText(pickProperty(page.properties, ['Versión', 'Version', 'Trim']));
+    const name = [brand, model, version].filter(Boolean).join(' ').trim() || 'el vehiculo';
+
+    return { advisorId, name };
+  } catch (error) {
+    console.error('No se pudo leer el vehiculo para notificar al ucariano.', error);
+    return { advisorId: null as string | null, name: '' };
+  }
+}
+
+async function notifyUcariano(options: {
+  notionToken: string;
+  notificationsDb?: string;
+  title: string;
+  message: string;
+  date?: string;
+  personaId: string | null;
+  vehicleId?: string | null;
+}) {
+  const { notionToken, notificationsDb, title, message, date, personaId, vehicleId } = options;
+
+  if (!notificationsDb || !personaId) {
+    return;
+  }
+
+  try {
+    const schemaProperties = await getNotionDatabaseSchema(notificationsDb, notionToken);
+    const properties: Record<string, unknown> = {};
+
+    const titlePropName = getTitlePropertyName(schemaProperties);
+    if (titlePropName) {
+      properties[titlePropName] = { title: [{ text: { content: title } }] };
+    }
+
+    const messagePropName = findPropertyName(schemaProperties, NOTIFICATION_MESSAGE_CANDIDATES);
+    if (messagePropName) {
+      properties[messagePropName] = { rich_text: [{ text: { content: message } }] };
+    }
+
+    const datePropName = findPropertyName(schemaProperties, NOTIFICATION_DATE_CANDIDATES);
+    if (datePropName && date) {
+      properties[datePropName] = { date: { start: date } };
+    }
+
+    const personaPropName = findPropertyName(schemaProperties, NOTIFICATION_PERSONA_CANDIDATES);
+    if (personaPropName) {
+      properties[personaPropName] = { relation: [{ id: personaId }] };
+    }
+
+    const vehiclePropName = findPropertyName(schemaProperties, NOTIFICATION_VEHICLE_CANDIDATES);
+    if (vehiclePropName && vehicleId) {
+      properties[vehiclePropName] = { relation: [{ id: vehicleId }] };
+    }
+
+    const response = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        parent: { database_id: notificationsDb },
+        properties
+      })
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json()) as { message?: string };
+      throw new Error(payload.message || 'No se pudo crear la notificacion en Notion.');
+    }
+  } catch (error) {
+    console.error('No se pudo notificar al ucariano sobre el cambio en su agenda.', error);
+  }
 }
 
 export async function PATCH(request: Request) {
@@ -383,7 +492,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const schemaProperties = await getAgendaSchema(agendaDb, notionToken);
+    const schemaProperties = await getNotionDatabaseSchema(agendaDb, notionToken);
     const properties: Record<string, unknown> = {};
     const skipped: string[] = [];
 
@@ -430,6 +539,22 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'No hay campos validos para actualizar.' }, { status: 422 });
     }
 
+    const currentPageResponse = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28'
+      },
+      cache: 'no-store'
+    });
+    const currentPage = (await currentPageResponse.json()) as { properties?: Record<string, NotionProperty> };
+    const currentVehicleProperty = currentPage.properties
+      ? pickProperty(currentPage.properties, VEHICLE_RELATION_CANDIDATES)
+      : undefined;
+    const vehicleId =
+      currentVehicleProperty && Array.isArray(currentVehicleProperty.relation) && currentVehicleProperty.relation.length > 0
+        ? currentVehicleProperty.relation[0]?.id || null
+        : null;
+
     const updateResponse = await fetch(`https://api.notion.com/v1/pages/${id}`, {
       method: 'PATCH',
       headers: {
@@ -446,6 +571,27 @@ export async function PATCH(request: Request) {
       throw new Error(updatePayload.message || 'No se pudo actualizar la cita en Notion.');
     }
 
+    if (vehicleId) {
+      const { advisorId, name: vehicleName } = await getVehicleInfo(vehicleId, notionToken);
+      const dateLabel = body.date ? `${body.date}${body.time ? ' a las ' + body.time : ''}` : '';
+      const messageParts = [
+        `Tu cita para ${vehicleName || 'el vehiculo'} fue modificada.`,
+        dateLabel ? `Nueva fecha: ${dateLabel}.` : '',
+        body.location ? `Lugar: ${body.location}.` : '',
+        body.status ? `Estado: ${body.status}.` : ''
+      ].filter(Boolean);
+
+      await notifyUcariano({
+        notionToken,
+        notificationsDb: process.env.NOTION_NOTIFICATIONS_DATABASE_ID,
+        title: `Cambio en tu agenda: ${vehicleName || 'vehiculo'}`,
+        message: messageParts.join(' '),
+        date: body.date,
+        personaId: advisorId,
+        vehicleId
+      });
+    }
+
     return Response.json(
       { id, skipped },
       { headers: { 'Cache-Control': 'no-store' } }
@@ -458,10 +604,6 @@ export async function PATCH(request: Request) {
       { status: 500 }
     );
   }
-}
-
-function getTitlePropertyName(properties: Record<string, AgendaSchemaProperty>) {
-  return Object.keys(properties).find((key) => properties[key]?.type === 'title');
 }
 
 export async function POST(request: Request) {
@@ -498,7 +640,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const schemaProperties = await getAgendaSchema(agendaDb, notionToken);
+    const schemaProperties = await getNotionDatabaseSchema(agendaDb, notionToken);
     const properties: Record<string, unknown> = {};
     const skipped: string[] = [];
 
@@ -575,6 +717,24 @@ export async function POST(request: Request) {
     if (!createResponse.ok || !createPayload.id) {
       throw new Error(createPayload.message || 'No se pudo crear la cita en Notion.');
     }
+
+    const { advisorId, name: resolvedVehicleName } = await getVehicleInfo(vehicleId, notionToken);
+    const dateLabel = `${date}${body.time ? ' a las ' + body.time : ''}`;
+    const messageParts = [
+      `Se agendo un test drive con ${customerName} para ${resolvedVehicleName || vehicleName}.`,
+      `Fecha: ${dateLabel}.`,
+      body.location ? `Lugar: ${body.location}.` : ''
+    ].filter(Boolean);
+
+    await notifyUcariano({
+      notionToken,
+      notificationsDb: process.env.NOTION_NOTIFICATIONS_DATABASE_ID,
+      title: `Nueva cita agendada: ${resolvedVehicleName || vehicleName}`,
+      message: messageParts.join(' '),
+      date,
+      personaId: advisorId,
+      vehicleId
+    });
 
     return Response.json(
       { id: createPayload.id, skipped },

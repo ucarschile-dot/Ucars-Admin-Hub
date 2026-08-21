@@ -37,9 +37,12 @@ type StockCardItem = {
   photoUrl: string;
   price: string;
   status: string;
+  publicationUrl: string;
 };
 
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+
+const PUBLICATION_URL_CANDIDATES = ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'];
 
 const ASSIGNED_UCARIANO_CANDIDATES = [
   'Ucariano Asignado',
@@ -259,6 +262,7 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
     pickProperty(properties, ['Precio Publicado', 'Precio publicado', 'Precio Actual', 'Precio', 'Published Price', 'Price'])
   );
   const status = getText(pickProperty(properties, ['Estado', 'Status'])) || 'Disponible';
+  const publicationUrl = extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES));
 
   const composedName = [model, version].filter(Boolean).join(' ').trim();
 
@@ -274,7 +278,8 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
     assignedUcarianoId: resolveAssignedUcarianoId(properties),
     photoUrl,
     price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
-    status
+    status,
+    publicationUrl
   };
 }
 
@@ -328,7 +333,8 @@ function fallbackCards(): StockCardItem[] {
     assignedUcarianoId: null,
     photoUrl: PLACEHOLDER_IMAGE,
     price: item.price > 0 ? `$${item.price.toLocaleString('es-CL')}` : '',
-    status: item.status
+    status: item.status,
+    publicationUrl: ''
   }));
 }
 

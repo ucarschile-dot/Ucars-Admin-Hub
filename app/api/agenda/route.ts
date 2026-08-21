@@ -7,6 +7,9 @@ type NotionProperty = Record<string, unknown> & {
   select?: { name?: string };
   status?: { name?: string };
   date?: { start?: string | null } | null;
+  relation?: Array<{ id?: string }>;
+  place?: { name?: string; address?: string; lat?: number; lon?: number } | null;
+  url?: string | null;
 };
 
 type NotionRow = {
@@ -18,12 +21,34 @@ type AgendaItem = {
   id: string;
   customerName: string;
   vehicleLabel: string;
+  vehicleId: string | null;
   advisorName: string;
+  advisorId: string | null;
   date: string;
+  dateRaw: string;
+  timeRaw: string;
   location: string;
   status: string;
   channel: string;
 };
+
+const VEHICLE_RELATION_CANDIDATES = ['Auto de interés', 'Auto de interes', 'Vehículo', 'Vehiculo', 'Vehicle', 'Auto'];
+const ASSIGNED_UCARIANO_CANDIDATES = [
+  'Ucariano Asignado',
+  'Ucariano',
+  'Advisor',
+  'Ejecutivo',
+  'Asignado',
+  'Asignado a',
+  'Assigned Ucariano',
+  'Assigned Advisor'
+];
+const CLIENT_CANDIDATES = ['Cliente', 'Customer', 'Nombre cliente'];
+const DATE_CANDIDATES = ['Fecha', 'Date', 'Fecha visita', 'Fecha test drive'];
+const TIME_CANDIDATES = ['Hora', 'Time'];
+const LOCATION_CANDIDATES = ['Lugar', 'Location', 'Sucursal'];
+const STATUS_CANDIDATES = ['Estado', 'Status'];
+const CHANNEL_CANDIDATES = ['Canal', 'Channel'];
 
 function getText(property?: NotionProperty | null) {
   if (!property) {
@@ -46,6 +71,14 @@ function getText(property?: NotionProperty | null) {
     return property.status.name;
   }
 
+  if (property.place) {
+    return property.place.name?.split(',')[0] || property.place.address?.split(',')[0] || '';
+  }
+
+  if (typeof property.url === 'string') {
+    return property.url;
+  }
+
   if (property.date?.start) {
     return property.date.start || '';
   }
@@ -57,34 +90,109 @@ function pickProperty(properties: Record<string, NotionProperty>, candidates: st
   return candidates.map((candidate) => properties[candidate]).find(Boolean);
 }
 
-function toAgendaItem(row: NotionRow): AgendaItem {
+function getPropertyNameByType(properties: Record<string, NotionProperty>, type: string) {
+  return Object.keys(properties).find((key) => properties[key]?.type === type);
+}
+
+function buildUserNameMap(rows: NotionRow[]) {
+  const map = new Map<string, string>();
+
+  rows.forEach((row) => {
+    const name =
+      getText(pickProperty(row.properties, ['Nombre', 'Name', 'Ucariano'])) ||
+      getText(row.properties[getPropertyNameByType(row.properties, 'title') || '']) ||
+      'Sin nombre';
+
+    map.set(row.id, name);
+  });
+
+  return map;
+}
+
+type VehicleAdvisorInfo = { id: string | null; name: string };
+
+function buildVehicleAdvisorMap(rows: NotionRow[], userNameMap: Map<string, string>) {
+  const map = new Map<string, VehicleAdvisorInfo>();
+
+  rows.forEach((row) => {
+    const explicit = pickProperty(row.properties, ASSIGNED_UCARIANO_CANDIDATES);
+    let advisorId: string | null = null;
+    let advisorName = '';
+
+    if (explicit && Array.isArray(explicit.relation) && explicit.relation.length > 0) {
+      advisorId = explicit.relation[0]?.id || null;
+      advisorName = advisorId ? userNameMap.get(advisorId) || '' : '';
+    }
+
+    if (!advisorName) {
+      advisorName = getText(explicit);
+    }
+
+    map.set(row.id, { id: advisorId, name: advisorName || 'Sin asignar' });
+  });
+
+  return map;
+}
+
+function combineDateAndTime(dateRaw: string, timeRaw: string) {
+  if (!dateRaw) {
+    return new Date().toISOString();
+  }
+
+  if (dateRaw.includes('T')) {
+    return dateRaw;
+  }
+
+  const timeMatch = timeRaw.match(/^(\d{1,2}):(\d{2})/);
+  if (timeMatch) {
+    const hours = timeMatch[1].padStart(2, '0');
+    const minutes = timeMatch[2];
+    return `${dateRaw}T${hours}:${minutes}:00`;
+  }
+
+  return dateRaw;
+}
+
+function toAgendaItem(row: NotionRow, vehicleAdvisorMap: Map<string, VehicleAdvisorInfo>): AgendaItem {
   const properties = row.properties;
 
-  const customerName = getText(pickProperty(properties, ['Cliente', 'Customer', 'Nombre cliente'])) || 'Cliente sin nombre';
-  const vehicleLabel =
-    getText(pickProperty(properties, ['Vehículo', 'Vehiculo', 'Vehicle', 'Auto'])) || 'Vehiculo no informado';
-  const advisorName =
-    getText(pickProperty(properties, ['Ucariano', 'Advisor', 'Ejecutivo', 'Asesor'])) || 'Sin asesor';
-  const date =
-    getText(pickProperty(properties, ['Fecha', 'Date', 'Fecha visita', 'Fecha test drive'])) || new Date().toISOString();
-  const location =
-    getText(pickProperty(properties, ['Lugar', 'Location', 'Sucursal'])) || 'Por definir';
-  const status = getText(pickProperty(properties, ['Estado', 'Status'])) || 'Pendiente';
-  const channel = getText(pickProperty(properties, ['Canal', 'Channel'])) || 'Sucursal';
+  const customerName = getText(pickProperty(properties, CLIENT_CANDIDATES)) || 'Cliente sin nombre';
+  const vehicleProperty = pickProperty(properties, VEHICLE_RELATION_CANDIDATES);
+  const vehicleId = Array.isArray(vehicleProperty?.relation) && vehicleProperty.relation.length > 0
+    ? vehicleProperty.relation[0]?.id || null
+    : null;
+  const vehicleLabel = getText(vehicleProperty) || (vehicleId ? 'Vehiculo asignado' : 'Vehiculo no informado');
+
+  const directAdvisor = pickProperty(properties, ASSIGNED_UCARIANO_CANDIDATES);
+  const directAdvisorName = getText(directAdvisor);
+  const linkedAdvisor = vehicleId ? vehicleAdvisorMap.get(vehicleId) : undefined;
+
+  const advisorName = directAdvisorName || linkedAdvisor?.name || 'Sin asesor';
+  const advisorId = linkedAdvisor?.id ?? null;
+
+  const dateRaw = getText(pickProperty(properties, DATE_CANDIDATES));
+  const timeRaw = getText(pickProperty(properties, TIME_CANDIDATES));
+  const location = getText(pickProperty(properties, LOCATION_CANDIDATES)) || 'Por definir';
+  const status = getText(pickProperty(properties, STATUS_CANDIDATES)) || 'Pendiente';
+  const channel = getText(pickProperty(properties, CHANNEL_CANDIDATES)) || 'Sucursal';
 
   return {
     id: row.id,
     customerName,
     vehicleLabel,
+    vehicleId,
     advisorName,
-    date,
+    advisorId,
+    date: combineDateAndTime(dateRaw, timeRaw),
+    dateRaw,
+    timeRaw,
     location,
     status,
     channel
   };
 }
 
-async function queryAgendaRows(databaseId: string) {
+async function queryDatabaseRows(databaseId: string) {
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
 
@@ -111,7 +219,7 @@ async function queryAgendaRows(databaseId: string) {
     };
 
     if (!response.ok || !Array.isArray(payload.results)) {
-      throw new Error(payload.message || 'No se pudo consultar la base de agenda en Notion.');
+      throw new Error(payload.message || 'No se pudo consultar la base en Notion.');
     }
 
     rows.push(...payload.results);
@@ -126,8 +234,12 @@ function fallbackAgenda(): AgendaItem[] {
     id: item.id,
     customerName: item.customerName,
     vehicleLabel: item.vehicleLabel,
+    vehicleId: null,
     advisorName: item.advisorName,
+    advisorId: null,
     date: item.date,
+    dateRaw: item.date.slice(0, 10),
+    timeRaw: '',
     location: item.location,
     status: item.status,
     channel: item.channel
@@ -144,6 +256,8 @@ function sortByDate(items: AgendaItem[]) {
 
 export async function GET() {
   const agendaDb = process.env.NOTION_AGENDA_DATABASE_ID;
+  const stockDb = process.env.NOTION_STOCK_DATABASE_ID;
+  const usersDb = process.env.NOTION_USERS_DATABASE_ID;
   const notionToken = process.env.NOTION_API_KEY;
 
   if (!agendaDb || !notionToken) {
@@ -158,8 +272,15 @@ export async function GET() {
   }
 
   try {
-    const rows = await queryAgendaRows(agendaDb);
-    const agenda = sortByDate(rows.map(toAgendaItem));
+    const [agendaRows, stockRows, userRows] = await Promise.all([
+      queryDatabaseRows(agendaDb),
+      stockDb ? queryDatabaseRows(stockDb) : Promise.resolve([] as NotionRow[]),
+      usersDb ? queryDatabaseRows(usersDb) : Promise.resolve([] as NotionRow[])
+    ]);
+
+    const userNameMap = buildUserNameMap(userRows);
+    const vehicleAdvisorMap = buildVehicleAdvisorMap(stockRows, userNameMap);
+    const agenda = sortByDate(agendaRows.map((row) => toAgendaItem(row, vehicleAdvisorMap)));
 
     return Response.json(
       { source: 'notion', agenda },
@@ -179,6 +300,139 @@ export async function GET() {
           'Cache-Control': 'no-store'
         }
       }
+    );
+  }
+}
+
+type AgendaSchemaProperty = { type?: string; select?: { options?: Array<{ name?: string }> } };
+
+async function getAgendaSchema(agendaDb: string, notionToken: string) {
+  const response = await fetch(`https://api.notion.com/v1/databases/${agendaDb}`, {
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': '2022-06-28'
+    },
+    cache: 'no-store'
+  });
+
+  const schema = (await response.json()) as {
+    properties?: Record<string, AgendaSchemaProperty>;
+    message?: string;
+  };
+
+  if (!response.ok || !schema.properties) {
+    throw new Error(schema.message || 'No se pudo leer el esquema de Agenda en Notion.');
+  }
+
+  return schema.properties;
+}
+
+function findPropertyName(properties: Record<string, AgendaSchemaProperty>, candidates: string[]) {
+  return candidates.find((candidate) => Boolean(properties[candidate]));
+}
+
+export async function PATCH(request: Request) {
+  const agendaDb = process.env.NOTION_AGENDA_DATABASE_ID;
+  const notionToken = process.env.NOTION_API_KEY;
+
+  if (!agendaDb || !notionToken) {
+    return Response.json({ error: 'Notion no esta configurado en esta app.' }, { status: 503 });
+  }
+
+  let body: {
+    id?: string;
+    customerName?: string;
+    date?: string;
+    time?: string;
+    location?: string;
+    status?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Cuerpo de solicitud invalido.' }, { status: 400 });
+  }
+
+  const id = body.id?.trim();
+  if (!id) {
+    return Response.json({ error: 'Falta el identificador de la cita.' }, { status: 400 });
+  }
+
+  try {
+    const schemaProperties = await getAgendaSchema(agendaDb, notionToken);
+    const properties: Record<string, unknown> = {};
+    const skipped: string[] = [];
+
+    const clientPropName = findPropertyName(schemaProperties, CLIENT_CANDIDATES);
+    if (clientPropName && typeof body.customerName === 'string') {
+      properties[clientPropName] = { rich_text: body.customerName ? [{ text: { content: body.customerName } }] : [] };
+    }
+
+    const datePropName = findPropertyName(schemaProperties, DATE_CANDIDATES);
+    if (datePropName && typeof body.date === 'string') {
+      properties[datePropName] = { date: body.date ? { start: body.date } : null };
+    }
+
+    const timePropName = findPropertyName(schemaProperties, TIME_CANDIDATES);
+    if (timePropName && typeof body.time === 'string') {
+      properties[timePropName] = { rich_text: body.time ? [{ text: { content: body.time } }] : [] };
+    }
+
+    const locationPropName = findPropertyName(schemaProperties, LOCATION_CANDIDATES);
+    if (locationPropName && typeof body.location === 'string') {
+      const locationType = schemaProperties[locationPropName]?.type;
+      if (locationType === 'rich_text') {
+        properties[locationPropName] = { rich_text: body.location ? [{ text: { content: body.location } }] : [] };
+      } else if (locationType === 'url') {
+        properties[locationPropName] = { url: body.location || null };
+      } else {
+        skipped.push(locationPropName);
+      }
+    }
+
+    const statusPropName = findPropertyName(schemaProperties, STATUS_CANDIDATES);
+    if (statusPropName && typeof body.status === 'string' && body.status) {
+      const statusType = schemaProperties[statusPropName]?.type;
+      if (statusType === 'status') {
+        properties[statusPropName] = { status: { name: body.status } };
+      } else if (statusType === 'select') {
+        properties[statusPropName] = { select: { name: body.status } };
+      } else {
+        skipped.push(statusPropName);
+      }
+    }
+
+    if (Object.keys(properties).length === 0) {
+      return Response.json({ error: 'No hay campos validos para actualizar.' }, { status: 422 });
+    }
+
+    const updateResponse = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ properties })
+    });
+
+    const updatePayload = (await updateResponse.json()) as { message?: string };
+
+    if (!updateResponse.ok) {
+      throw new Error(updatePayload.message || 'No se pudo actualizar la cita en Notion.');
+    }
+
+    return Response.json(
+      { id, skipped },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
+  } catch (error) {
+    console.error('Error al actualizar la agenda en Notion.', error);
+
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Error desconocido al actualizar la cita.' },
+      { status: 500 }
     );
   }
 }

@@ -216,10 +216,12 @@
 <button class="px-4 py-1.5 text-body-sm font-title-sm bg-surface-lowest shadow-sm rounded text-primary font-medium">Semana</button>
 <button class="px-4 py-1.5 text-body-sm font-title-sm text-on-surface-variant hover:text-primary font-medium">Mes</button>
 </div>
-<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors text-body-md font-body-md font-medium text-on-background">
-<span class="material-symbols-outlined text-sm">filter_list</span>
-                        Filtrar
-                    </button>
+<div class="relative min-w-[180px]">
+<select class="w-full appearance-none bg-surface-lowest border border-outline-variant text-body-md font-body-md py-2 pl-3 pr-8 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-advisor-filter">
+<option value="">Todos los ucarianos</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
+</div>
 <button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-tertiary transition-colors text-body-md font-body-md font-medium shadow-sm">
 <span class="material-symbols-outlined text-sm">add</span>
                         Nuevo evento
@@ -361,6 +363,60 @@
 </div>
 </div>
 </main>
+<!-- Edit Appointment Modal -->
+<div class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 p-4" id="agenda-edit-modal">
+<div class="bg-surface-lowest w-full max-w-md rounded-xl border border-outline-variant shadow-lg p-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-title-sm font-title-sm text-primary">Editar cita</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors" id="agenda-edit-close" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<form class="flex flex-col gap-3" id="agenda-edit-form">
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1">Vehiculo</label>
+<p class="text-body-sm font-body-sm text-on-background" id="agenda-edit-vehicle">-</p>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1">Ucariano asignado</label>
+<p class="text-body-sm font-body-sm text-on-background" id="agenda-edit-advisor">-</p>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-edit-customer">Cliente</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-edit-customer" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-edit-date">Fecha</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-edit-date" type="date"/>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-edit-time">Hora</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-edit-time" type="time"/>
+</div>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-edit-location">Lugar</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-edit-location" type="text"/>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-edit-status">Estado</label>
+<select class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-edit-status">
+<option>Por confirmar</option>
+<option>Confirmada</option>
+<option>Reagendada</option>
+<option>Finalizada</option>
+<option>Cancelada</option>
+</select>
+</div>
+<p class="text-body-sm font-body-sm text-error hidden" id="agenda-edit-error"></p>
+<div class="flex justify-end gap-2 mt-2">
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-body-md font-body-md text-on-background hover:bg-surface-container transition-colors" id="agenda-edit-cancel" type="button">Cancelar</button>
+<button class="px-4 py-2 rounded-lg bg-primary text-white text-body-md font-body-md font-medium hover:bg-tertiary transition-colors" id="agenda-edit-save" type="submit">Guardar cambios</button>
+</div>
+</form>
+</div>
+</div>
 </div>
 <script>
             (function () {
@@ -376,7 +432,22 @@
                 var miniGrid = document.getElementById('agenda-mini-grid');
                 var miniPrevBtn = document.getElementById('agenda-mini-prev');
                 var miniNextBtn = document.getElementById('agenda-mini-next');
+                var advisorFilter = document.getElementById('agenda-advisor-filter');
+                var editModal = document.getElementById('agenda-edit-modal');
+                var editForm = document.getElementById('agenda-edit-form');
+                var editVehicle = document.getElementById('agenda-edit-vehicle');
+                var editAdvisor = document.getElementById('agenda-edit-advisor');
+                var editCustomer = document.getElementById('agenda-edit-customer');
+                var editDate = document.getElementById('agenda-edit-date');
+                var editTime = document.getElementById('agenda-edit-time');
+                var editLocation = document.getElementById('agenda-edit-location');
+                var editStatus = document.getElementById('agenda-edit-status');
+                var editError = document.getElementById('agenda-edit-error');
+                var editClose = document.getElementById('agenda-edit-close');
+                var editCancel = document.getElementById('agenda-edit-cancel');
+                var allAgendaItems = [];
                 var agendaItems = [];
+                var editingItemId = null;
                 var referenceDate = new Date();
 
                 if (!monthLabel || !totalLabel || !todayCount || !todayList || !eventsOverlay || dayHeaders.length === 0) {
@@ -766,7 +837,7 @@
                         var styleClass = eventStyle(item.status);
 
                         return [
-                            '<div class="absolute w-[calc(12.5%-8px)] p-2 rounded calendar-event cursor-pointer overflow-hidden pointer-events-auto ' + styleClass + '" style="top:' + top + 'px;left:' + left + ';height:' + height + 'px;">',
+                            '<div class="absolute w-[calc(12.5%-8px)] p-2 rounded calendar-event cursor-pointer overflow-hidden pointer-events-auto ' + styleClass + '" style="top:' + top + 'px;left:' + left + ';height:' + height + 'px;" data-agenda-id="' + escapeHtml(item.id) + '">',
                             '  <p class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatTime(item.date)) + '</p>',
                             '  <p class="text-body-sm font-body-sm text-on-background truncate leading-tight mt-1">' + escapeHtml(item.vehicleLabel || 'Vehiculo') + '</p>',
                             '  <p class="text-label-caps font-label-caps text-on-surface-variant truncate mt-1">' + escapeHtml(item.customerName || 'Cliente') + '</p>',
@@ -778,7 +849,7 @@
                 function renderItem(item) {
                     var tone = statusTone(item.status);
                     return [
-                        '<div class="flex gap-3 items-start p-2 rounded-lg hover:bg-surface-container transition-colors group cursor-pointer ' + tone.row + '">',
+                        '<div class="flex gap-3 items-start p-2 rounded-lg hover:bg-surface-container transition-colors group cursor-pointer ' + tone.row + '" data-agenda-id="' + escapeHtml(item.id) + '">',
                         '  <div class="flex flex-col items-center mt-1">',
                         '    <span class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatTime(item.date)) + '</span>',
                         '    <div class="w-0.5 h-full bg-outline-variant my-1"></div>',
@@ -803,6 +874,177 @@
                     ].join('');
                 }
 
+                function uniqueSorted(values) {
+                    return Array.from(new Set(values.filter(Boolean))).sort(function (a, b) {
+                        return a.localeCompare(b, 'es');
+                    });
+                }
+
+                function fillAdvisorFilterOptions() {
+                    if (!advisorFilter) {
+                        return;
+                    }
+
+                    var advisors = uniqueSorted(allAgendaItems.map(function (item) {
+                        return item.advisorName || 'Sin asesor';
+                    }));
+
+                    advisorFilter.innerHTML = ['<option value="">Todos los ucarianos</option>']
+                        .concat(advisors.map(function (advisor) {
+                            return '<option value="' + escapeHtml(advisor) + '">' + escapeHtml(advisor) + '</option>';
+                        }))
+                        .join('');
+                }
+
+                function applyAdvisorFilter() {
+                    var selected = advisorFilter ? advisorFilter.value : '';
+                    agendaItems = !selected
+                        ? allAgendaItems
+                        : allAgendaItems.filter(function (item) {
+                            return (item.advisorName || 'Sin asesor') === selected;
+                        });
+
+                    referenceDate = agendaItems.length > 0 ? new Date(agendaItems[0].date) : new Date();
+                    renderAgendaViews();
+                }
+
+                if (advisorFilter) {
+                    advisorFilter.addEventListener('change', applyAdvisorFilter);
+                }
+
+                function findAgendaItem(id) {
+                    return allAgendaItems.find(function (item) { return item.id === id; });
+                }
+
+                function openEditModal(id) {
+                    var item = findAgendaItem(id);
+                    if (!item || !editModal) {
+                        return;
+                    }
+
+                    editingItemId = id;
+                    if (editError) {
+                        editError.classList.add('hidden');
+                        editError.textContent = '';
+                    }
+
+                    if (editVehicle) editVehicle.textContent = item.vehicleLabel || 'Vehiculo no informado';
+                    if (editAdvisor) editAdvisor.textContent = item.advisorName || 'Sin asesor';
+                    if (editCustomer) editCustomer.value = item.customerName || '';
+                    if (editDate) editDate.value = (item.dateRaw || '').slice(0, 10);
+                    if (editTime) editTime.value = item.timeRaw || '';
+                    if (editLocation) editLocation.value = item.location || '';
+                    if (editStatus) editStatus.value = item.status || 'Por confirmar';
+
+                    editModal.classList.remove('hidden');
+                    editModal.classList.add('flex');
+                }
+
+                function closeEditModal() {
+                    editingItemId = null;
+                    if (!editModal) {
+                        return;
+                    }
+
+                    editModal.classList.add('hidden');
+                    editModal.classList.remove('flex');
+                }
+
+                if (editClose) {
+                    editClose.addEventListener('click', closeEditModal);
+                }
+
+                if (editCancel) {
+                    editCancel.addEventListener('click', closeEditModal);
+                }
+
+                if (editModal) {
+                    editModal.addEventListener('click', function (event) {
+                        if (event.target === editModal) {
+                            closeEditModal();
+                        }
+                    });
+                }
+
+                eventsOverlay.addEventListener('click', function (event) {
+                    var target = event.target.closest('[data-agenda-id]');
+                    if (target) {
+                        openEditModal(target.getAttribute('data-agenda-id'));
+                    }
+                });
+
+                todayList.addEventListener('click', function (event) {
+                    var target = event.target.closest('[data-agenda-id]');
+                    if (target) {
+                        openEditModal(target.getAttribute('data-agenda-id'));
+                    }
+                });
+
+                if (editForm) {
+                    editForm.addEventListener('submit', function (event) {
+                        event.preventDefault();
+
+                        if (!editingItemId) {
+                            return;
+                        }
+
+                        var saveBtn = document.getElementById('agenda-edit-save');
+                        if (saveBtn) {
+                            saveBtn.disabled = true;
+                        }
+
+                        fetch('/api/agenda', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id: editingItemId,
+                                customerName: editCustomer ? editCustomer.value : '',
+                                date: editDate ? editDate.value : '',
+                                time: editTime ? editTime.value : '',
+                                location: editLocation ? editLocation.value : '',
+                                status: editStatus ? editStatus.value : ''
+                            })
+                        })
+                            .then(function (response) {
+                                return response.json().then(function (payload) {
+                                    if (!response.ok) {
+                                        throw new Error(payload.error || 'No se pudo guardar la cita.');
+                                    }
+
+                                    return payload;
+                                });
+                            })
+                            .then(function () {
+                                var item = findAgendaItem(editingItemId);
+                                if (item) {
+                                    item.customerName = editCustomer ? editCustomer.value : item.customerName;
+                                    item.dateRaw = editDate ? editDate.value : item.dateRaw;
+                                    item.timeRaw = editTime ? editTime.value : item.timeRaw;
+                                    item.location = editLocation ? editLocation.value : item.location;
+                                    item.status = editStatus ? editStatus.value : item.status;
+                                    item.date = item.dateRaw && item.timeRaw
+                                        ? item.dateRaw + 'T' + item.timeRaw + ':00'
+                                        : (item.dateRaw || item.date);
+                                }
+
+                                closeEditModal();
+                                applyAdvisorFilter();
+                            })
+                            .catch(function (error) {
+                                console.error(error);
+                                if (editError) {
+                                    editError.textContent = error.message || 'No se pudo guardar la cita.';
+                                    editError.classList.remove('hidden');
+                                }
+                            })
+                            .finally(function () {
+                                if (saveBtn) {
+                                    saveBtn.disabled = false;
+                                }
+                            });
+                    });
+                }
+
                 fetch('/api/agenda', { cache: 'no-store' })
                     .then(function (response) {
                         if (!response.ok) {
@@ -812,9 +1054,9 @@
                         return response.json();
                     })
                     .then(function (payload) {
-                        agendaItems = Array.isArray(payload.agenda) ? payload.agenda : [];
-                        referenceDate = agendaItems.length > 0 ? new Date(agendaItems[0].date) : new Date();
-                        renderAgendaViews();
+                        allAgendaItems = Array.isArray(payload.agenda) ? payload.agenda : [];
+                        fillAdvisorFilterOptions();
+                        applyAdvisorFilter();
                     })
                     .catch(function (error) {
                         console.error(error);

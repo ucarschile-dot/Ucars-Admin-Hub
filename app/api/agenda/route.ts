@@ -459,3 +459,133 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+function getTitlePropertyName(properties: Record<string, AgendaSchemaProperty>) {
+  return Object.keys(properties).find((key) => properties[key]?.type === 'title');
+}
+
+export async function POST(request: Request) {
+  const agendaDb = process.env.NOTION_AGENDA_DATABASE_ID;
+  const notionToken = process.env.NOTION_API_KEY;
+
+  if (!agendaDb || !notionToken) {
+    return Response.json({ error: 'Notion no esta configurado en esta app.' }, { status: 503 });
+  }
+
+  let body: {
+    customerName?: string;
+    vehicleId?: string;
+    vehicleName?: string;
+    date?: string;
+    time?: string;
+    location?: string;
+    status?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: 'Cuerpo de solicitud invalido.' }, { status: 400 });
+  }
+
+  const customerName = body.customerName?.trim();
+  const vehicleId = body.vehicleId?.trim();
+  const vehicleName = body.vehicleName?.trim() || 'el vehiculo';
+  const date = body.date?.trim();
+
+  if (!customerName || !vehicleId || !date) {
+    return Response.json({ error: 'Faltan datos obligatorios: cliente, vehiculo y fecha.' }, { status: 400 });
+  }
+
+  try {
+    const schemaProperties = await getAgendaSchema(agendaDb, notionToken);
+    const properties: Record<string, unknown> = {};
+    const skipped: string[] = [];
+
+    const titlePropName = getTitlePropertyName(schemaProperties);
+    if (titlePropName) {
+      const tituloCita = `Con ${customerName} para ver ${vehicleName}`;
+      properties[titlePropName] = { title: [{ text: { content: tituloCita } }] };
+    }
+
+    const clientPropName = findPropertyName(schemaProperties, CLIENT_CANDIDATES);
+    if (clientPropName) {
+      properties[clientPropName] = { rich_text: [{ text: { content: customerName } }] };
+    }
+
+    const datePropName = findPropertyName(schemaProperties, DATE_CANDIDATES);
+    if (datePropName) {
+      properties[datePropName] = { date: { start: date } };
+    }
+
+    const timePropName = findPropertyName(schemaProperties, TIME_CANDIDATES);
+    if (timePropName && body.time) {
+      properties[timePropName] = { rich_text: [{ text: { content: body.time } }] };
+    }
+
+    const locationPropName = findPropertyName(schemaProperties, LOCATION_CANDIDATES);
+    if (locationPropName && body.location) {
+      const locationType = schemaProperties[locationPropName]?.type;
+      if (locationType === 'rich_text') {
+        properties[locationPropName] = { rich_text: [{ text: { content: body.location } }] };
+      } else if (locationType === 'url') {
+        properties[locationPropName] = { url: body.location };
+      } else {
+        skipped.push(locationPropName);
+      }
+    }
+
+    const vehiclePropName = findPropertyName(schemaProperties, VEHICLE_RELATION_CANDIDATES);
+    if (!vehiclePropName) {
+      return Response.json(
+        { error: 'No se encontro la propiedad de relacion con el vehiculo en la base de Agenda.' },
+        { status: 422 }
+      );
+    }
+    properties[vehiclePropName] = { relation: [{ id: vehicleId }] };
+
+    const statusPropName = findPropertyName(schemaProperties, STATUS_CANDIDATES);
+    const statusValue = body.status?.trim() || 'Por confirmar';
+    if (statusPropName) {
+      const statusType = schemaProperties[statusPropName]?.type;
+      if (statusType === 'status') {
+        properties[statusPropName] = { status: { name: statusValue } };
+      } else if (statusType === 'select') {
+        properties[statusPropName] = { select: { name: statusValue } };
+      } else {
+        skipped.push(statusPropName);
+      }
+    }
+
+    const createResponse = await fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        parent: { database_id: agendaDb },
+        properties
+      })
+    });
+
+    const createPayload = (await createResponse.json()) as { id?: string; message?: string };
+
+    if (!createResponse.ok || !createPayload.id) {
+      throw new Error(createPayload.message || 'No se pudo crear la cita en Notion.');
+    }
+
+    return Response.json(
+      { id: createPayload.id, skipped },
+      { status: 201, headers: { 'Cache-Control': 'no-store' } }
+    );
+  } catch (error) {
+    console.error('Error al crear la cita en Notion.', error);
+
+    return Response.json(
+      { error: error instanceof Error ? error.message : 'Error desconocido al crear la cita.' },
+      { status: 500 }
+    );
+  }
+}

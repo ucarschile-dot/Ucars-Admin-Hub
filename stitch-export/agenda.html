@@ -222,7 +222,7 @@
 </select>
 <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm">expand_more</span>
 </div>
-<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-tertiary transition-colors text-body-md font-body-md font-medium shadow-sm">
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-tertiary transition-colors text-body-md font-body-md font-medium shadow-sm" id="agenda-new-event-btn" type="button">
 <span class="material-symbols-outlined text-sm">add</span>
                         Nuevo evento
                     </button>
@@ -417,6 +417,63 @@
 </form>
 </div>
 </div>
+<!-- New Test Drive Modal -->
+<div class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 p-4" id="agenda-create-modal">
+<div class="bg-surface-lowest w-full max-w-md rounded-xl border border-outline-variant shadow-lg p-6 max-h-[90vh] overflow-y-auto">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-title-sm font-title-sm text-primary">Agendar test drive</h3>
+<button class="text-on-surface-variant hover:text-primary transition-colors" id="agenda-create-close" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<form class="flex flex-col gap-3" id="agenda-create-form">
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-create-vehicle">Vehiculo</label>
+<select class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-create-vehicle" required="">
+<option value="">Cargando vehiculos...</option>
+</select>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-create-customer">Cliente</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-create-customer" required="" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-create-date">Fecha</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-create-date" required="" type="date"/>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-create-time">Hora</label>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-create-time" type="time"/>
+</div>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-create-location">Localizacion</label>
+<div class="flex flex-wrap gap-2 mb-2" id="agenda-create-location-options">
+<button class="px-3 py-1 rounded-full border border-outline-variant text-label-caps font-label-caps text-on-surface-variant hover:bg-surface-container transition-colors" data-location="Sucursal Ucars" type="button">Sucursal Ucars</button>
+<button class="px-3 py-1 rounded-full border border-outline-variant text-label-caps font-label-caps text-on-surface-variant hover:bg-surface-container transition-colors" data-location="Domicilio del cliente" type="button">Domicilio del cliente</button>
+<button class="px-3 py-1 rounded-full border border-outline-variant text-label-caps font-label-caps text-on-surface-variant hover:bg-surface-container transition-colors" data-location="Por coordinar" type="button">Por coordinar</button>
+</div>
+<input class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-create-location" placeholder="Direccion o punto de encuentro" type="text"/>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-on-surface-variant block mb-1" for="agenda-create-status">Estado</label>
+<select class="w-full border border-outline-variant rounded-lg py-2 px-3 text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="agenda-create-status">
+<option>Por confirmar</option>
+<option>Confirmada</option>
+<option>Reagendada</option>
+<option>Finalizada</option>
+<option>Cancelada</option>
+</select>
+</div>
+<p class="text-body-sm font-body-sm text-error hidden" id="agenda-create-error"></p>
+<div class="flex justify-end gap-2 mt-2">
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-body-md font-body-md text-on-background hover:bg-surface-container transition-colors" id="agenda-create-cancel" type="button">Cancelar</button>
+<button class="px-4 py-2 rounded-lg bg-primary text-white text-body-md font-body-md font-medium hover:bg-tertiary transition-colors" id="agenda-create-save" type="submit">Agendar test drive</button>
+</div>
+</form>
+</div>
+</div>
 </div>
 <script>
             (function () {
@@ -445,8 +502,22 @@
                 var editError = document.getElementById('agenda-edit-error');
                 var editClose = document.getElementById('agenda-edit-close');
                 var editCancel = document.getElementById('agenda-edit-cancel');
+                var newEventBtn = document.getElementById('agenda-new-event-btn');
+                var createModal = document.getElementById('agenda-create-modal');
+                var createForm = document.getElementById('agenda-create-form');
+                var createVehicle = document.getElementById('agenda-create-vehicle');
+                var createCustomer = document.getElementById('agenda-create-customer');
+                var createDate = document.getElementById('agenda-create-date');
+                var createTime = document.getElementById('agenda-create-time');
+                var createLocation = document.getElementById('agenda-create-location');
+                var createLocationOptions = document.getElementById('agenda-create-location-options');
+                var createStatus = document.getElementById('agenda-create-status');
+                var createError = document.getElementById('agenda-create-error');
+                var createClose = document.getElementById('agenda-create-close');
+                var createCancel = document.getElementById('agenda-create-cancel');
                 var allAgendaItems = [];
                 var agendaItems = [];
+                var allVehicles = [];
                 var editingItemId = null;
                 var referenceDate = new Date();
 
@@ -492,6 +563,15 @@
                     }
 
                     return date.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false });
+                }
+
+                function formatShortDate(dateValue) {
+                    var date = new Date(dateValue);
+                    if (Number.isNaN(date.getTime())) {
+                        return 'Sin fecha';
+                    }
+
+                    return date.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
                 }
 
                 function isToday(dateValue) {
@@ -582,7 +662,7 @@
                         var numberEl = header.querySelector('.day-number');
                         var highlight = header.querySelector('.day-highlight-bar');
 
-                        var today = inSameDay(date, new Date());
+                        var today = inSameDay(date, referenceDate);
 
                         if (nameEl) {
                             nameEl.textContent = formatDayName(date);
@@ -664,8 +744,7 @@
                         return !Number.isNaN(date.getTime()) && inSameDay(date, targetDate);
                     });
 
-                    var renderItems = daily.length > 0 ? daily : agenda.slice(0, 6);
-                    todayCount.textContent = '(' + renderItems.length + ')';
+                    todayCount.textContent = '(' + daily.length + ')';
 
                     if (todayTitle) {
                         todayTitle.textContent = isToday(targetDate)
@@ -673,9 +752,9 @@
                             : 'Agenda del ' + targetDate.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' });
                     }
 
-                    todayList.innerHTML = renderItems.length > 0
-                        ? renderItems.map(renderItem).join('')
-                        : emptyHtml('No hay eventos en agenda para mostrar.');
+                    todayList.innerHTML = daily.length > 0
+                        ? daily.map(renderItem).join('')
+                        : emptyHtml('No hay eventos programados para esta fecha.');
                 }
 
                 function renderMiniCalendar(referenceDate, agenda) {
@@ -838,7 +917,7 @@
 
                         return [
                             '<div class="absolute w-[calc(12.5%-8px)] p-2 rounded calendar-event cursor-pointer overflow-hidden pointer-events-auto ' + styleClass + '" style="top:' + top + 'px;left:' + left + ';height:' + height + 'px;" data-agenda-id="' + escapeHtml(item.id) + '">',
-                            '  <p class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatTime(item.date)) + '</p>',
+                            '  <p class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatShortDate(item.date)) + ' · ' + escapeHtml(formatTime(item.date)) + '</p>',
                             '  <p class="text-body-sm font-body-sm text-on-background truncate leading-tight mt-1">' + escapeHtml(item.vehicleLabel || 'Vehiculo') + '</p>',
                             '  <p class="text-label-caps font-label-caps text-on-surface-variant truncate mt-1">' + escapeHtml(item.customerName || 'Cliente') + '</p>',
                             '</div>'
@@ -851,6 +930,7 @@
                     return [
                         '<div class="flex gap-3 items-start p-2 rounded-lg hover:bg-surface-container transition-colors group cursor-pointer ' + tone.row + '" data-agenda-id="' + escapeHtml(item.id) + '">',
                         '  <div class="flex flex-col items-center mt-1">',
+                        '    <span class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatShortDate(item.date)) + '</span>',
                         '    <span class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(formatTime(item.date)) + '</span>',
                         '    <div class="w-0.5 h-full bg-outline-variant my-1"></div>',
                         '  </div>',
@@ -1045,30 +1125,186 @@
                     });
                 }
 
-                fetch('/api/agenda', { cache: 'no-store' })
-                    .then(function (response) {
-                        if (!response.ok) {
-                            throw new Error('No se pudo consultar /api/agenda');
+                function loadAgenda() {
+                    return fetch('/api/agenda', { cache: 'no-store' })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('No se pudo consultar /api/agenda');
+                            }
+
+                            return response.json();
+                        })
+                        .then(function (payload) {
+                            allAgendaItems = Array.isArray(payload.agenda) ? payload.agenda : [];
+                            fillAdvisorFilterOptions();
+                            applyAdvisorFilter();
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            monthLabel.textContent = 'Agenda Comercial';
+                            totalLabel.textContent = 'No fue posible cargar la agenda.';
+                            todayCount.textContent = '(0)';
+                            renderWeekHeaders(new Date());
+                            renderWeekEvents([], new Date());
+                            renderMiniCalendar(new Date(), []);
+                            setNowIndicator(new Date());
+                            todayList.innerHTML = emptyHtml('No fue posible conectar con Notion para cargar la agenda.');
+                        });
+                }
+
+                function loadVehicles() {
+                    if (!createVehicle) {
+                        return Promise.resolve();
+                    }
+
+                    return fetch('/api/stock', { cache: 'no-store' })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('No se pudo consultar /api/stock');
+                            }
+
+                            return response.json();
+                        })
+                        .then(function (payload) {
+                            allVehicles = Array.isArray(payload.vehicles) ? payload.vehicles : [];
+                            createVehicle.innerHTML = allVehicles.length > 0
+                                ? allVehicles.map(function (vehicle) {
+                                    return '<option value="' + escapeHtml(vehicle.id) + '" data-name="' + escapeHtml(vehicle.name || 'Vehiculo') + '">' +
+                                        escapeHtml(vehicle.name || 'Vehiculo') + (vehicle.status ? ' · ' + escapeHtml(vehicle.status) : '') +
+                                        '</option>';
+                                }).join('')
+                                : '<option value="">No hay vehiculos disponibles</option>';
+                        })
+                        .catch(function (error) {
+                            console.error(error);
+                            createVehicle.innerHTML = '<option value="">No fue posible cargar el stock</option>';
+                        });
+                }
+
+                function openCreateModal() {
+                    if (!createModal) {
+                        return;
+                    }
+
+                    if (createError) {
+                        createError.classList.add('hidden');
+                        createError.textContent = '';
+                    }
+
+                    if (createForm) {
+                        createForm.reset();
+                    }
+
+                    if (createDate) {
+                        createDate.value = normalizeDateKey(referenceDate || new Date());
+                    }
+
+                    createModal.classList.remove('hidden');
+                    createModal.classList.add('flex');
+                }
+
+                function closeCreateModal() {
+                    if (!createModal) {
+                        return;
+                    }
+
+                    createModal.classList.add('hidden');
+                    createModal.classList.remove('flex');
+                }
+
+                if (newEventBtn) {
+                    newEventBtn.addEventListener('click', openCreateModal);
+                }
+
+                if (createClose) {
+                    createClose.addEventListener('click', closeCreateModal);
+                }
+
+                if (createCancel) {
+                    createCancel.addEventListener('click', closeCreateModal);
+                }
+
+                if (createModal) {
+                    createModal.addEventListener('click', function (event) {
+                        if (event.target === createModal) {
+                            closeCreateModal();
+                        }
+                    });
+                }
+
+                if (createLocationOptions) {
+                    createLocationOptions.addEventListener('click', function (event) {
+                        var target = event.target.closest('[data-location]');
+                        if (target && createLocation) {
+                            createLocation.value = target.getAttribute('data-location');
+                        }
+                    });
+                }
+
+                if (createForm) {
+                    createForm.addEventListener('submit', function (event) {
+                        event.preventDefault();
+
+                        var vehicleOption = createVehicle ? createVehicle.options[createVehicle.selectedIndex] : null;
+                        var vehicleId = vehicleOption ? vehicleOption.value : '';
+                        var vehicleName = vehicleOption ? (vehicleOption.getAttribute('data-name') || vehicleOption.textContent || '') : '';
+
+                        if (!vehicleId) {
+                            if (createError) {
+                                createError.textContent = 'Selecciona un vehiculo para el test drive.';
+                                createError.classList.remove('hidden');
+                            }
+                            return;
                         }
 
-                        return response.json();
-                    })
-                    .then(function (payload) {
-                        allAgendaItems = Array.isArray(payload.agenda) ? payload.agenda : [];
-                        fillAdvisorFilterOptions();
-                        applyAdvisorFilter();
-                    })
-                    .catch(function (error) {
-                        console.error(error);
-                        monthLabel.textContent = 'Agenda Comercial';
-                        totalLabel.textContent = 'No fue posible cargar la agenda.';
-                        todayCount.textContent = '(0)';
-                        renderWeekHeaders(new Date());
-                        renderWeekEvents([], new Date());
-                        renderMiniCalendar(new Date(), []);
-                        setNowIndicator(new Date());
-                        todayList.innerHTML = emptyHtml('No fue posible conectar con Notion para cargar la agenda.');
+                        var saveBtn = document.getElementById('agenda-create-save');
+                        if (saveBtn) {
+                            saveBtn.disabled = true;
+                        }
+
+                        fetch('/api/agenda', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                customerName: createCustomer ? createCustomer.value : '',
+                                vehicleId: vehicleId,
+                                vehicleName: vehicleName,
+                                date: createDate ? createDate.value : '',
+                                time: createTime ? createTime.value : '',
+                                location: createLocation ? createLocation.value : '',
+                                status: createStatus ? createStatus.value : ''
+                            })
+                        })
+                            .then(function (response) {
+                                return response.json().then(function (payload) {
+                                    if (!response.ok) {
+                                        throw new Error(payload.error || 'No se pudo agendar el test drive.');
+                                    }
+
+                                    return payload;
+                                });
+                            })
+                            .then(function () {
+                                closeCreateModal();
+                                return loadAgenda();
+                            })
+                            .catch(function (error) {
+                                console.error(error);
+                                if (createError) {
+                                    createError.textContent = error.message || 'No se pudo agendar el test drive.';
+                                    createError.classList.remove('hidden');
+                                }
+                            })
+                            .finally(function () {
+                                if (saveBtn) {
+                                    saveBtn.disabled = false;
+                                }
+                            });
                     });
+                }
+
+                loadVehicles();
+                loadAgenda();
             })();
         </script>
 </body></html>

@@ -312,6 +312,10 @@
 <span class="material-symbols-outlined">add</span>
                         Agregar vehiculo
                     </button>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg hover:bg-surface-container transition-colors text-body-md font-body-md font-medium text-on-background" id="import-web-stock-btn" type="button">
+<span class="material-symbols-outlined text-sm">cloud_download</span>
+                        Importar desde ucars.cl
+                    </button>
 </div>
 </div>
 <!-- Data Grid View (Bento/Card style for high-end look) -->
@@ -446,14 +450,55 @@
 </div>
 </div>
 </main>
+<!-- Import From Website Modal -->
+<div class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 p-4" id="import-web-stock-modal">
+<div class="bg-surface-lowest w-full max-w-3xl max-h-[85vh] rounded-xl border border-outline-variant shadow-lg p-6 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<div>
+<h3 class="text-title-sm font-title-sm text-primary">Importar stock desde ucars.cl</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Selecciona los vehiculos que quieres publicar en Notion.</p>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors" id="import-web-stock-close" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="flex items-center justify-between gap-3 mb-3">
+<label class="flex items-center gap-2 text-body-sm font-body-sm text-on-background cursor-pointer">
+<input class="form-checkbox rounded border-outline-variant text-primary focus:ring-primary h-4 w-4" id="import-web-stock-select-all" type="checkbox"/>
+                        Seleccionar todos
+                    </label>
+<p class="text-body-sm font-body-sm text-on-surface-variant" id="import-web-stock-summary"></p>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar border border-outline-variant rounded-lg divide-y divide-outline-variant" id="import-web-stock-list">
+<div class="p-4">
+<p class="text-body-sm font-body-sm text-on-surface-variant">Cargando stock de ucars.cl...</p>
+</div>
+</div>
+<p class="text-body-sm font-body-sm text-error hidden mt-3" id="import-web-stock-error"></p>
+<div class="flex justify-end gap-2 mt-4">
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-body-md font-body-md text-on-background hover:bg-surface-container transition-colors" id="import-web-stock-cancel" type="button">Cancelar</button>
+<button class="px-4 py-2 rounded-lg bg-primary text-white text-body-md font-body-md font-medium hover:bg-tertiary transition-colors" id="import-web-stock-save" type="button">Importar seleccionados</button>
+</div>
+</div>
+</div>
 </div>
 <script>
         (function () {
                 var grid = document.getElementById('stock-cards-grid');
                 var brandFilter = document.getElementById('brand-filter');
                 var advisorFilter = document.getElementById('advisor-filter');
+                var importBtn = document.getElementById('import-web-stock-btn');
+                var importModal = document.getElementById('import-web-stock-modal');
+                var importClose = document.getElementById('import-web-stock-close');
+                var importCancel = document.getElementById('import-web-stock-cancel');
+                var importSave = document.getElementById('import-web-stock-save');
+                var importList = document.getElementById('import-web-stock-list');
+                var importSelectAll = document.getElementById('import-web-stock-select-all');
+                var importSummary = document.getElementById('import-web-stock-summary');
+                var importError = document.getElementById('import-web-stock-error');
                 var allVehicles = [];
                 var allUcarianos = [];
+                var webVehicles = [];
                 if (!grid) {
                         return;
                 }
@@ -689,55 +734,257 @@
 
                 grid.innerHTML = loadingStateHtml();
 
-                Promise.all([
-                        fetch('/api/stock', { cache: 'no-store' }).then(function (response) {
-                                if (!response.ok) {
-                                        throw new Error('No se pudo consultar /api/stock');
-                                }
-
-                                return response.json();
-                        }),
-                        fetch('/api/ucarianos', { cache: 'no-store' })
-                                .then(function (response) {
+                function loadStock() {
+                        return Promise.all([
+                                fetch('/api/stock', { cache: 'no-store' }).then(function (response) {
                                         if (!response.ok) {
-                                                throw new Error('No se pudo consultar /api/ucarianos');
+                                                throw new Error('No se pudo consultar /api/stock');
                                         }
 
                                         return response.json();
+                                }),
+                                fetch('/api/ucarianos', { cache: 'no-store' })
+                                        .then(function (response) {
+                                                if (!response.ok) {
+                                                        throw new Error('No se pudo consultar /api/ucarianos');
+                                                }
+
+                                                return response.json();
+                                        })
+                                        .catch(function (error) {
+                                                console.error(error);
+                                                return { ucarianos: [] };
+                                        })
+                        ])
+                                .then(function (results) {
+                                        var stockPayload = results[0];
+                                        var ucarianosPayload = results[1];
+
+                                        allUcarianos = Array.isArray(ucarianosPayload.ucarianos) ? ucarianosPayload.ucarianos : [];
+
+                                        var vehicles = Array.isArray(stockPayload.vehicles) ? stockPayload.vehicles : [];
+                                        if (vehicles.length === 0) {
+                                                grid.innerHTML = emptyStateHtml();
+                                                return;
+                                        }
+
+                                        allVehicles = vehicles;
+                                        fillFilterOptions();
+                                        renderFilteredVehicles();
+
+                                        if (brandFilter) {
+                                                brandFilter.addEventListener('change', renderFilteredVehicles);
+                                        }
+
+                                        if (advisorFilter) {
+                                                advisorFilter.addEventListener('change', renderFilteredVehicles);
+                                        }
                                 })
                                 .catch(function (error) {
                                         console.error(error);
-                                        return { ucarianos: [] };
-                                })
-                ])
-                        .then(function (results) {
-                                var stockPayload = results[0];
-                                var ucarianosPayload = results[1];
-
-                                allUcarianos = Array.isArray(ucarianosPayload.ucarianos) ? ucarianosPayload.ucarianos : [];
-
-                                var vehicles = Array.isArray(stockPayload.vehicles) ? stockPayload.vehicles : [];
-                                if (vehicles.length === 0) {
                                         grid.innerHTML = emptyStateHtml();
+                                });
+                }
+
+                loadStock();
+
+                function normalizeKey(value) {
+                        return String(value || '').trim().toLowerCase();
+                }
+
+                function isAlreadyInNotion(webVehicle) {
+                        var key = normalizeKey([webVehicle.marca, webVehicle.modelo, webVehicle.version].filter(Boolean).join(' '));
+                        return allVehicles.some(function (vehicle) {
+                                return normalizeKey(vehicle.name) === key || normalizeKey(vehicle.name).indexOf(key) === 0;
+                        });
+                }
+
+                function webVehicleRowHtml(webVehicle, index) {
+                        var name = [webVehicle.marca, webVehicle.modelo, webVehicle.version].filter(Boolean).join(' ') || 'Vehiculo sin nombre';
+                        var price = webVehicle.precio ? '$' + Number(webVehicle.precio).toLocaleString('es-CL') : 'Sin precio';
+                        var year = webVehicle.año || webVehicle['a\u00f1o'] || '-';
+                        var already = isAlreadyInNotion(webVehicle);
+                        var photo = webVehicle.imagen || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+
+                        return [
+                                '<label class="flex items-center gap-3 p-3 hover:bg-surface-container-low transition-colors cursor-pointer">',
+                                '  <input type="checkbox" class="import-web-stock-item form-checkbox rounded border-outline-variant text-primary focus:ring-primary h-4 w-4 shrink-0" data-index="' + index + '"' + (already ? ' disabled' : '') + '/>',
+                                '  <img src="' + escapeHtml(photo) + '" class="w-14 h-14 rounded-lg object-cover bg-surface-dim shrink-0" alt=""/>',
+                                '  <div class="flex-1 min-w-0">',
+                                '    <p class="text-body-sm font-body-sm font-medium text-on-background truncate">' + escapeHtml(name) + '</p>',
+                                '    <p class="text-label-caps font-label-caps text-on-surface-variant">' + escapeHtml(String(year)) + ' \u00b7 ' + escapeHtml(price) + '</p>',
+                                '  </div>',
+                                already
+                                        ? '  <span class="text-label-caps font-label-caps text-on-surface-variant border border-outline-variant rounded px-2 py-1 shrink-0">Ya en Notion</span>'
+                                        : '',
+                                '</label>'
+                        ].join('');
+                }
+
+                function updateImportSummary() {
+                        if (!importSummary) {
+                                return;
+                        }
+
+                        var checkboxes = importList.querySelectorAll('.import-web-stock-item:not(:disabled)');
+                        var checked = importList.querySelectorAll('.import-web-stock-item:checked');
+                        importSummary.textContent = checked.length + ' de ' + checkboxes.length + ' seleccionados';
+                }
+
+                function renderImportList() {
+                        if (!importList) {
+                                return;
+                        }
+
+                        importList.innerHTML = webVehicles.length > 0
+                                ? webVehicles.map(webVehicleRowHtml).join('')
+                                : '<div class="p-4"><p class="text-body-sm font-body-sm text-on-surface-variant">No hay vehiculos en ucars.cl.</p></div>';
+
+                        updateImportSummary();
+                }
+
+                function openImportModal() {
+                        if (!importModal) {
+                                return;
+                        }
+
+                        if (importError) {
+                                importError.classList.add('hidden');
+                                importError.textContent = '';
+                        }
+
+                        importModal.classList.remove('hidden');
+                        importModal.classList.add('flex');
+                        importList.innerHTML = '<div class="p-4"><p class="text-body-sm font-body-sm text-on-surface-variant">Cargando stock de ucars.cl...</p></div>';
+
+                        fetch('/api/import-web-stock', { cache: 'no-store' })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudo consultar el stock de ucars.cl.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (payload) {
+                                        webVehicles = Array.isArray(payload.vehicles) ? payload.vehicles : [];
+                                        renderImportList();
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        importList.innerHTML = '';
+                                        if (importError) {
+                                                importError.textContent = error.message || 'No se pudo consultar el stock de ucars.cl.';
+                                                importError.classList.remove('hidden');
+                                        }
+                                });
+                }
+
+                function closeImportModal() {
+                        if (!importModal) {
+                                return;
+                        }
+
+                        importModal.classList.add('hidden');
+                        importModal.classList.remove('flex');
+                }
+
+                if (importBtn) {
+                        importBtn.addEventListener('click', openImportModal);
+                }
+
+                if (importClose) {
+                        importClose.addEventListener('click', closeImportModal);
+                }
+
+                if (importCancel) {
+                        importCancel.addEventListener('click', closeImportModal);
+                }
+
+                if (importModal) {
+                        importModal.addEventListener('click', function (event) {
+                                if (event.target === importModal) {
+                                        closeImportModal();
+                                }
+                        });
+                }
+
+                if (importSelectAll) {
+                        importSelectAll.addEventListener('change', function () {
+                                var checkboxes = importList.querySelectorAll('.import-web-stock-item:not(:disabled)');
+                                checkboxes.forEach(function (checkbox) {
+                                        checkbox.checked = importSelectAll.checked;
+                                });
+                                updateImportSummary();
+                        });
+                }
+
+                if (importList) {
+                        importList.addEventListener('change', function (event) {
+                                if (event.target.classList.contains('import-web-stock-item')) {
+                                        updateImportSummary();
+                                }
+                        });
+                }
+
+                if (importSave) {
+                        importSave.addEventListener('click', function () {
+                                var checked = Array.from(importList.querySelectorAll('.import-web-stock-item:checked'));
+                                var selected = checked.map(function (checkbox) {
+                                        return webVehicles[Number(checkbox.getAttribute('data-index'))];
+                                }).filter(Boolean);
+
+                                if (selected.length === 0) {
+                                        if (importError) {
+                                                importError.textContent = 'Selecciona al menos un vehiculo para importar.';
+                                                importError.classList.remove('hidden');
+                                        }
                                         return;
                                 }
 
-                                allVehicles = vehicles;
-                                fillFilterOptions();
-                                renderFilteredVehicles();
-
-                                if (brandFilter) {
-                                        brandFilter.addEventListener('change', renderFilteredVehicles);
+                                importSave.disabled = true;
+                                if (importError) {
+                                        importError.classList.add('hidden');
                                 }
 
-                                if (advisorFilter) {
-                                        advisorFilter.addEventListener('change', renderFilteredVehicles);
-                                }
-                        })
-                        .catch(function (error) {
-                                console.error(error);
-                                grid.innerHTML = emptyStateHtml();
+                                fetch('/api/import-web-stock', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ vehicles: selected })
+                                })
+                                        .then(function (response) {
+                                                return response.json().then(function (payload) {
+                                                        if (!response.ok) {
+                                                                throw new Error(payload.error || 'No se pudo importar el stock.');
+                                                        }
+
+                                                        return payload;
+                                                });
+                                        })
+                                        .then(function (payload) {
+                                                if (Array.isArray(payload.failed) && payload.failed.length > 0 && importError) {
+                                                        importError.textContent = 'Algunos vehiculos no se pudieron importar: ' +
+                                                                payload.failed.map(function (item) { return item.vehicle; }).join(', ');
+                                                        importError.classList.remove('hidden');
+                                                } else {
+                                                        closeImportModal();
+                                                }
+
+                                                return loadStock();
+                                        })
+                                        .catch(function (error) {
+                                                console.error(error);
+                                                if (importError) {
+                                                        importError.textContent = error.message || 'No se pudo importar el stock.';
+                                                        importError.classList.remove('hidden');
+                                                }
+                                        })
+                                        .finally(function () {
+                                                importSave.disabled = false;
+                                        });
                         });
+                }
         })();
 </script>
 </body></html>

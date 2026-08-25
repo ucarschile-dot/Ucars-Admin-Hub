@@ -782,11 +782,18 @@ async function syncWebStockToNotion(
   const rowsBySourceId = new Map<string, NotionRow>();
   const rowsByCompositeKey = new Map<string, NotionRow>();
   const webSourceIds = new Set<string>();
+  const webCompositeKeys = new Set<string>();
 
   webVehicles.forEach((vehicle) => {
     const sourceId = String(vehicle.id || '').trim();
+    const compositeKey = getWebVehicleCompositeKey(vehicle);
+
     if (sourceId) {
       webSourceIds.add(sourceId);
+    }
+
+    if (compositeKey) {
+      webCompositeKeys.add(compositeKey);
     }
   });
 
@@ -831,31 +838,34 @@ async function syncWebStockToNotion(
     }
   }
 
-  if (sourceIdPropertyName) {
-    for (const row of existingRows) {
-      const sourceId = getText(row.properties[sourceIdPropertyName]).trim();
+  for (const row of existingRows) {
+    const sourceId = sourceIdPropertyName ? getText(row.properties[sourceIdPropertyName]).trim() : '';
+    const compositeKey = getNotionVehicleCompositeKey(row.properties);
 
-      if (!sourceId) {
-        continue;
-      }
+    const existsInWebBySourceId = sourceId ? webSourceIds.has(sourceId) : false;
+    const existsInWebByComposite = compositeKey ? webCompositeKeys.has(compositeKey) : false;
 
-      if (webSourceIds.has(sourceId)) {
-        continue;
-      }
+    if (existsInWebBySourceId || existsInWebByComposite) {
+      continue;
+    }
 
-      try {
-        await archiveNotionPage(row.id, notionToken);
-        archived += 1;
-      } catch (error) {
-        failed.push({
-          vehicleId: sourceId,
-          error: error instanceof Error ? error.message : 'Error desconocido al archivar vehiculo.'
-        });
-      }
+    // Do not archive rows that cannot be matched deterministically.
+    if (!sourceId && !compositeKey) {
+      continue;
+    }
+
+    try {
+      await archiveNotionPage(row.id, notionToken);
+      archived += 1;
+    } catch (error) {
+      failed.push({
+        vehicleId: sourceId || compositeKey || row.id,
+        error: error instanceof Error ? error.message : 'Error desconocido al archivar vehiculo.'
+      });
     }
   }
 
-  return { failed, archived, deleteEnabled: Boolean(sourceIdPropertyName) };
+  return { failed, archived, deleteEnabled: true };
 }
 
 function fallbackCards(): StockCardItem[] {

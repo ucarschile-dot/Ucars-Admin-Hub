@@ -781,19 +781,23 @@ async function syncWebStockToNotion(
   const sourceIdPropertyName = findPropertyName(schemaProperties, WEB_SOURCE_ID_CANDIDATES);
   const rowsBySourceId = new Map<string, NotionRow>();
   const rowsByCompositeKey = new Map<string, NotionRow>();
-  const webSourceIds = new Set<string>();
-  const webCompositeKeys = new Set<string>();
+  const webSourceIdCounts = new Map<string, number>();
+  const webCompositeKeyCounts = new Map<string, number>();
+
+  function increaseCount(map: Map<string, number>, key: string) {
+    map.set(key, (map.get(key) || 0) + 1);
+  }
 
   webVehicles.forEach((vehicle) => {
     const sourceId = String(vehicle.id || '').trim();
     const compositeKey = getWebVehicleCompositeKey(vehicle);
 
     if (sourceId) {
-      webSourceIds.add(sourceId);
+      increaseCount(webSourceIdCounts, sourceId);
     }
 
     if (compositeKey) {
-      webCompositeKeys.add(compositeKey);
+      increaseCount(webCompositeKeyCounts, compositeKey);
     }
   });
 
@@ -842,10 +846,17 @@ async function syncWebStockToNotion(
     const sourceId = sourceIdPropertyName ? getText(row.properties[sourceIdPropertyName]).trim() : '';
     const compositeKey = getNotionVehicleCompositeKey(row.properties);
 
-    const existsInWebBySourceId = sourceId ? webSourceIds.has(sourceId) : false;
-    const existsInWebByComposite = compositeKey ? webCompositeKeys.has(compositeKey) : false;
+    const sourceIdCount = sourceId ? (webSourceIdCounts.get(sourceId) || 0) : 0;
+    const compositeCount = compositeKey ? (webCompositeKeyCounts.get(compositeKey) || 0) : 0;
 
-    if (existsInWebBySourceId || existsInWebByComposite) {
+    // Keep only as many Notion rows as Veekls currently publishes.
+    if (sourceIdCount > 0) {
+      webSourceIdCounts.set(sourceId, sourceIdCount - 1);
+      continue;
+    }
+
+    if (compositeCount > 0) {
+      webCompositeKeyCounts.set(compositeKey, compositeCount - 1);
       continue;
     }
 

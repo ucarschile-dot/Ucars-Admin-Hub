@@ -27,9 +27,22 @@ NOTION_STOCK_DATABASE_ID=
 NOTION_USERS_DATABASE_ID=
 NOTION_AGENDA_DATABASE_ID=
 NOTION_NOTIFICATIONS_DATABASE_ID=
+PUBLIC_SITE_URL=https://ucars.cl
+UCARS_API_KEY=
+VEEKLS_API_URL=https://public.api.veekls.com
+VEEKLS_ORG_ID=
+VEEKLS_SECRET_KEY=
+VEEKLS_BASIC_AUTH=
 AUTH_SECRET=
 NEXT_PUBLIC_APP_NAME=Ucars Admin Hub
 ```
+
+Para stock web desde Veekls usa una de estas dos opciones:
+
+- Opcion A (recomendada): `VEEKLS_ORG_ID` + `VEEKLS_SECRET_KEY` (secret cruda)
+- Opcion B (si ya te entregaron token Base64): `VEEKLS_BASIC_AUTH` con el token ya codificado
+
+Si defines `VEEKLS_BASIC_AUTH`, la app lo prioriza automaticamente sobre `VEEKLS_ORG_ID` y `VEEKLS_SECRET_KEY`.
 
 Si estas variables no existen o fallan las consultas, la app entra en modo demo con datos mock para no bloquear desarrollo ni despliegue inicial. La autenticacion administrativa requiere `NOTION_API_KEY`, `NOTION_USERS_DATABASE_ID` y un `AUTH_SECRET` estable para firmar la sesion.
 
@@ -53,7 +66,7 @@ npm run dev
 ## Despliegue en Vercel
 
 1. Importa el repositorio `ucarschile-dot/Ucars-Admin-Hub` en Vercel.
-2. Configura las variables `NOTION_*` en el panel de Environment Variables.
+2. Configura las variables `NOTION_*` y `VEEKLS_*` en el panel de Environment Variables.
 3. Usa `npm run build` como comando de build y deja el output estándar de Next.js.
 
 ## Mapeo Notion

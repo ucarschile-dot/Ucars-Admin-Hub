@@ -118,13 +118,37 @@ function getWebApiHeaders() {
 function getVeeklsConfig() {
   const orgId = process.env.VEEKLS_ORG_ID?.trim();
   const secret = process.env.VEEKLS_SECRET_KEY?.trim();
+  const basicAuthRaw = process.env.VEEKLS_BASIC_AUTH?.trim();
   const apiUrl = (process.env.VEEKLS_API_URL || DEFAULT_VEEKLS_API_URL).replace(/\/$/, '');
+
+  if (basicAuthRaw) {
+    const basicToken = basicAuthRaw.toLowerCase().startsWith('basic ')
+      ? basicAuthRaw.slice(6).trim()
+      : basicAuthRaw;
+
+    if (!basicToken) {
+      throw new Error('VEEKLS_BASIC_AUTH esta vacio.');
+    }
+
+    return { apiUrl, authHeader: `Basic ${basicToken}` };
+  }
 
   if (!orgId || !secret) {
     return null;
   }
 
-  return { orgId, secret, apiUrl };
+  const secretWithoutPrefix = secret.toLowerCase().startsWith('basic ')
+    ? secret.slice(6).trim()
+    : secret;
+
+  // Compatibility: some accounts provide a pre-built base64 token instead of the raw secret key.
+  const decodedCandidate = Buffer.from(secretWithoutPrefix, 'base64').toString('utf8');
+  if (decodedCandidate.startsWith(`${orgId}:`) && decodedCandidate.split(':').length >= 2) {
+    return { apiUrl, authHeader: `Basic ${secretWithoutPrefix}` };
+  }
+
+  const authToken = Buffer.from(`${orgId}:${secretWithoutPrefix}`).toString('base64');
+  return { apiUrl, authHeader: `Basic ${authToken}` };
 }
 
 function decodeVeeklsEnum(value: string | undefined) {
@@ -183,7 +207,6 @@ async function fetchVeeklsStock() {
     return null;
   }
 
-  const auth = Buffer.from(`${config.orgId}:${config.secret}`).toString('base64');
   const allVehicles: WebVehicle[] = [];
   let skip = 0;
 
@@ -191,12 +214,18 @@ async function fetchVeeklsStock() {
     const url = `${config.apiUrl}/vehicles?limit=${VEEKLS_PAGE_SIZE}&skip=${skip}`;
     const response = await fetch(url, {
       headers: {
-        Authorization: `Basic ${auth}`
+        Authorization: config.authHeader
       },
       cache: 'no-store'
     });
 
     const payload = (await response.json()) as VeeklsVehicle[] | { error?: string; message?: string };
+
+    if (response.status === 401) {
+      throw new Error(
+        'Veekls rechazo las credenciales (401). Usa VEEKLS_BASIC_AUTH con tu token base64 actual o VEEKLS_ORG_ID + VEEKLS_SECRET_KEY crudos.'
+      );
+    }
 
     if (!response.ok || !Array.isArray(payload)) {
       const message = !Array.isArray(payload) ? payload.error || payload.message : undefined;

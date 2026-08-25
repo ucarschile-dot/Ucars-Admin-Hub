@@ -512,6 +512,26 @@
                                 .replaceAll("'", '&#39;');
                 }
 
+                function fetchJson(url, options, fallbackErrorMessage) {
+                        return fetch(url, options || {})
+                                .then(function (response) {
+                                        return response.text().then(function (text) {
+                                                var payload;
+                                                try {
+                                                        payload = text ? JSON.parse(text) : {};
+                                                } catch (_parseError) {
+                                                        throw new Error('La API devolvio una respuesta no valida (no JSON). Verifica que la ruta exista y que la sesion del hub este activa.');
+                                                }
+
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || fallbackErrorMessage || 'No se pudo completar la solicitud.');
+                                                }
+
+                                                return payload;
+                                        });
+                                });
+                }
+
                 function initials(name) {
                         var parts = String(name || 'Sin asignar').trim().split(/\s+/).filter(Boolean);
                         if (parts.length === 0) return 'SA';
@@ -683,7 +703,7 @@
                 function assignUcariano(vehicleId, ucarianoId, ucarianoName, selectEl) {
                         selectEl.disabled = true;
 
-                        return fetch('/api/stock', {
+                        return fetchJson('/api/stock', {
                                 method: 'PATCH',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
@@ -691,16 +711,7 @@
                                         ucarianoId: ucarianoId || null,
                                         ucarianoName: ucarianoName || ''
                                 })
-                        })
-                                .then(function (response) {
-                                        return response.json().then(function (payload) {
-                                                if (!response.ok) {
-                                                        throw new Error(payload.error || 'No se pudo asignar el ucariano.');
-                                                }
-
-                                                return payload;
-                                        });
-                                })
+                        }, 'No se pudo asignar el ucariano.')
                                 .then(function (payload) {
                                         var vehicle = allVehicles.find(function (item) { return item.id === vehicleId; });
                                         if (vehicle) {
@@ -736,21 +747,8 @@
 
                 function loadStock() {
                         return Promise.all([
-                                fetch('/api/stock', { cache: 'no-store' }).then(function (response) {
-                                        if (!response.ok) {
-                                                throw new Error('No se pudo consultar /api/stock');
-                                        }
-
-                                        return response.json();
-                                }),
-                                fetch('/api/ucarianos', { cache: 'no-store' })
-                                        .then(function (response) {
-                                                if (!response.ok) {
-                                                        throw new Error('No se pudo consultar /api/ucarianos');
-                                                }
-
-                                                return response.json();
-                                        })
+                                fetchJson('/api/stock', { cache: 'no-store' }, 'No se pudo consultar el stock web.'),
+                                fetchJson('/api/ucarianos', { cache: 'no-store' }, 'No se pudo consultar /api/ucarianos.')
                                         .catch(function (error) {
                                                 console.error(error);
                                                 return { ucarianos: [] };
@@ -782,7 +780,12 @@
                                 })
                                 .catch(function (error) {
                                         console.error(error);
-                                        grid.innerHTML = emptyStateHtml();
+                                        grid.innerHTML = [
+                                                '<div class="col-span-full bg-surface-container-low rounded-xl border border-error/30 p-6">',
+                                                '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No se pudo cargar el stock web</h3>',
+                                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(error.message || 'Error desconocido.') + '</p>',
+                                                '</div>'
+                                        ].join('');
                                 });
                 }
 
@@ -857,16 +860,7 @@
                         importModal.classList.add('flex');
                         importList.innerHTML = '<div class="p-4"><p class="text-body-sm font-body-sm text-on-surface-variant">Cargando stock de ucars.cl...</p></div>';
 
-                        fetch('/api/import-web-stock', { cache: 'no-store' })
-                                .then(function (response) {
-                                        return response.json().then(function (payload) {
-                                                if (!response.ok) {
-                                                        throw new Error(payload.error || 'No se pudo consultar el stock de ucars.cl.');
-                                                }
-
-                                                return payload;
-                                        });
-                                })
+                        fetchJson('/api/import-web-stock', { cache: 'no-store' }, 'No se pudo consultar el stock de ucars.cl.')
                                 .then(function (payload) {
                                         webVehicles = Array.isArray(payload.vehicles) ? payload.vehicles : [];
                                         renderImportList();
@@ -948,20 +942,11 @@
                                         importError.classList.add('hidden');
                                 }
 
-                                fetch('/api/import-web-stock', {
+                                fetchJson('/api/import-web-stock', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ vehicles: selected })
-                                })
-                                        .then(function (response) {
-                                                return response.json().then(function (payload) {
-                                                        if (!response.ok) {
-                                                                throw new Error(payload.error || 'No se pudo importar el stock.');
-                                                        }
-
-                                                        return payload;
-                                                });
-                                        })
+                                }, 'No se pudo importar el stock.')
                                         .then(function (payload) {
                                                 if (Array.isArray(payload.failed) && payload.failed.length > 0 && importError) {
                                                         importError.textContent = 'Algunos vehiculos no se pudieron importar: ' +

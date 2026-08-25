@@ -1,6 +1,8 @@
 import { mockDataset } from '@/lib/mock-data';
 
 const DEFAULT_PUBLIC_SITE_URL = 'https://ucars.cl';
+const DEFAULT_VEEKLS_API_URL = 'https://public.api.veekls.com';
+const VEEKLS_PAGE_SIZE = 50;
 
 const WEB_SOURCE_ID_CANDIDATES = ['ID Web', 'ID Ucars', 'ID Externo', 'External ID', 'Source ID', 'Vehicle ID'];
 
@@ -62,6 +64,23 @@ type WebVehicle = {
   url?: string;
 };
 
+type VeeklsVehicle = {
+  _id: string;
+  brand?: string;
+  model?: string;
+  version?: unknown;
+  type?: string;
+  year?: number;
+  price?: number;
+  odometer?: number;
+  fuel?: string;
+  gearbox?: string;
+  color?: string;
+  reservedAt?: string | null;
+  soldAt?: string | null;
+  pictures?: string[];
+};
+
 type NotionSchemaProperty = { type?: string };
 
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
@@ -96,7 +115,113 @@ function getWebApiHeaders() {
   };
 }
 
+function getVeeklsConfig() {
+  const orgId = process.env.VEEKLS_ORG_ID?.trim();
+  const secret = process.env.VEEKLS_SECRET_KEY?.trim();
+  const apiUrl = (process.env.VEEKLS_API_URL || DEFAULT_VEEKLS_API_URL).replace(/\/$/, '');
+
+  if (!orgId || !secret) {
+    return null;
+  }
+
+  return { orgId, secret, apiUrl };
+}
+
+function decodeVeeklsEnum(value: string | undefined) {
+  if (!value) {
+    return '';
+  }
+
+  const raw = value.includes('.') ? value.split('.').pop() || value : value;
+  return raw
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function normalizeVeeklsVersion(version: unknown) {
+  if (typeof version === 'string') {
+    return version;
+  }
+
+  if (version && typeof version === 'object' && 'name' in version) {
+    const name = (version as { name?: unknown }).name;
+    if (typeof name === 'string') {
+      return name;
+    }
+  }
+
+  return '';
+}
+
+function mapVeeklsVehicleToWeb(vehicle: VeeklsVehicle): WebVehicle {
+  const firstPictureId = Array.isArray(vehicle.pictures) ? vehicle.pictures.find(Boolean) : undefined;
+  const image = firstPictureId ? `https://pictures.veekls.com/${firstPictureId}` : undefined;
+  const status = vehicle.soldAt ? 'Vendido' : vehicle.reservedAt ? 'Reservado' : 'Disponible';
+
+  return {
+    id: String(vehicle._id || ''),
+    marca: vehicle.brand,
+    modelo: vehicle.model,
+    version: normalizeVeeklsVersion(vehicle.version),
+    tipo: decodeVeeklsEnum(vehicle.type),
+    año: vehicle.year,
+    precio: vehicle.price,
+    km: vehicle.odometer,
+    combustible: decodeVeeklsEnum(vehicle.fuel),
+    transmision: decodeVeeklsEnum(vehicle.gearbox),
+    color: vehicle.color,
+    estado: status,
+    imagen: image
+  };
+}
+
+async function fetchVeeklsStock() {
+  const config = getVeeklsConfig();
+
+  if (!config) {
+    return null;
+  }
+
+  const auth = Buffer.from(`${config.orgId}:${config.secret}`).toString('base64');
+  const allVehicles: WebVehicle[] = [];
+  let skip = 0;
+
+  while (true) {
+    const url = `${config.apiUrl}/vehicles?limit=${VEEKLS_PAGE_SIZE}&skip=${skip}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Basic ${auth}`
+      },
+      cache: 'no-store'
+    });
+
+    const payload = (await response.json()) as VeeklsVehicle[] | { error?: string; message?: string };
+
+    if (!response.ok || !Array.isArray(payload)) {
+      const message = !Array.isArray(payload) ? payload.error || payload.message : undefined;
+      throw new Error(message || 'No se pudo consultar el stock en Veekls.');
+    }
+
+    const mapped = payload.map(mapVeeklsVehicleToWeb).filter((item) => Boolean(item.id));
+    allVehicles.push(...mapped);
+
+    if (payload.length < VEEKLS_PAGE_SIZE) {
+      break;
+    }
+
+    skip += VEEKLS_PAGE_SIZE;
+  }
+
+  return allVehicles;
+}
+
 async function fetchWebStock() {
+  const veeklsVehicles = await fetchVeeklsStock();
+  if (veeklsVehicles) {
+    return veeklsVehicles;
+  }
+
   const baseUrl = getPublicSiteUrl();
   const response = await fetch(`${baseUrl}/api/stock`, {
     headers: getWebApiHeaders(),
@@ -794,42 +919,16 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Error al consultar stock web. Se usa fallback Notion/mock.', error);
-  }
-
-  if (!stockDb || !notionToken) {
-    return Response.json(
-      { source: 'mock', vehicles: fallbackCards() },
-      {
-        headers: {
-          'Cache-Control': 'no-store'
-        }
-      }
-    );
-  }
-
-  try {
-    const [rows, userRows] = await Promise.all([
-      queryStockRows(stockDb),
-      usersDb ? queryStockRows(usersDb) : Promise.resolve([] as NotionRow[])
-    ]);
-    const userNameMap = buildUserNameMap(userRows);
-    const cards = rows.map((row) => toCard(row, userNameMap));
+    console.error('Error al consultar stock web.', error);
 
     return Response.json(
-      { source: 'notion', vehicles: cards },
       {
-        headers: {
-          'Cache-Control': 'no-store'
-        }
-      }
-    );
-  } catch (error) {
-    console.error('Error al consultar Stock en Notion. Se usa fallback mock.', error);
-
-    return Response.json(
-      { source: 'mock', vehicles: fallbackCards() },
+        source: 'web',
+        error: error instanceof Error ? error.message : 'Error desconocido al consultar el stock de ucars.cl.',
+        vehicles: []
+      },
       {
+        status: 502,
         headers: {
           'Cache-Control': 'no-store'
         }

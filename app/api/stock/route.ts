@@ -1,5 +1,9 @@
 import { mockDataset } from '@/lib/mock-data';
 
+const DEFAULT_PUBLIC_SITE_URL = 'https://ucars.cl';
+
+const WEB_SOURCE_ID_CANDIDATES = ['ID Web', 'ID Ucars', 'ID Externo', 'External ID', 'Source ID', 'Vehicle ID'];
+
 type NotionProperty = Record<string, unknown> & {
   type?: string;
   rich_text?: Array<{ plain_text?: string }>;
@@ -40,6 +44,26 @@ type StockCardItem = {
   publicationUrl: string;
 };
 
+type WebVehicle = {
+  id: string;
+  marca?: string;
+  modelo?: string;
+  version?: string;
+  tipo?: string;
+  año?: number;
+  precio?: number;
+  km?: number;
+  combustible?: string;
+  transmision?: string;
+  color?: string;
+  estado?: string;
+  badge?: string;
+  imagen?: string;
+  url?: string;
+};
+
+type NotionSchemaProperty = { type?: string };
+
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
 
 const PUBLICATION_URL_CANDIDATES = ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'];
@@ -54,6 +78,40 @@ const ASSIGNED_UCARIANO_CANDIDATES = [
   'Assigned Ucariano',
   'Assigned Advisor'
 ];
+
+function getPublicSiteUrl() {
+  return (process.env.PUBLIC_SITE_URL || DEFAULT_PUBLIC_SITE_URL).replace(/\/$/, '');
+}
+
+function getWebApiHeaders() {
+  const apiKey = process.env.UCARS_API_KEY?.trim();
+
+  if (!apiKey) {
+    return undefined;
+  }
+
+  return {
+    Authorization: `Bearer ${apiKey}`,
+    'x-api-key': apiKey
+  };
+}
+
+async function fetchWebStock() {
+  const baseUrl = getPublicSiteUrl();
+  const response = await fetch(`${baseUrl}/api/stock`, {
+    headers: getWebApiHeaders(),
+    cache: 'no-store'
+  });
+
+  const payload = (await response.json()) as WebVehicle[] | { error?: string };
+
+  if (!response.ok || !Array.isArray(payload)) {
+    const message = !Array.isArray(payload) ? payload.error : undefined;
+    throw new Error(message || 'No se pudo consultar el stock del sitio web.');
+  }
+
+  return payload;
+}
 
 function getText(property?: NotionProperty | null) {
   if (!property) {
@@ -131,6 +189,10 @@ function pickProperty(properties: Record<string, NotionProperty>, candidates: st
   return candidates.map((candidate) => properties[candidate]).find(Boolean);
 }
 
+function pickPropertyName(properties: Record<string, NotionProperty>, candidates: string[]) {
+  return candidates.find((candidate) => Boolean(properties[candidate]));
+}
+
 function getPropertyNameByType(properties: Record<string, NotionProperty>, type: string) {
   return Object.keys(properties).find((key) => properties[key]?.type === type);
 }
@@ -157,6 +219,27 @@ function extractFirstUrl(property?: NotionProperty | null) {
   const text = getText(property);
   const matched = text.match(/https?:\/\/[^\s,;]+/i);
   return matched ? matched[0] : '';
+}
+
+function normalizeKey(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getWebVehicleCompositeKey(vehicle: WebVehicle) {
+  return normalizeKey([vehicle.marca, vehicle.modelo, vehicle.version, String(vehicle.año || '')].filter(Boolean).join(' '));
+}
+
+function getNotionVehicleCompositeKey(properties: Record<string, NotionProperty>) {
+  const brand = getText(pickProperty(properties, ['Marca', 'Brand']));
+  const model = getText(pickProperty(properties, ['Modelo', 'Model', 'Vehículo', 'Vehiculo', 'Vehicle', 'Nombre', 'Name']));
+  const version = getText(pickProperty(properties, ['Versión', 'Version', 'Trim']));
+  const year = getText(pickProperty(properties, ['Año', 'Ano', 'Year']));
+  return normalizeKey([brand, model, version, year].filter(Boolean).join(' '));
 }
 
 function buildUserNameMap(rows: NotionRow[]) {
@@ -283,6 +366,53 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
   };
 }
 
+function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, userNameMap: Map<string, string>): StockCardItem {
+  const properties = row?.properties || {};
+  const rowBrand = getText(pickProperty(properties, ['Marca', 'Brand']));
+  const rowModel = getText(pickProperty(properties, ['Modelo', 'Model', 'Vehículo', 'Vehiculo', 'Vehicle', 'Nombre', 'Name']));
+  const rowVersion = getText(pickProperty(properties, ['Versión', 'Version', 'Trim']));
+  const rowYear = getNumber(pickProperty(properties, ['Año', 'Ano', 'Year']));
+  const rowMileage = getNumber(pickProperty(properties, ['Kilometraje', 'Km', 'Mileage']));
+  const rowTransmission = getText(pickProperty(properties, ['Transmisión', 'Transmision', 'Transmission', 'Caja']));
+  const rowEngine = getText(pickProperty(properties, ['Motor', 'Engine', 'Motorización', 'Motorizacion']));
+  const rowPrice = getNumber(
+    pickProperty(properties, ['Precio Publicado', 'Precio publicado', 'Precio Actual', 'Precio', 'Published Price', 'Price'])
+  );
+  const rowStatus = getText(pickProperty(properties, ['Estado', 'Status']));
+
+  const brand = vehicle.marca || rowBrand || 'Sin marca';
+  const model = vehicle.modelo || rowModel || '';
+  const version = vehicle.version || rowVersion || '';
+  const yearNumber = typeof vehicle.año === 'number' ? vehicle.año : rowYear;
+  const mileageNumber = typeof vehicle.km === 'number' ? vehicle.km : rowMileage;
+  const transmission = vehicle.transmision || rowTransmission || 'No especificada';
+  const engine = rowEngine || vehicle.combustible || 'No especificado';
+  const priceNumber = typeof vehicle.precio === 'number' ? vehicle.precio : rowPrice;
+  const status = vehicle.estado || rowStatus || 'Disponible';
+  const publicationUrl = extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES));
+
+  const composedName = [model, version].filter(Boolean).join(' ').trim();
+
+  return {
+    id: row?.id || String(vehicle.id || ''),
+    brand,
+    name: composedName || model || `${brand} sin nombre`,
+    year: yearNumber > 0 ? String(yearNumber) : '-',
+    mileage: mileageNumber > 0 ? `${mileageNumber.toLocaleString('es-CL')} km` : '-',
+    engine,
+    transmission,
+    assignedUcariano: row ? resolveAssignedUcariano(properties, userNameMap) : 'Sin asignar',
+    assignedUcarianoId: row ? resolveAssignedUcarianoId(properties) : null,
+    photoUrl:
+      vehicle.imagen ||
+      extractFirstUrl(pickProperty(properties, ['Fotos URL', 'Foto URL', 'Fotos', 'Foto', 'Imagen', 'Image', 'Photos'])) ||
+      PLACEHOLDER_IMAGE,
+    price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
+    status,
+    publicationUrl
+  };
+}
+
 async function queryStockRows(databaseId: string) {
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
@@ -320,6 +450,260 @@ async function queryStockRows(databaseId: string) {
   return rows;
 }
 
+async function getDatabaseSchema(databaseId: string, notionToken: string) {
+  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': '2022-06-28'
+    },
+    cache: 'no-store'
+  });
+
+  const schema = (await response.json()) as {
+    properties?: Record<string, NotionSchemaProperty>;
+    message?: string;
+  };
+
+  if (!response.ok || !schema.properties) {
+    throw new Error(schema.message || 'No se pudo leer el esquema de Stock en Notion.');
+  }
+
+  return schema.properties;
+}
+
+function findPropertyName(properties: Record<string, NotionSchemaProperty>, candidates: string[]) {
+  return candidates.find((candidate) => Boolean(properties[candidate]));
+}
+
+function getTitlePropertyName(properties: Record<string, NotionSchemaProperty>) {
+  return Object.keys(properties).find((key) => properties[key]?.type === 'title');
+}
+
+function buildPropertyValue(type: string | undefined, rawValue: string | number | undefined) {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    return undefined;
+  }
+
+  switch (type) {
+    case 'rich_text':
+      return { rich_text: [{ text: { content: String(rawValue) } }] };
+    case 'number': {
+      const numeric = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+      return Number.isFinite(numeric) ? { number: numeric } : undefined;
+    }
+    case 'select':
+      return { select: { name: String(rawValue) } };
+    case 'status':
+      return { status: { name: String(rawValue) } };
+    case 'multi_select':
+      return { multi_select: [{ name: String(rawValue) }] };
+    case 'url':
+      return { url: String(rawValue) };
+    default:
+      return undefined;
+  }
+}
+
+function buildNotionPropertiesFromWebVehicle(
+  schemaProperties: Record<string, NotionSchemaProperty>,
+  vehicle: WebVehicle,
+  sourceIdPropertyName?: string
+) {
+  const titlePropName = getTitlePropertyName(schemaProperties);
+  const composedName = [vehicle.marca, vehicle.modelo, vehicle.version].filter(Boolean).join(' ').trim() || 'Vehiculo importado';
+  const properties: Record<string, unknown> = {};
+
+  if (titlePropName) {
+    properties[titlePropName] = { title: [{ text: { content: composedName } }] };
+  }
+
+  const fields: Array<{ candidates: string[]; rawValue: string | number | undefined }> = [
+    { candidates: ['Marca', 'Brand'], rawValue: vehicle.marca },
+    { candidates: ['Modelo', 'Model', 'Vehículo', 'Vehiculo', 'Vehicle', 'Nombre', 'Name'], rawValue: vehicle.modelo },
+    { candidates: ['Versión', 'Version', 'Trim'], rawValue: vehicle.version },
+    { candidates: ['Año', 'Ano', 'Year'], rawValue: vehicle.año },
+    { candidates: ['Precio Publicado', 'Precio publicado', 'Precio Actual', 'Precio', 'Price'], rawValue: vehicle.precio },
+    { candidates: ['Kilometraje', 'Km', 'Mileage'], rawValue: vehicle.km },
+    { candidates: ['Transmisión', 'Transmision', 'Transmission', 'Caja'], rawValue: vehicle.transmision },
+    { candidates: ['Combustible', 'Fuel', 'Fuel Type'], rawValue: vehicle.combustible },
+    { candidates: ['Tipo', 'Type', 'Categoria', 'Categoría'], rawValue: vehicle.tipo },
+    { candidates: ['Color'], rawValue: vehicle.color },
+    { candidates: ['Estado', 'Status'], rawValue: vehicle.estado || 'Disponible' },
+    {
+      candidates: ['Fotos URL', 'Foto URL', 'Fotos', 'Foto', 'Imagen', 'Image', 'Photos'],
+      rawValue: vehicle.imagen
+    },
+    { candidates: ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'], rawValue: vehicle.url }
+  ];
+
+  fields.forEach((field) => {
+    const propName = findPropertyName(schemaProperties, field.candidates);
+    if (!propName) {
+      return;
+    }
+
+    const value = buildPropertyValue(schemaProperties[propName]?.type, field.rawValue);
+    if (value) {
+      properties[propName] = value;
+    }
+  });
+
+  if (sourceIdPropertyName && vehicle.id) {
+    const value = buildPropertyValue(schemaProperties[sourceIdPropertyName]?.type, String(vehicle.id));
+    if (value) {
+      properties[sourceIdPropertyName] = value;
+    }
+  }
+
+  return properties;
+}
+
+async function updateNotionPage(pageId: string, notionToken: string, properties: Record<string, unknown>) {
+  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ properties })
+  });
+
+  const payload = (await response.json()) as { message?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudo actualizar el vehiculo en Notion.');
+  }
+}
+
+async function createNotionPage(stockDb: string, notionToken: string, properties: Record<string, unknown>) {
+  const response = await fetch('https://api.notion.com/v1/pages', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      parent: { database_id: stockDb },
+      properties
+    })
+  });
+
+  const payload = (await response.json()) as { id?: string; message?: string };
+
+  if (!response.ok || !payload.id) {
+    throw new Error(payload.message || 'No se pudo crear el vehiculo en Notion.');
+  }
+
+  return payload.id;
+}
+
+async function archiveNotionPage(pageId: string, notionToken: string) {
+  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': '2022-06-28',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ archived: true })
+  });
+
+  const payload = (await response.json()) as { message?: string };
+
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudo archivar el vehiculo en Notion.');
+  }
+}
+
+async function syncWebStockToNotion(
+  webVehicles: WebVehicle[],
+  existingRows: NotionRow[],
+  schemaProperties: Record<string, NotionSchemaProperty>,
+  stockDb: string,
+  notionToken: string
+) {
+  const sourceIdPropertyName = findPropertyName(schemaProperties, WEB_SOURCE_ID_CANDIDATES);
+  const rowsBySourceId = new Map<string, NotionRow>();
+  const rowsByCompositeKey = new Map<string, NotionRow>();
+  const webSourceIds = new Set<string>();
+
+  webVehicles.forEach((vehicle) => {
+    const sourceId = String(vehicle.id || '').trim();
+    if (sourceId) {
+      webSourceIds.add(sourceId);
+    }
+  });
+
+  existingRows.forEach((row) => {
+    if (sourceIdPropertyName) {
+      const sourceId = getText(row.properties[sourceIdPropertyName]);
+      if (sourceId) {
+        rowsBySourceId.set(sourceId, row);
+      }
+    }
+
+    const compositeKey = getNotionVehicleCompositeKey(row.properties);
+    if (compositeKey) {
+      rowsByCompositeKey.set(compositeKey, row);
+    }
+  });
+
+  const failed: Array<{ vehicleId: string; error: string }> = [];
+  let archived = 0;
+
+  for (const vehicle of webVehicles) {
+    const sourceId = String(vehicle.id || '').trim();
+    const compositeKey = getWebVehicleCompositeKey(vehicle);
+    const existing = (sourceId && rowsBySourceId.get(sourceId)) || (compositeKey ? rowsByCompositeKey.get(compositeKey) : undefined);
+    const properties = buildNotionPropertiesFromWebVehicle(schemaProperties, vehicle, sourceIdPropertyName);
+
+    if (Object.keys(properties).length === 0) {
+      continue;
+    }
+
+    try {
+      if (existing) {
+        await updateNotionPage(existing.id, notionToken, properties);
+      } else {
+        await createNotionPage(stockDb, notionToken, properties);
+      }
+    } catch (error) {
+      failed.push({
+        vehicleId: sourceId || compositeKey || 'unknown',
+        error: error instanceof Error ? error.message : 'Error desconocido al sincronizar vehiculo.'
+      });
+    }
+  }
+
+  if (sourceIdPropertyName) {
+    for (const row of existingRows) {
+      const sourceId = getText(row.properties[sourceIdPropertyName]).trim();
+
+      if (!sourceId) {
+        continue;
+      }
+
+      if (webSourceIds.has(sourceId)) {
+        continue;
+      }
+
+      try {
+        await archiveNotionPage(row.id, notionToken);
+        archived += 1;
+      } catch (error) {
+        failed.push({
+          vehicleId: sourceId,
+          error: error instanceof Error ? error.message : 'Error desconocido al archivar vehiculo.'
+        });
+      }
+    }
+  }
+
+  return { failed, archived, deleteEnabled: Boolean(sourceIdPropertyName) };
+}
+
 function fallbackCards(): StockCardItem[] {
   return mockDataset.stock.map((item) => ({
     id: item.id,
@@ -342,6 +726,76 @@ export async function GET() {
   const stockDb = process.env.NOTION_STOCK_DATABASE_ID;
   const usersDb = process.env.NOTION_USERS_DATABASE_ID;
   const notionToken = process.env.NOTION_API_KEY;
+
+  try {
+    const webVehicles = await fetchWebStock();
+
+    if (!stockDb || !notionToken) {
+      const cards = webVehicles.map((vehicle) => toCardFromWebVehicle(vehicle, undefined, new Map<string, string>()));
+
+      return Response.json(
+        { source: 'web', vehicles: cards },
+        {
+          headers: {
+            'Cache-Control': 'no-store'
+          }
+        }
+      );
+    }
+
+    const [existingRows, userRows, schemaProperties] = await Promise.all([
+      queryStockRows(stockDb),
+      usersDb ? queryStockRows(usersDb) : Promise.resolve([] as NotionRow[]),
+      getDatabaseSchema(stockDb, notionToken)
+    ]);
+
+    const syncResult = await syncWebStockToNotion(webVehicles, existingRows, schemaProperties, stockDb, notionToken);
+    const syncedRows = await queryStockRows(stockDb);
+    const userNameMap = buildUserNameMap(userRows);
+
+    const sourceIdPropertyName = findPropertyName(schemaProperties, WEB_SOURCE_ID_CANDIDATES);
+    const rowsBySourceId = new Map<string, NotionRow>();
+    const rowsByCompositeKey = new Map<string, NotionRow>();
+
+    syncedRows.forEach((row) => {
+      if (sourceIdPropertyName) {
+        const sourceId = getText(row.properties[sourceIdPropertyName]);
+        if (sourceId) {
+          rowsBySourceId.set(sourceId, row);
+        }
+      }
+
+      const compositeKey = getNotionVehicleCompositeKey(row.properties);
+      if (compositeKey) {
+        rowsByCompositeKey.set(compositeKey, row);
+      }
+    });
+
+    const cards = webVehicles.map((vehicle) => {
+      const sourceId = String(vehicle.id || '').trim();
+      const compositeKey = getWebVehicleCompositeKey(vehicle);
+      const row = (sourceId && rowsBySourceId.get(sourceId)) || (compositeKey ? rowsByCompositeKey.get(compositeKey) : undefined);
+      return toCardFromWebVehicle(vehicle, row, userNameMap);
+    });
+
+    return Response.json(
+      {
+        source: 'web',
+        syncedWithNotion: true,
+        deleteSyncedInNotion: syncResult.deleteEnabled,
+        archivedInNotion: syncResult.archived,
+        syncFailed: syncResult.failed,
+        vehicles: cards
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store'
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Error al consultar stock web. Se usa fallback Notion/mock.', error);
+  }
 
   if (!stockDb || !notionToken) {
     return Response.json(

@@ -620,7 +620,7 @@
                         return [
                                 '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
                                 '  <h3 class="text-title-sm font-title-sm text-primary mb-1">No hay vehiculos en Stock</h3>',
-                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Revisa la base de datos de Notion o las variables de entorno de la app.</p>',
+                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Revisa la API de ucars.cl o las variables de entorno de la app.</p>',
                                 '</div>'
                         ].join('');
                 }
@@ -628,7 +628,7 @@
                 function loadingStateHtml() {
                         return [
                                 '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
-                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Cargando stock desde Notion...</p>',
+                                '  <p class="text-body-sm font-body-sm text-on-surface-variant">Cargando stock desde ucars.cl y sincronizando Notion...</p>',
                                 '</div>'
                         ].join('');
                 }

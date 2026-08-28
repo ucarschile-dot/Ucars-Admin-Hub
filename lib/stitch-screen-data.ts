@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
 export type StitchScreenKey = 'agenda' | 'leads' | 'notificaciones' | 'pruebas' | 'stock' | 'ucarianos';
 
 type StitchScreenMeta = {
@@ -64,14 +61,3 @@ export const stitchScreens: Record<StitchScreenKey, StitchScreenMeta> = {
     height: 2176
   }
 };
-
-export async function getStitchScreenDocument(key: StitchScreenKey) {
-  const screen = stitchScreens[key];
-  const filePath = path.join(process.cwd(), 'stitch-export', screen.fileName);
-  const html = await readFile(filePath, 'utf8');
-
-  return {
-    ...screen,
-    html
-  };
-}

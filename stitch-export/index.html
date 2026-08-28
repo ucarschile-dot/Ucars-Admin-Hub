@@ -197,6 +197,7 @@
         <a class="nav-link" data-screen="agenda" href="#agenda">Agenda</a>
         <a class="nav-link" data-screen="leads" href="#leads">Prospectos</a>
         <a class="nav-link" data-screen="notificaciones" href="#notificaciones">Notificaciones</a>
+        <a class="nav-link" data-screen="pruebas" href="#pruebas">Pruebas</a>
       </nav>
     </header>
 
@@ -216,6 +217,9 @@
       <section class="screen" data-screen="notificaciones">
         <iframe src="/stitch-export/notificaciones.html" title="Notificaciones"></iframe>
       </section>
+      <section class="screen" data-screen="pruebas">
+        <iframe src="/stitch-export/pruebas.html" title="Pruebas"></iframe>
+      </section>
     </main>
   </div>
 
@@ -223,7 +227,7 @@
     (function () {
       var topbar = document.querySelector('.topbar');
       var iframeWindows = new Map();
-      var validScreens = ['stock', 'ucarianos', 'agenda', 'leads', 'notificaciones'];
+      var validScreens = ['stock', 'ucarianos', 'agenda', 'leads', 'notificaciones', 'pruebas'];
       var defaultScreen = 'stock';
       var topbarVisible = true;
       var lastScrollY = 0;

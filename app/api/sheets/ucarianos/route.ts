@@ -1,4 +1,4 @@
-import { hasGoogleSheetsConfig, fetchSheetValues, rowsToObjects } from '@/lib/google-sheets';
+import { hasGoogleSheetsConfig, fetchSheetOrExcelValues, rowsToObjects } from '@/lib/google-sheets';
 
 export async function GET() {
   const spreadsheetId = process.env.GOOGLE_SHEET_ID;
@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   try {
-    const rows = await fetchSheetValues(spreadsheetId, range);
+    const rows = await fetchSheetOrExcelValues(spreadsheetId, range);
     const ucarianos = rowsToObjects(rows);
 
     return Response.json(

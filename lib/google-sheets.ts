@@ -1,6 +1,10 @@
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SHEETS_API_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
-const READONLY_SCOPE = 'https://www.googleapis.com/auth/spreadsheets.readonly';
+const DRIVE_API_BASE = 'https://www.googleapis.com/drive/v3/files';
+const READONLY_SCOPES = [
+  'https://www.googleapis.com/auth/spreadsheets.readonly',
+  'https://www.googleapis.com/auth/drive.readonly'
+].join(' ');
 
 type CachedToken = { accessToken: string; expiresAt: number };
 
@@ -43,7 +47,7 @@ async function getAccessToken() {
   const header = { alg: 'RS256', typ: 'JWT' };
   const claimSet = {
     iss: email,
-    scope: READONLY_SCOPE,
+    scope: READONLY_SCOPES,
     aud: TOKEN_URL,
     iat: nowSeconds,
     exp: nowSeconds + 3600
@@ -122,4 +126,63 @@ export function rowsToObjects(rows: string[][]): Array<Record<string, string>> {
       });
       return record;
     });
+}
+
+async function fetchDriveFileBuffer(fileId: string): Promise<Buffer> {
+  const accessToken = await getAccessToken();
+  const url = `${DRIVE_API_BASE}/${fileId}?alt=media`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`No se pudo descargar el archivo desde Google Drive (${response.status}). ${text}`.trim());
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+/** Parses one sheet/tab of a raw Excel workbook (xlsx/xls) buffer into string[][] rows. */
+async function parseExcelSheetToRows(buffer: Buffer, sheetName: string): Promise<string[][]> {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+
+  const requestedName = sheetName.trim();
+  const resolvedName = workbook.SheetNames.find(
+    (name) => name.toLowerCase() === requestedName.toLowerCase()
+  ) || workbook.SheetNames[0];
+
+  const sheet = workbook.Sheets[resolvedName];
+  if (!sheet) {
+    return [];
+  }
+
+  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, blankrows: false, defval: '' });
+  return rows.map((row) => row.map((cell) => (cell === null || cell === undefined ? '' : String(cell))));
+}
+
+function isOfficeFileError(error: unknown) {
+  return error instanceof Error && /office file|not supported for this document/i.test(error.message);
+}
+
+/**
+ * Reads a range/tab as rows. Tries the native Sheets API first; if the file turns out to be a
+ * raw Excel workbook stored in Drive (not converted to Google Sheets), falls back to downloading
+ * it via the Drive API and parsing it with a spreadsheet library.
+ */
+export async function fetchSheetOrExcelValues(spreadsheetId: string, range: string): Promise<string[][]> {
+  try {
+    return await fetchSheetValues(spreadsheetId, range);
+  } catch (error) {
+    if (!isOfficeFileError(error)) {
+      throw error;
+    }
+
+    const buffer = await fetchDriveFileBuffer(spreadsheetId);
+    return parseExcelSheetToRows(buffer, range);
+  }
 }

@@ -307,6 +307,25 @@
 </div>
 </div>
 </section>
+<!-- Visualizador de la pestaña Ucarianos del Google Sheet -->
+<section class="space-y-4 mt-8">
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-primary">Ucarianos (Google Sheet) <span class="text-on-surface-variant" id="sheet-ucarianos-visible-count">(0)</span></h3>
+<span class="text-label-caps font-label-caps text-on-surface-variant">Fuente: Google Sheets</span>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-x-auto">
+<table class="w-full text-left border-collapse" id="sheet-ucarianos-table">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant" id="sheet-ucarianos-table-head"></tr>
+</thead>
+<tbody id="sheet-ucarianos-table-body">
+<tr>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">Cargando datos desde Google Sheets...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 </main>
 <script>
         (function () {
@@ -477,6 +496,68 @@
                                 visibleCount.textContent = '(0)';
                                 grid.innerHTML = emptyStateHtml();
                         });
+
+                var sheetUcarianosHead = document.getElementById('sheet-ucarianos-table-head');
+                var sheetUcarianosBody = document.getElementById('sheet-ucarianos-table-body');
+                var sheetUcarianosVisibleCount = document.getElementById('sheet-ucarianos-visible-count');
+
+                function sheetUcarianosEmptyRowHtml(message) {
+                        return '<tr><td class="p-4 text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(message) + '</td></tr>';
+                }
+
+                function renderSheetUcarianosTable(rows) {
+                        if (!sheetUcarianosHead || !sheetUcarianosBody) {
+                                return;
+                        }
+
+                        if (rows.length === 0) {
+                                sheetUcarianosHead.innerHTML = '';
+                                sheetUcarianosBody.innerHTML = sheetUcarianosEmptyRowHtml('No hay filas registradas en la pestana Ucarianos del Sheet.');
+                                if (sheetUcarianosVisibleCount) {
+                                        sheetUcarianosVisibleCount.textContent = '(0)';
+                                }
+                                return;
+                        }
+
+                        var headers = Object.keys(rows[0]);
+
+                        sheetUcarianosHead.innerHTML = headers.map(function (header) {
+                                return '<th class="p-3 text-label-caps font-label-caps text-on-surface-variant whitespace-nowrap">' + escapeHtml(header) + '</th>';
+                        }).join('');
+
+                        sheetUcarianosBody.innerHTML = rows.map(function (row) {
+                                return '<tr class="border-b border-outline-variant/50 last:border-0">' +
+                                        headers.map(function (header) {
+                                                return '<td class="p-3 text-body-sm font-body-sm text-on-surface align-top">' + escapeHtml(row[header]) + '</td>';
+                                        }).join('') +
+                                        '</tr>';
+                        }).join('');
+
+                        if (sheetUcarianosVisibleCount) {
+                                sheetUcarianosVisibleCount.textContent = '(' + rows.length + ')';
+                        }
+                }
+
+                if (sheetUcarianosHead && sheetUcarianosBody) {
+                        fetch('/api/sheets/ucarianos', { cache: 'no-store' })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudo consultar el Google Sheet.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (payload) {
+                                        renderSheetUcarianosTable(Array.isArray(payload.ucarianos) ? payload.ucarianos : []);
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        sheetUcarianosHead.innerHTML = '';
+                                        sheetUcarianosBody.innerHTML = sheetUcarianosEmptyRowHtml(error.message || 'No se pudo consultar el Google Sheet.');
+                                });
+                }
         })();
 </script>
 </body></html>

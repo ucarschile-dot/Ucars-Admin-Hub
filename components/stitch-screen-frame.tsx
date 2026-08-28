@@ -9,7 +9,8 @@ const screenTitles: Record<StitchScreenKey, string> = {
   ucarianos: 'Ucarianos - Ucars Hub',
   agenda: 'Agenda - Ucars Hub',
   leads: 'Prospectos - Ucars Hub',
-  notificaciones: 'Notificaciones - Ucars Hub'
+  notificaciones: 'Notificaciones - Ucars Hub',
+  pruebas: 'Pruebas - Ucars Hub'
 };
 
 export function StitchScreenFrame({ screen }: StitchScreenFrameProps) {

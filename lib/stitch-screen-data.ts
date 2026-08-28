@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-export type StitchScreenKey = 'agenda' | 'leads' | 'notificaciones' | 'stock' | 'ucarianos';
+export type StitchScreenKey = 'agenda' | 'leads' | 'notificaciones' | 'pruebas' | 'stock' | 'ucarianos';
 
 type StitchScreenMeta = {
   fileName: string;
@@ -37,6 +37,14 @@ export const stitchScreens: Record<StitchScreenKey, StitchScreenMeta> = {
     title: 'Notificaciones - Ucars Hub',
     projectId,
     screenId: 'cb308bfa20444a5fb8052a925ebedd82',
+    height: 2048
+  },
+  pruebas: {
+    fileName: 'pruebas.html',
+    imageName: 'pruebas.png',
+    title: 'Pruebas - Ucars Hub',
+    projectId,
+    screenId: 'pruebas-placeholder',
     height: 2048
   },
   stock: {

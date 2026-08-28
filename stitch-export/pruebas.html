@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ucars Hub - Pruebas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-lowest": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "outline-variant": "#c4c7c7",
+                      "on-background": "#0b1c30",
+                      "primary-container": "#282828",
+                      "on-surface-variant": "#444748",
+                      "secondary-container": "#fdcb52",
+                      "secondary": "#785a00",
+                      "outline": "#747878",
+                      "on-surface": "#0b1c30",
+                      "error": "#ba1a1a",
+                      "background": "#f8f9ff",
+                      "surface-container-low": "#eff4ff",
+                      "surface": "#f8f9ff",
+                      "primary": "#131414",
+                      "on-primary-container": "#908f8e"
+              },
+              "fontFamily": {
+                      "body-md": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "title-sm": ["Inter"],
+                      "display-lg": ["Inter"],
+                      "display-lg-mobile": ["Inter"],
+                      "body-sm": ["Inter"]
+              }
+            },
+          }
+        }
+      </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+    </style>
+<link href="/stitch-export/shared.css" rel="stylesheet"/>
+<script defer src="/stitch-export/shared.js"></script>
+</head>
+<body class="antialiased min-h-screen">
+<!-- SideNavBar -->
+<nav class="hidden md:flex fixed left-0 top-0 h-full w-[260px] bg-primary dark:bg-primary-container shadow-md flex-col py-stack-md z-20">
+<div class="px-container-padding mb-8 flex flex-col items-start gap-4">
+<div class="flex items-center gap-3 w-full">
+<img alt="Ucars Hub Admin Profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="flex-1 min-w-0">
+<h1 class="text-headline-md font-headline-md font-bold text-secondary dark:text-secondary-fixed truncate">Ucars Hub</h1>
+<p class="text-body-sm font-body-sm text-on-primary-container dark:text-on-primary-fixed-variant truncate">Panel administrativo</p>
+</div>
+</div>
+</div>
+<ul class="flex-1 px-3 space-y-1 overflow-y-auto">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="/stitch-export/stock.html">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="text-body-md font-body-md">Stock</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="/stitch-export/ucarianos.html">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+<span class="text-body-md font-body-md">Ucarianos</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="/stitch-export/agenda.html">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+<span class="text-body-md font-body-md">Agenda</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-primary-container dark:text-on-primary-fixed-variant hover:bg-tertiary-container dark:hover:bg-tertiary transition-colors duration-200" href="/stitch-export/notificaciones.html">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="text-body-md font-body-md">Notificaciones</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-secondary dark:text-secondary-fixed border-l-4 border-secondary bg-tertiary-container/50 opacity-90 transition-all duration-150" href="/stitch-export/pruebas.html">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">science</span>
+<span class="text-body-md font-body-md font-medium">Pruebas</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- TopAppBar -->
+<header class="hidden md:flex fixed top-0 right-0 left-[260px] h-16 bg-surface-lowest dark:bg-background border-b border-outline-variant dark:border-outline justify-between items-center px-container-padding w-[calc(100%-260px)] z-10">
+<div class="flex items-center">
+<span class="text-title-sm font-title-sm font-bold text-primary">Pruebas</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="md:ml-[260px] mt-6 md:mt-24 p-4 md:p-container-padding min-h-screen pb-24 md:pb-container-padding">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+<div>
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background">Visor de Google Sheets</h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Pestana temporal para probar la conexion con el Spreadsheet de ucarschile.</p>
+</div>
+</div>
+
+<section class="space-y-4">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+<label class="text-body-sm font-body-sm text-on-surface-variant shrink-0" for="sheet-range-input">Rango o pestana:</label>
+<input class="flex-1 w-full sm:w-auto bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="sheet-range-input" placeholder="Ej: Ucarianos o A1:Z200" type="text"/>
+<button class="bg-[#282828] text-white py-2 px-4 rounded text-title-sm font-title-sm hover:bg-tertiary-container transition-colors shrink-0" id="sheet-range-load" type="button">Cargar</button>
+</div>
+
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-primary">Resultado <span class="text-on-surface-variant" id="sheet-visible-count">(0)</span></h3>
+<span class="text-label-caps font-label-caps text-on-surface-variant" id="sheet-range-label"></span>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-x-auto">
+<table class="w-full text-left border-collapse" id="sheet-table">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant" id="sheet-table-head"></tr>
+</thead>
+<tbody id="sheet-table-body">
+<tr>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">Cargando datos desde Google Sheets...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<script>
+        (function () {
+                var rangeInput = document.getElementById('sheet-range-input');
+                var loadBtn = document.getElementById('sheet-range-load');
+                var tableHead = document.getElementById('sheet-table-head');
+                var tableBody = document.getElementById('sheet-table-body');
+                var visibleCount = document.getElementById('sheet-visible-count');
+                var rangeLabel = document.getElementById('sheet-range-label');
+
+                function escapeHtml(value) {
+                        return String(value || '')
+                                .replaceAll('&', '&amp;')
+                                .replaceAll('<', '&lt;')
+                                .replaceAll('>', '&gt;')
+                                .replaceAll('"', '&quot;')
+                                .replaceAll("'", '&#39;');
+                }
+
+                function emptyRowHtml(message) {
+                        return '<tr><td class="p-4 text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(message) + '</td></tr>';
+                }
+
+                function renderTable(rows) {
+                        if (rows.length === 0) {
+                                tableHead.innerHTML = '';
+                                tableBody.innerHTML = emptyRowHtml('No hay filas en ese rango del Sheet.');
+                                visibleCount.textContent = '(0)';
+                                return;
+                        }
+
+                        var headers = Object.keys(rows[0]);
+
+                        tableHead.innerHTML = headers.map(function (header) {
+                                return '<th class="p-3 text-label-caps font-label-caps text-on-surface-variant whitespace-nowrap">' + escapeHtml(header) + '</th>';
+                        }).join('');
+
+                        tableBody.innerHTML = rows.map(function (row) {
+                                return '<tr class="border-b border-outline-variant/50 last:border-0">' +
+                                        headers.map(function (header) {
+                                                return '<td class="p-3 text-body-sm font-body-sm text-on-surface align-top">' + escapeHtml(row[header]) + '</td>';
+                                        }).join('') +
+                                        '</tr>';
+                        }).join('');
+
+                        visibleCount.textContent = '(' + rows.length + ')';
+                }
+
+                function loadRange(range) {
+                        tableHead.innerHTML = '';
+                        tableBody.innerHTML = emptyRowHtml('Cargando datos desde Google Sheets...');
+
+                        var url = '/api/sheets/raw' + (range ? '?range=' + encodeURIComponent(range) : '');
+
+                        fetch(url, { cache: 'no-store' })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudo consultar el Google Sheet.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (payload) {
+                                        if (rangeLabel) {
+                                                rangeLabel.textContent = payload.range ? 'Rango: ' + payload.range : '';
+                                        }
+
+                                        renderTable(Array.isArray(payload.rows) ? payload.rows : []);
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        tableHead.innerHTML = '';
+                                        tableBody.innerHTML = emptyRowHtml(error.message || 'No se pudo consultar el Google Sheet.');
+                                        visibleCount.textContent = '(0)';
+                                });
+                }
+
+                if (loadBtn && rangeInput) {
+                        loadBtn.addEventListener('click', function () {
+                                loadRange(rangeInput.value.trim());
+                        });
+
+                        rangeInput.addEventListener('keydown', function (event) {
+                                if (event.key === 'Enter') {
+                                        loadRange(rangeInput.value.trim());
+                                }
+                        });
+                }
+
+                loadRange('');
+        })();
+</script>
+</body></html>

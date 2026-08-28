@@ -59,6 +59,23 @@ async function signSegment(value: string) {
   return encodeBase64Url(new Uint8Array(signature));
 }
 
+// Constant-time comparison to avoid leaking signature bytes via response-time side channel.
+function timingSafeEqualStrings(a: string, b: string) {
+  const bytesA = new TextEncoder().encode(a);
+  const bytesB = new TextEncoder().encode(b);
+
+  if (bytesA.length !== bytesB.length) {
+    return false;
+  }
+
+  let diff = 0;
+  for (let index = 0; index < bytesA.length; index += 1) {
+    diff |= bytesA[index] ^ bytesB[index];
+  }
+
+  return diff === 0;
+}
+
 function buildSessionPayload(profile: AdminLoginProfile): AdminSessionPayload {
   return {
     email: profile.email,
@@ -88,7 +105,7 @@ export async function verifyAdminSessionToken(token?: string | null) {
 
   const expectedSignature = await signSegment(encodedPayload);
 
-  if (expectedSignature !== providedSignature) {
+  if (!timingSafeEqualStrings(expectedSignature, providedSignature)) {
     return null;
   }
 

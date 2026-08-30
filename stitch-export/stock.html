@@ -203,13 +203,18 @@
                 #advisor-filter::-ms-expand {
                         display: none;
                 }
+
+                #legacy-stock-sidebar,
+                #legacy-stock-header {
+                        display: none !important;
+                }
     </style>
 <link href="/stitch-export/shared.css" rel="stylesheet"/>
 <script defer src="/stitch-export/shared.js"></script>
 </head>
 <body class="bg-background text-on-background min-h-screen font-body-md overflow-x-hidden flex">
 <!-- SideNavBar -->
-<nav class="fixed left-0 top-0 h-full w-[260px] bg-primary dark:bg-primary-container shadow-md flex flex-col py-stack-md z-50 hidden md:flex">
+<nav class="fixed left-0 top-0 h-full w-[260px] bg-primary dark:bg-primary-container shadow-md flex flex-col py-stack-md z-50 hidden md:flex" id="legacy-stock-sidebar">
 <div class="px-container-padding mb-8">
 <h1 class="text-headline-md font-headline-md font-bold text-secondary dark:text-secondary-fixed">Ucars Hub</h1>
 <p class="text-body-sm text-on-primary-container dark:text-on-primary-fixed-variant mt-1">Panel administrativo</p>
@@ -260,9 +265,9 @@
 </div>
 </nav>
 <!-- Main Content Wrapper -->
-<div class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
+<div class="flex-1 flex flex-col min-h-screen">
 <!-- TopAppBar -->
-<header class="fixed top-0 right-0 left-0 md:left-[260px] h-16 bg-surface-lowest dark:bg-background border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding z-40">
+<header class="fixed top-0 right-0 left-0 md:left-[260px] h-16 bg-surface-lowest dark:bg-background border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding z-40" id="legacy-stock-header">
 <div class="flex items-center gap-4">
 <!-- Mobile Menu Toggle -->
 <button class="md:hidden text-primary dark:text-on-background">
@@ -285,7 +290,7 @@
 </div>
 </header>
 <!-- Main Content Area -->
-<main class="flex-1 pt-24 px-4 md:px-container-padding pb-8">
+<main class="flex-1 px-4 pt-8 pb-8 md:px-container-padding">
 <!-- Page Header & Filters -->
 <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
 <div>

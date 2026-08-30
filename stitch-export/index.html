@@ -367,9 +367,34 @@
         return '<a class="vehicle-document" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer"><span>' + label + '</span><span>Abrir</span></a>';
       }
 
-      function openVehicleOverlay(vehicle) {
-        if (!vehicleOverlay || !vehicleContent || !vehicleTitle) return;
+      function formatCurrency(amount) {
+        return '$' + Math.round(amount).toLocaleString('es-CL');
+      }
+
+      function getSalesCommission(price) {
+        var amount = Number(String(price || '').replace(/[^\d]/g, ''));
+        return Number.isFinite(amount) && amount > 0 ? formatCurrency(amount * 0.03) : 'No disponible';
+      }
+
+      function getRentalForVehicle(vehicleId) {
+        return fetch('/api/arriendos', { cache: 'no-store' })
+          .then(function (response) {
+            if (!response.ok) return { arriendos: [] };
+            return response.json();
+          })
+          .then(function (payload) {
+            var rentals = Array.isArray(payload.arriendos) ? payload.arriendos : [];
+            return rentals.find(function (rental) { return rental.autoId === vehicleId; }) || null;
+          })
+          .catch(function () { return null; });
+      }
+
+      function renderVehicleOverlay(vehicle, rental) {
+        if (!vehicleContent || !vehicleTitle) return;
         var value = function (item) { return escapeHtml(item || 'No registrado'); };
+        var rentalDays = rental && rental.diasArriendoRestantes !== null
+          ? String(rental.diasArriendoRestantes) + ' dias'
+          : 'Sin arriendo vigente';
         vehicleTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
         vehicleContent.innerHTML = [
           '<div class="vehicle-details">',
@@ -385,13 +410,27 @@
           '</div></section>',
           '<section class="vehicle-section"><h3>Contrato de arriendo</h3><div class="vehicle-documents">',
           documentHtml('Contrato de arriendo', vehicle.rentalContractUrl),
+          '</div><div class="vehicle-details" style="margin-top: 12px;">',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Ucariano asignado</span><span class="vehicle-detail-value">' + value(rental && rental.ucariano !== 'Sin asignar' ? rental.ucariano : vehicle.assignedUcariano) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Dias de arriendo restantes</span><span class="vehicle-detail-value">' + value(rentalDays) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Comision de venta (3%)</span><span class="vehicle-detail-value">' + getSalesCommission(vehicle.price) + '</span></div>',
           '</div></section>'
         ].join('');
+      }
+
+      function openVehicleOverlay(vehicle) {
+        if (!vehicleOverlay || !vehicleContent || !vehicleTitle) return;
+        renderVehicleOverlay(vehicle, null);
         vehicleOverlay.classList.add('is-open');
         vehicleOverlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         applyTopbarVisibility(false);
         vehicleClose.focus();
+        getRentalForVehicle(vehicle.id).then(function (rental) {
+          if (vehicleOverlay.classList.contains('is-open')) {
+            renderVehicleOverlay(vehicle, rental);
+          }
+        });
       }
 
       function closeVehicleOverlay() {

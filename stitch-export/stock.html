@@ -450,11 +450,29 @@
 </div>
 </div>
 </main>
+<div aria-hidden="true" aria-labelledby="vehicle-detail-title" aria-modal="true" class="fixed inset-0 z-[70] hidden items-center justify-center bg-primary/50 p-4" id="vehicle-detail-modal" role="dialog">
+<div class="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-xl bg-surface-container-lowest shadow-xl" role="document">
+<div class="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-outline-variant bg-surface-container-lowest px-5 py-4">
+<div class="min-w-0">
+<p class="text-label-caps font-label-caps text-secondary">Ficha del vehiculo</p>
+<h2 class="mt-1 truncate text-headline-md font-headline-md text-primary" id="vehicle-detail-title">Vehiculo</h2>
+</div>
+<button aria-label="Cerrar ficha del vehiculo" class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container" id="vehicle-detail-close" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-5" id="vehicle-detail-content"></div>
+</div>
+</div>
 <script>
         (function () {
                 var grid = document.getElementById('stock-cards-grid');
                 var brandFilter = document.getElementById('brand-filter');
                 var advisorFilter = document.getElementById('advisor-filter');
+                var vehicleDetailModal = document.getElementById('vehicle-detail-modal');
+                var vehicleDetailContent = document.getElementById('vehicle-detail-content');
+                var vehicleDetailTitle = document.getElementById('vehicle-detail-title');
+                var vehicleDetailClose = document.getElementById('vehicle-detail-close');
                 var allVehicles = [];
                 var allUcarianos = [];
                 if (!grid) {
@@ -596,6 +614,78 @@
                         ].join('');
                 }
 
+                function documentLink(label, url, icon) {
+                        if (!url) {
+                                return '<div class="flex items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-3 text-body-sm font-body-sm text-on-surface-variant"><span class="material-symbols-outlined text-[20px]">' + icon + '</span><span class="flex-1">' + label + '</span><span>No registrado</span></div>';
+                        }
+
+                        return '<a class="flex items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-low p-3 text-body-sm font-body-sm text-primary transition-colors hover:border-secondary hover:bg-secondary-fixed" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer"><span class="material-symbols-outlined text-[20px]">' + icon + '</span><span class="flex-1">' + label + '</span><span class="material-symbols-outlined text-[18px]">open_in_new</span></a>';
+                }
+
+                function vehicleDetailHtml(vehicle) {
+                        var photoUrl = vehicle.photoUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+                        var registered = function (value) { return escapeHtml(value || 'No registrado'); };
+                        var publication = vehicle.publicationUrl
+                                ? '<a class="inline-flex items-center gap-1 text-body-sm font-body-sm text-secondary hover:underline" href="' + escapeHtml(vehicle.publicationUrl) + '" target="_blank" rel="noopener noreferrer"><span class="material-symbols-outlined text-[16px]">open_in_new</span>Ver publicacion</a>'
+                                : '';
+
+                        return [
+                                '<div class="grid gap-5 md:grid-cols-[220px_1fr]">',
+                                '  <img alt="Imagen del vehiculo" class="h-48 w-full rounded-lg bg-surface-dim object-cover md:h-full" src="' + escapeHtml(photoUrl) + '"/>',
+                                '  <div class="space-y-4">',
+                                '    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">',
+                                '      <span class="text-title-sm font-title-sm font-bold text-primary">' + registered(vehicle.price) + '</span>',
+                                '      <span class="text-body-sm font-body-sm text-on-surface-variant">' + registered(vehicle.year) + ' | ' + registered(vehicle.mileage) + '</span>',
+                                '      ' + publication,
+                                '    </div>',
+                                '    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">',
+                                '      <div class="rounded-lg border border-outline-variant p-3"><p class="text-label-caps font-label-caps text-on-surface-variant">VIN</p><p class="mt-1 break-all text-body-md font-body-md text-primary">' + registered(vehicle.vin) + '</p></div>',
+                                '      <div class="rounded-lg border border-outline-variant p-3"><p class="text-label-caps font-label-caps text-on-surface-variant">Patente</p><p class="mt-1 text-body-md font-body-md text-primary">' + registered(vehicle.licensePlate) + '</p></div>',
+                                '      <div class="rounded-lg border border-outline-variant p-3"><p class="text-label-caps font-label-caps text-on-surface-variant">Origen</p><p class="mt-1 text-body-md font-body-md text-primary">' + registered(vehicle.origin) + '</p></div>',
+                                '      <div class="rounded-lg border border-outline-variant p-3"><p class="text-label-caps font-label-caps text-on-surface-variant">Estado</p><p class="mt-1 text-body-md font-body-md text-primary">' + registered(vehicle.status) + '</p></div>',
+                                '    </div>',
+                                '  </div>',
+                                '</div>',
+                                '<section class="mt-6 border-t border-outline-variant pt-5">',
+                                '  <h3 class="text-title-sm font-title-sm text-primary">Certificados y documentos</h3>',
+                                '  <div class="mt-3 grid gap-3 sm:grid-cols-2">',
+                                documentLink('Revision tecnica', vehicle.technicalInspectionUrl, 'fact_check'),
+                                documentLink('Permiso de circulacion', vehicle.circulationPermitUrl, 'description'),
+                                documentLink('Otros certificados', vehicle.otherCertificatesUrl, 'folder_open'),
+                                '  </div>',
+                                '</section>',
+                                '<section class="mt-6 border-t border-outline-variant pt-5">',
+                                '  <h3 class="text-title-sm font-title-sm text-primary">Contrato de arriendo</h3>',
+                                '  <div class="mt-3">' + documentLink('Contrato de arriendo', vehicle.rentalContractUrl, 'assignment') + '</div>',
+                                '</section>'
+                        ].join('');
+                }
+
+                function openVehicleDetail(vehicleId) {
+                        var vehicle = allVehicles.find(function (item) { return item.id === vehicleId; });
+                        if (!vehicle || !vehicleDetailModal || !vehicleDetailContent || !vehicleDetailTitle) {
+                                return;
+                        }
+
+                        vehicleDetailTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
+                        vehicleDetailContent.innerHTML = vehicleDetailHtml(vehicle);
+                        vehicleDetailModal.classList.remove('hidden');
+                        vehicleDetailModal.classList.add('flex');
+                        vehicleDetailModal.setAttribute('aria-hidden', 'false');
+                        document.body.classList.add('overflow-hidden');
+                }
+
+                function closeVehicleDetail() {
+                        if (!vehicleDetailModal) {
+                                return;
+                        }
+
+                        vehicleDetailModal.classList.add('hidden');
+                        vehicleDetailModal.classList.remove('flex');
+                        vehicleDetailModal.setAttribute('aria-hidden', 'true');
+                        document.body.classList.remove('overflow-hidden');
+                }
+
                 function emptyStateHtml() {
                         return [
                                 '<div class="col-span-full bg-surface-container-low rounded-xl border border-outline-variant p-6">',
@@ -701,6 +791,35 @@
                         var ucarianoName = option ? (option.getAttribute('data-name') || option.textContent || '') : '';
 
                         assignUcariano(vehicleId, ucarianoId, ucarianoName, selectEl);
+                });
+
+                grid.addEventListener('click', function (event) {
+                        if (event.target.closest('a, button, select, option, label')) {
+                                return;
+                        }
+
+                        var card = event.target.closest('[data-vehicle-id]');
+                        if (card) {
+                                openVehicleDetail(card.getAttribute('data-vehicle-id'));
+                        }
+                });
+
+                if (vehicleDetailClose) {
+                        vehicleDetailClose.addEventListener('click', closeVehicleDetail);
+                }
+
+                if (vehicleDetailModal) {
+                        vehicleDetailModal.addEventListener('click', function (event) {
+                                if (event.target === vehicleDetailModal) {
+                                        closeVehicleDetail();
+                                }
+                        });
+                }
+
+                document.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape') {
+                                closeVehicleDetail();
+                        }
                 });
 
                 grid.innerHTML = loadingStateHtml();

@@ -44,6 +44,13 @@ type StockCardItem = {
   price: string;
   status: string;
   publicationUrl: string;
+  vin: string;
+  licensePlate: string;
+  origin: string;
+  technicalInspectionUrl: string;
+  circulationPermitUrl: string;
+  otherCertificatesUrl: string;
+  rentalContractUrl: string;
 };
 
 type WebVehicle = {
@@ -86,6 +93,13 @@ type NotionSchemaProperty = { type?: string };
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
 
 const PUBLICATION_URL_CANDIDATES = ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'];
+const VIN_CANDIDATES = ['VIN', 'Numero VIN', 'Número VIN', 'Chasis', 'Numero de chasis', 'Número de chasis'];
+const LICENSE_PLATE_CANDIDATES = ['Patente', 'Placa patente', 'Placa', 'License Plate'];
+const ORIGIN_CANDIDATES = ['Origen', 'Procedencia', 'Origen del vehiculo', 'Origen del vehículo', 'Vehicle Origin'];
+const TECHNICAL_INSPECTION_CANDIDATES = ['Revision tecnica', 'Revisión técnica', 'Certificado revision tecnica', 'Certificado revisión técnica'];
+const CIRCULATION_PERMIT_CANDIDATES = ['Permiso de circulacion', 'Permiso de circulación', 'Certificado permiso de circulacion', 'Certificado permiso de circulación'];
+const OTHER_CERTIFICATES_CANDIDATES = ['Certificados', 'Otros certificados', 'Documentos', 'Documentacion', 'Documentación'];
+const RENTAL_CONTRACT_CANDIDATES = ['Contrato de arriendo', 'Contrato arriendo', 'Contrato de alquiler', 'Rental Contract'];
 
 const ASSIGNED_UCARIANO_CANDIDATES = [
   'Ucariano Asignado',
@@ -520,6 +534,13 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
   );
   const status = getText(pickProperty(properties, ['Estado', 'Status'])) || 'Disponible';
   const publicationUrl = extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES));
+  const vin = getText(pickProperty(properties, VIN_CANDIDATES));
+  const licensePlate = getText(pickProperty(properties, LICENSE_PLATE_CANDIDATES));
+  const origin = getText(pickProperty(properties, ORIGIN_CANDIDATES));
+  const technicalInspectionUrl = extractFirstUrl(pickProperty(properties, TECHNICAL_INSPECTION_CANDIDATES));
+  const circulationPermitUrl = extractFirstUrl(pickProperty(properties, CIRCULATION_PERMIT_CANDIDATES));
+  const otherCertificatesUrl = extractFirstUrl(pickProperty(properties, OTHER_CERTIFICATES_CANDIDATES));
+  const rentalContractUrl = extractFirstUrl(pickProperty(properties, RENTAL_CONTRACT_CANDIDATES));
 
   const composedName = [model, version].filter(Boolean).join(' ').trim();
 
@@ -536,7 +557,14 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
     photoUrl,
     price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
     status,
-    publicationUrl
+    publicationUrl,
+    vin,
+    licensePlate,
+    origin,
+    technicalInspectionUrl,
+    circulationPermitUrl,
+    otherCertificatesUrl,
+    rentalContractUrl
   };
 }
 
@@ -567,6 +595,13 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
       vehicle.url ||
       extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES)) ||
       buildPublicationUrl(vehicle);
+    const vin = getText(pickProperty(properties, VIN_CANDIDATES));
+    const licensePlate = getText(pickProperty(properties, LICENSE_PLATE_CANDIDATES));
+    const origin = getText(pickProperty(properties, ORIGIN_CANDIDATES));
+    const technicalInspectionUrl = extractFirstUrl(pickProperty(properties, TECHNICAL_INSPECTION_CANDIDATES));
+    const circulationPermitUrl = extractFirstUrl(pickProperty(properties, CIRCULATION_PERMIT_CANDIDATES));
+    const otherCertificatesUrl = extractFirstUrl(pickProperty(properties, OTHER_CERTIFICATES_CANDIDATES));
+    const rentalContractUrl = extractFirstUrl(pickProperty(properties, RENTAL_CONTRACT_CANDIDATES));
 
   const composedName = [model, version].filter(Boolean).join(' ').trim();
 
@@ -586,7 +621,14 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
       PLACEHOLDER_IMAGE,
     price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
     status,
-    publicationUrl
+    publicationUrl,
+    vin,
+    licensePlate,
+    origin,
+    technicalInspectionUrl,
+    circulationPermitUrl,
+    otherCertificatesUrl,
+    rentalContractUrl
   };
 }
 
@@ -919,7 +961,14 @@ function fallbackCards(): StockCardItem[] {
     photoUrl: PLACEHOLDER_IMAGE,
     price: item.price > 0 ? `$${item.price.toLocaleString('es-CL')}` : '',
     status: item.status,
-    publicationUrl: ''
+    publicationUrl: '',
+    vin: '',
+    licensePlate: '',
+    origin: '',
+    technicalInspectionUrl: '',
+    circulationPermitUrl: '',
+    otherCertificatesUrl: '',
+    rentalContractUrl: ''
   }));
 }
 

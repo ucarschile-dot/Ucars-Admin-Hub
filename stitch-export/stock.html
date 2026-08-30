@@ -673,6 +673,7 @@
                         vehicleDetailModal.classList.add('flex');
                         vehicleDetailModal.setAttribute('aria-hidden', 'false');
                         document.body.classList.add('overflow-hidden');
+                        window.parent.postMessage({ type: 'ucars:vehicle-detail', open: true }, window.location.origin);
                 }
 
                 function closeVehicleDetail() {
@@ -684,6 +685,7 @@
                         vehicleDetailModal.classList.remove('flex');
                         vehicleDetailModal.setAttribute('aria-hidden', 'true');
                         document.body.classList.remove('overflow-hidden');
+                        window.parent.postMessage({ type: 'ucars:vehicle-detail', open: false }, window.location.origin);
                 }
 
                 function emptyStateHtml() {

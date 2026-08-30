@@ -9,6 +9,7 @@
   <style>
     :root {
       color-scheme: light;
+      --ui-scale: 1;
       --bg: #f8f9ff;
       --bar-bg: #282828;
       --topbar-height: 100px;
@@ -38,6 +39,11 @@
       height: 100%;
     }
 
+    html {
+      zoom: var(--ui-scale);
+      width: calc(100% / var(--ui-scale));
+    }
+
     body {
       margin: 0;
       min-width: 1200px;
@@ -47,7 +53,8 @@
     }
 
     .layout {
-      min-height: 100vh;
+      height: calc(100vh / var(--ui-scale));
+      min-height: calc(100vh / var(--ui-scale));
       display: flex;
       flex-direction: column;
     }
@@ -150,7 +157,8 @@
 
     .content {
       position: relative;
-      min-height: 100vh;
+      height: calc(100vh / var(--ui-scale));
+      min-height: calc(100vh / var(--ui-scale));
       padding-top: var(--content-top-offset);
       overflow: hidden;
       background: var(--bg);
@@ -235,6 +243,16 @@
       var activeScrollSource = null;
       var activeScreen = defaultScreen;
 
+      function applyUiScale() {
+        var fhdWidth = 1920;
+        var fhdHeight = 1080;
+        var scale = Math.max(1, Math.min(window.innerWidth / fhdWidth, window.innerHeight / fhdHeight));
+        document.documentElement.style.setProperty('--ui-scale', scale.toFixed(3));
+      }
+
+      applyUiScale();
+      window.addEventListener('resize', applyUiScale);
+
       function getCurrentScrollY(source) {
         if (!source) {
           return 0;
@@ -263,6 +281,14 @@
         }
 
       }
+
+      window.addEventListener('message', function (event) {
+        if (event.origin !== window.location.origin || !event.data || event.data.type !== 'ucars:vehicle-detail') {
+          return;
+        }
+
+        applyTopbarVisibility(!event.data.open);
+      });
 
       function syncTopbarVisibility() {
         var currentScrollY = getCurrentScrollY(activeScrollSource);

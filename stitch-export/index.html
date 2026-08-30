@@ -376,6 +376,42 @@
         return Number.isFinite(amount) && amount > 0 ? formatCurrency(amount * 0.03) : 'No disponible';
       }
 
+      function getNumericValue(value) {
+        var matches = String(value || '').match(/\d+(?:[.,]\d+)?/g);
+        if (!matches || matches.length === 0) return null;
+        var parsed = Number(matches[0].replace(',', '.'));
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+
+      function getRentalPayment(price, rental) {
+        var publishedPrice = Number(String(price || '').replace(/[^\d]/g, ''));
+        var termDays = rental ? getNumericValue(rental.plazo) : null;
+        var remainingDays = rental && typeof rental.diasArriendoRestantes === 'number'
+          ? rental.diasArriendoRestantes
+          : null;
+
+        if (!Number.isFinite(publishedPrice) || publishedPrice <= 0 || termDays === null || remainingDays === null) {
+          return { payment: null, elapsedDays: null, rate: null, balance: null };
+        }
+
+        var elapsedDays = Math.max(0, termDays - remainingDays);
+        var rate = elapsedDays <= 10 ? 0.0002 : elapsedDays <= 20 ? 0.0005 : elapsedDays <= 40 ? 0.0008 : 0.0014;
+        var commission = publishedPrice * 0.03;
+        var payment = publishedPrice * rate * elapsedDays;
+
+        // The policy closes the rental balance against the full sales commission on day 45.
+        if (elapsedDays >= 45) {
+          payment = commission;
+        }
+
+        return {
+          payment: Math.min(payment, commission),
+          elapsedDays: elapsedDays,
+          rate: rate,
+          balance: Math.max(0, commission - payment)
+        };
+      }
+
       function getRentalForVehicle(vehicleId) {
         return fetch('/api/arriendos', { cache: 'no-store' })
           .then(function (response) {
@@ -424,6 +460,12 @@
         var rentalDays = rental && rental.diasArriendoRestantes !== null
           ? String(rental.diasArriendoRestantes) + ' dias'
           : rentalError ? 'No disponible' : 'Cargando...';
+        var rentalPayment = getRentalPayment(vehicle.price, rental);
+        var paymentText = rentalPayment.payment === null ? 'No disponible' : formatCurrency(rentalPayment.payment);
+        var commissionBalanceText = rentalPayment.balance === null ? 'No disponible' : formatCurrency(rentalPayment.balance);
+        var paymentDetail = rentalPayment.elapsedDays === null
+          ? 'Se requiere Plazo y Dias restantes para calcularlo.'
+          : 'Dia ' + rentalPayment.elapsedDays + ' | Tasa aplicada: ' + (rentalPayment.rate * 100).toFixed(2) + '%.';
         var rentalErrorHtml = rentalError
           ? '<p style="margin: 12px 0 0; color: #93000a; font-size: 0.875rem;">Diagnostico de arriendo: ' + escapeHtml(rentalError) + '</p>'
           : '';
@@ -446,6 +488,8 @@
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Ucariano asignado</span><span class="vehicle-detail-value">' + value(rental && rental.ucariano !== 'Sin asignar' ? rental.ucariano : vehicle.assignedUcariano) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Dias de arriendo restantes</span><span class="vehicle-detail-value">' + value(rentalDays) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Comision de venta (3%)</span><span class="vehicle-detail-value">' + getSalesCommission(vehicle.price) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Pago de arriendo al dia</span><span class="vehicle-detail-value">' + paymentText + '</span><span class="vehicle-detail-label" style="margin-top: 6px; text-transform: none;">' + value(paymentDetail) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Comision restante</span><span class="vehicle-detail-value">' + commissionBalanceText + '</span></div>',
           '</div>' + rentalErrorHtml + '</section>'
         ].join('');
       }

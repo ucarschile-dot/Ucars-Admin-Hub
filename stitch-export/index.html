@@ -407,7 +407,7 @@
             if (rental.diasArriendoRestantes === null) {
               return {
                 rental: rental,
-                error: 'El arriendo esta relacionado, pero no tiene una fecha de termino valida para calcular los dias restantes.'
+                error: 'El arriendo esta relacionado, pero Notion no devolvio un valor valido en la propiedad Dias restantes ni una fecha de termino utilizable.'
               };
             }
 

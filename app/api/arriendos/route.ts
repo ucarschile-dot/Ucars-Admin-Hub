@@ -32,6 +32,7 @@ const START_DATE_CANDIDATES = ['Fecha de inicio', 'Inicio', 'Fecha Inicio', 'Sta
 const END_DATE_CANDIDATES = ['Fecha de término', 'Fecha de termino', 'Término', 'Termino', 'Fecha fin', 'Fin', 'End Date'];
 const TERM_CANDIDATES = ['Plazo', 'Termino', 'Término', 'Duración', 'Duracion', 'Term'];
 const DEADLINE_CANDIDATES = ['Deadline', 'Fecha Deadline', 'Vencimiento', 'Fecha de vencimiento'];
+const REMAINING_DAYS_CANDIDATES = ['Días restantes', 'Dias restantes', 'Días de arriendo restantes', 'Dias de arriendo restantes', 'Remaining Days'];
 
 function getText(property?: NotionProperty | null) {
   if (!property) return '';
@@ -72,6 +73,14 @@ function getRemainingDays(endDate: string) {
   const now = new Date();
   const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.max(0, Math.ceil((endUtc - todayUtc) / 86400000));
+}
+
+function getNumber(property?: NotionProperty | null) {
+  if (typeof property?.number === 'number') return property.number;
+  if (typeof property?.formula?.number === 'number') return property.formula.number;
+
+  const parsed = Number(getText(property).replace(',', '.').replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 async function queryRows(databaseId: string, notionToken: string) {
@@ -122,6 +131,7 @@ function toArriendo(row: NotionRow, auto: { id: string | null; name: string }, u
   const fechaTermino = getDate(pickProperty(properties, END_DATE_CANDIDATES));
   const plazo = getText(pickProperty(properties, TERM_CANDIDATES));
   const deadline = getDate(pickProperty(properties, DEADLINE_CANDIDATES));
+  const remainingDaysFromNotion = getNumber(pickProperty(properties, REMAINING_DAYS_CANDIDATES));
 
   return {
     id: row.id,
@@ -133,7 +143,7 @@ function toArriendo(row: NotionRow, auto: { id: string | null; name: string }, u
     fechaTermino,
     plazo,
     deadline,
-    diasArriendoRestantes: getRemainingDays(fechaTermino)
+    diasArriendoRestantes: remainingDaysFromNotion ?? getRemainingDays(fechaTermino)
   };
 }
 

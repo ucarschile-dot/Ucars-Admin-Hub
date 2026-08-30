@@ -545,9 +545,10 @@
                         var price = vehicle.price ? '<span class="text-title-sm font-title-sm font-bold text-primary">' + escapeHtml(vehicle.price) + '</span>' : '';
                         var ucariano = vehicle.assignedUcariano || 'Sin asignar';
                         var vehicleName = escapeHtml(vehicle.name || 'Vehiculo sin nombre');
-                        var titleHtml = vehicle.publicationUrl
-                                ? '<a href="' + escapeHtml(vehicle.publicationUrl) + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="text-title-sm font-title-sm text-primary hover:text-secondary hover:underline transition-colors">' + vehicleName + '</a>'
-                                : '<h3 class="text-title-sm font-title-sm text-primary group-hover:text-secondary transition-colors">' + vehicleName + '</h3>';
+                        var titleHtml = '<h3 class="text-title-sm font-title-sm text-primary group-hover:text-secondary transition-colors">' + vehicleName + '</h3>';
+                        var publicationLinkHtml = vehicle.publicationUrl
+                                ? '<a href="' + escapeHtml(vehicle.publicationUrl) + '" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" class="inline-flex items-center gap-1 text-body-sm font-body-sm text-secondary hover:text-on-secondary-container hover:underline transition-colors" title="Abrir publicacion en ucars.cl"><span class="material-symbols-outlined text-[16px]">open_in_new</span>Ver en ucars.cl</a>'
+                                : '';
 
                         return [
                                 '<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden group cursor-pointer" data-vehicle-id="' + escapeHtml(vehicle.id) + '">',
@@ -581,7 +582,8 @@
                                 '        <span class="text-label-caps font-label-caps truncate">' + escapeHtml(vehicle.transmission || '-') + '</span>',
                                 '      </div>',
                                 '    </div>',
-                                '    <div class="mt-auto pt-3 border-t border-surface-container-highest">',
+                                '    <div class="mt-auto pt-3 border-t border-surface-container-highest space-y-3">',
+                                publicationLinkHtml,
                                 '      <label class="flex items-center gap-2 cursor-pointer" onclick="event.stopPropagation()">',
                                 '        <div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-[10px] font-bold text-on-secondary-container shrink-0">' + escapeHtml(initials(ucariano)) + '</div>',
                                 '        <select class="ucariano-assign-select flex-1 min-w-0 bg-transparent border border-transparent hover:border-outline-variant focus:border-primary focus:outline-none rounded-md text-body-sm font-body-sm text-on-surface-variant py-1 px-1" data-vehicle-id="' + escapeHtml(vehicle.id) + '">',

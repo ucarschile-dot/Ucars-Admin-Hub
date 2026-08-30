@@ -178,12 +178,30 @@ function normalizeVeeklsVersion(version: unknown) {
   return '';
 }
 
+function buildPublicationUrl(vehicle: Pick<WebVehicle, 'id' | 'marca' | 'modelo' | 'version'>) {
+  const vehicleId = String(vehicle.id || '').trim();
+  if (!vehicleId) {
+    return '';
+  }
+
+  const slug = [vehicle.marca, vehicle.modelo, vehicle.version]
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `${getPublicSiteUrl()}/comprar/${slug || 'vehiculo'}?id=${encodeURIComponent(vehicleId)}`;
+}
+
 function mapVeeklsVehicleToWeb(vehicle: VeeklsVehicle): WebVehicle {
   const firstPictureId = Array.isArray(vehicle.pictures) ? vehicle.pictures.find(Boolean) : undefined;
   const image = firstPictureId ? `https://pictures.veekls.com/${firstPictureId}` : undefined;
   const status = vehicle.soldAt ? 'Vendido' : vehicle.reservedAt ? 'Reservado' : 'Disponible';
 
-  return {
+  const mappedVehicle: WebVehicle = {
     id: String(vehicle._id || ''),
     marca: vehicle.brand,
     modelo: vehicle.model,
@@ -198,6 +216,8 @@ function mapVeeklsVehicleToWeb(vehicle: VeeklsVehicle): WebVehicle {
     estado: status,
     imagen: image
   };
+
+  return { ...mappedVehicle, url: buildPublicationUrl(mappedVehicle) };
 }
 
 async function fetchVeeklsStock() {
@@ -543,7 +563,10 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
   const engine = rowEngine || vehicle.combustible || 'No especificado';
   const priceNumber = typeof vehicle.precio === 'number' ? vehicle.precio : rowPrice;
   const status = vehicle.estado || rowStatus || 'Disponible';
-  const publicationUrl = extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES));
+    const publicationUrl =
+      vehicle.url ||
+      extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES)) ||
+      buildPublicationUrl(vehicle);
 
   const composedName = [model, version].filter(Boolean).join(' ').trim();
 
@@ -687,7 +710,10 @@ function buildNotionPropertiesFromWebVehicle(
       candidates: ['Fotos URL', 'Foto URL', 'Fotos', 'Foto', 'Imagen', 'Image', 'Photos'],
       rawValue: vehicle.imagen
     },
-    { candidates: ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'], rawValue: vehicle.url }
+    {
+      candidates: ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'],
+      rawValue: vehicle.url || buildPublicationUrl(vehicle)
+    }
   ];
 
   fields.forEach((field) => {

@@ -450,7 +450,7 @@
 </div>
 </div>
 </main>
-<div aria-hidden="true" aria-labelledby="vehicle-detail-title" aria-modal="true" class="fixed inset-0 z-[70] hidden items-center justify-center bg-primary/50 p-4" id="vehicle-detail-modal" role="dialog">
+<div aria-hidden="true" aria-labelledby="vehicle-detail-title" aria-modal="true" class="fixed inset-0 z-[70] hidden items-center justify-center bg-primary/50 p-4" id="vehicle-detail-modal" role="dialog" tabindex="-1">
 <div class="max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto rounded-xl bg-surface-container-lowest shadow-xl" role="document">
 <div class="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-outline-variant bg-surface-container-lowest px-5 py-4">
 <div class="min-w-0">
@@ -669,11 +669,15 @@
 
                         vehicleDetailTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
                         vehicleDetailContent.innerHTML = vehicleDetailHtml(vehicle);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                         vehicleDetailModal.classList.remove('hidden');
                         vehicleDetailModal.classList.add('flex');
                         vehicleDetailModal.setAttribute('aria-hidden', 'false');
                         document.body.classList.add('overflow-hidden');
                         window.parent.postMessage({ type: 'ucars:vehicle-detail', open: true }, window.location.origin);
+                        window.requestAnimationFrame(function () {
+                                vehicleDetailModal.focus({ preventScroll: true });
+                        });
                 }
 
                 function closeVehicleDetail() {

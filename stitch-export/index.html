@@ -188,6 +188,64 @@
       background: var(--bg);
     }
 
+    .vehicle-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(11, 28, 48, 0.56);
+    }
+
+    .vehicle-overlay.is-open {
+      display: flex;
+    }
+
+    .vehicle-sheet {
+      width: min(920px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 24px 64px rgba(11, 28, 48, 0.3);
+    }
+
+    .vehicle-sheet-header {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid #c4c7c7;
+      background: #ffffff;
+    }
+
+    .vehicle-sheet-title { margin: 0; font-size: 1.35rem; }
+    .vehicle-sheet-kicker { margin: 0 0 5px; color: #785a00; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .vehicle-sheet-close { width: 36px; height: 36px; border: 0; border-radius: 50%; background: #eff4ff; color: #0b1c30; cursor: pointer; font-size: 1.4rem; }
+    .vehicle-sheet-body { padding: 24px; }
+    .vehicle-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .vehicle-detail { padding: 12px; border: 1px solid #c4c7c7; border-radius: 6px; }
+    .vehicle-detail-label { display: block; color: #444748; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .vehicle-detail-value { display: block; margin-top: 5px; overflow-wrap: anywhere; }
+    .vehicle-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #d3e4fe; }
+    .vehicle-section h3 { margin: 0 0 12px; font-size: 1rem; }
+    .vehicle-documents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .vehicle-document { display: flex; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #c4c7c7; border-radius: 6px; color: #0b1c30; text-decoration: none; }
+    .vehicle-document[href]:hover { border-color: #785a00; background: #fffdf7; }
+    .vehicle-document-empty { color: #444748; background: #eff4ff; }
+    @media (max-width: 700px) {
+      .vehicle-overlay { padding: 12px; }
+      .vehicle-sheet { max-height: calc(100vh - 24px); }
+      .vehicle-sheet-header, .vehicle-sheet-body { padding: 16px; }
+      .vehicle-details, .vehicle-documents { grid-template-columns: 1fr; }
+    }
+
   </style>
 </head>
 <body>
@@ -230,6 +288,18 @@
       </section>
     </main>
   </div>
+  <div aria-hidden="true" aria-labelledby="hub-vehicle-title" aria-modal="true" class="vehicle-overlay" id="hub-vehicle-overlay" role="dialog">
+    <section class="vehicle-sheet" role="document">
+      <header class="vehicle-sheet-header">
+        <div>
+          <p class="vehicle-sheet-kicker">Ficha del vehiculo</p>
+          <h2 class="vehicle-sheet-title" id="hub-vehicle-title">Vehiculo</h2>
+        </div>
+        <button aria-label="Cerrar ficha del vehiculo" class="vehicle-sheet-close" id="hub-vehicle-close" type="button">&times;</button>
+      </header>
+      <div class="vehicle-sheet-body" id="hub-vehicle-content"></div>
+    </section>
+  </div>
 
   <script>
     (function () {
@@ -242,6 +312,10 @@
       var scrollRaf = 0;
       var activeScrollSource = null;
       var activeScreen = defaultScreen;
+      var vehicleOverlay = document.getElementById('hub-vehicle-overlay');
+      var vehicleContent = document.getElementById('hub-vehicle-content');
+      var vehicleTitle = document.getElementById('hub-vehicle-title');
+      var vehicleClose = document.getElementById('hub-vehicle-close');
 
       function applyUiScale() {
         var fhdWidth = 1920;
@@ -282,16 +356,70 @@
 
       }
 
+      function escapeHtml(value) {
+        return String(value || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+      }
+
+      function documentHtml(label, url) {
+        if (!url) {
+          return '<div class="vehicle-document vehicle-document-empty"><span>' + label + '</span><span>No registrado</span></div>';
+        }
+        return '<a class="vehicle-document" href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer"><span>' + label + '</span><span>Abrir</span></a>';
+      }
+
+      function openVehicleOverlay(vehicle) {
+        if (!vehicleOverlay || !vehicleContent || !vehicleTitle) return;
+        var value = function (item) { return escapeHtml(item || 'No registrado'); };
+        vehicleTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
+        vehicleContent.innerHTML = [
+          '<div class="vehicle-details">',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">VIN</span><span class="vehicle-detail-value">' + value(vehicle.vin) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Patente</span><span class="vehicle-detail-value">' + value(vehicle.licensePlate) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Origen</span><span class="vehicle-detail-value">' + value(vehicle.origin) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Estado</span><span class="vehicle-detail-value">' + value(vehicle.status) + '</span></div>',
+          '</div>',
+          '<section class="vehicle-section"><h3>Certificados y documentos</h3><div class="vehicle-documents">',
+          documentHtml('Revision tecnica', vehicle.technicalInspectionUrl),
+          documentHtml('Permiso de circulacion', vehicle.circulationPermitUrl),
+          documentHtml('Otros certificados', vehicle.otherCertificatesUrl),
+          '</div></section>',
+          '<section class="vehicle-section"><h3>Contrato de arriendo</h3><div class="vehicle-documents">',
+          documentHtml('Contrato de arriendo', vehicle.rentalContractUrl),
+          '</div></section>'
+        ].join('');
+        vehicleOverlay.classList.add('is-open');
+        vehicleOverlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        applyTopbarVisibility(false);
+        vehicleClose.focus();
+      }
+
+      function closeVehicleOverlay() {
+        if (!vehicleOverlay) return;
+        vehicleOverlay.classList.remove('is-open');
+        vehicleOverlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        applyTopbarVisibility(true);
+      }
+
       window.addEventListener('message', function (event) {
         if (event.origin !== window.location.origin || !event.data || event.data.type !== 'ucars:vehicle-detail') {
           return;
         }
 
         if (event.data.open) {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          openVehicleOverlay(event.data.vehicle || {});
+        } else {
+          closeVehicleOverlay();
         }
+      });
 
-        applyTopbarVisibility(!event.data.open);
+      vehicleClose.addEventListener('click', closeVehicleOverlay);
+      vehicleOverlay.addEventListener('click', function (event) {
+        if (event.target === vehicleOverlay) closeVehicleOverlay();
+      });
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') closeVehicleOverlay();
       });
 
       function syncTopbarVisibility() {

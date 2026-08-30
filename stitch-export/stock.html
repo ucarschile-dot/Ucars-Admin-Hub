@@ -668,21 +668,11 @@
 
                 function openVehicleDetail(vehicleId) {
                         var vehicle = allVehicles.find(function (item) { return item.id === vehicleId; });
-                        if (!vehicle || !vehicleDetailModal || !vehicleDetailContent || !vehicleDetailTitle) {
+                        if (!vehicle) {
                                 return;
                         }
 
-                        vehicleDetailTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
-                        vehicleDetailContent.innerHTML = vehicleDetailHtml(vehicle);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        vehicleDetailModal.classList.remove('hidden');
-                        vehicleDetailModal.classList.add('flex');
-                        vehicleDetailModal.setAttribute('aria-hidden', 'false');
-                        document.body.classList.add('overflow-hidden');
-                        window.parent.postMessage({ type: 'ucars:vehicle-detail', open: true }, window.location.origin);
-                        window.requestAnimationFrame(function () {
-                                vehicleDetailModal.focus({ preventScroll: true });
-                        });
+                        window.parent.postMessage({ type: 'ucars:vehicle-detail', open: true, vehicle: vehicle }, window.location.origin);
                 }
 
                 function closeVehicleDetail() {

@@ -379,22 +379,54 @@
       function getRentalForVehicle(vehicleId) {
         return fetch('/api/arriendos', { cache: 'no-store' })
           .then(function (response) {
-            if (!response.ok) return { arriendos: [] };
-            return response.json();
+            return response.text().then(function (text) {
+              var payload;
+              try {
+                payload = text ? JSON.parse(text) : {};
+              } catch (_) {
+                throw new Error('La API de arriendos devolvio una respuesta no valida. Estado HTTP: ' + response.status + '.');
+              }
+
+              if (!response.ok) {
+                throw new Error(payload.error || 'La API de arriendos respondio HTTP ' + response.status + '.');
+              }
+
+              return payload;
+            });
           })
           .then(function (payload) {
             var rentals = Array.isArray(payload.arriendos) ? payload.arriendos : [];
-            return rentals.find(function (rental) { return rental.autoId === vehicleId; }) || null;
+            var rental = rentals.find(function (item) { return item.autoId === vehicleId; }) || null;
+            if (!rental) {
+              return {
+                rental: null,
+                error: 'No se encontro un arriendo relacionado con este vehiculo. ID de Stock: ' + (vehicleId || 'vacio') + '. Arriendos consultados: ' + rentals.length + '.'
+              };
+            }
+
+            if (rental.diasArriendoRestantes === null) {
+              return {
+                rental: rental,
+                error: 'El arriendo esta relacionado, pero no tiene una fecha de termino valida para calcular los dias restantes.'
+              };
+            }
+
+            return { rental: rental, error: '' };
           })
-          .catch(function () { return null; });
+          .catch(function (error) {
+            return { rental: null, error: error instanceof Error ? error.message : 'Error desconocido al consultar arriendos.' };
+          });
       }
 
-      function renderVehicleOverlay(vehicle, rental) {
+      function renderVehicleOverlay(vehicle, rental, rentalError) {
         if (!vehicleContent || !vehicleTitle) return;
         var value = function (item) { return escapeHtml(item || 'No registrado'); };
         var rentalDays = rental && rental.diasArriendoRestantes !== null
           ? String(rental.diasArriendoRestantes) + ' dias'
-          : 'Sin arriendo vigente';
+          : rentalError ? 'No disponible' : 'Cargando...';
+        var rentalErrorHtml = rentalError
+          ? '<p style="margin: 12px 0 0; color: #93000a; font-size: 0.875rem;">Diagnostico de arriendo: ' + escapeHtml(rentalError) + '</p>'
+          : '';
         vehicleTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
         vehicleContent.innerHTML = [
           '<div class="vehicle-details">',
@@ -414,21 +446,21 @@
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Ucariano asignado</span><span class="vehicle-detail-value">' + value(rental && rental.ucariano !== 'Sin asignar' ? rental.ucariano : vehicle.assignedUcariano) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Dias de arriendo restantes</span><span class="vehicle-detail-value">' + value(rentalDays) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Comision de venta (3%)</span><span class="vehicle-detail-value">' + getSalesCommission(vehicle.price) + '</span></div>',
-          '</div></section>'
+          '</div>' + rentalErrorHtml + '</section>'
         ].join('');
       }
 
       function openVehicleOverlay(vehicle) {
         if (!vehicleOverlay || !vehicleContent || !vehicleTitle) return;
-        renderVehicleOverlay(vehicle, null);
+        renderVehicleOverlay(vehicle, null, '');
         vehicleOverlay.classList.add('is-open');
         vehicleOverlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         applyTopbarVisibility(false);
         vehicleClose.focus();
-        getRentalForVehicle(vehicle.id).then(function (rental) {
+        getRentalForVehicle(vehicle.id).then(function (result) {
           if (vehicleOverlay.classList.contains('is-open')) {
-            renderVehicleOverlay(vehicle, rental);
+            renderVehicleOverlay(vehicle, result.rental, result.error);
           }
         });
       }

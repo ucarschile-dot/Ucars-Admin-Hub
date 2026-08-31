@@ -159,14 +159,17 @@
       position: relative;
       height: calc(100vh / var(--ui-scale));
       min-height: calc(100vh / var(--ui-scale));
-      padding-top: var(--content-top-offset);
       overflow: hidden;
       background: var(--bg);
     }
 
     .screen {
       position: absolute;
-      inset: 0;
+      /* .content's padding-top would be ignored here since inset:0 anchors to the padding edge, so offset top explicitly instead. */
+      top: var(--content-top-offset);
+      right: 0;
+      bottom: 0;
+      left: 0;
       opacity: 0;
       transform: translateY(6px);
       pointer-events: none;

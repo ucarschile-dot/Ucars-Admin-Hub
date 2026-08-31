@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
   <style>
+    /* Escala y tokens globales: modificar aqui para ajustar densidad, dimensiones y colores del Hub completo. */
     :root {
       color-scheme: light;
       --ui-scale: 1;
@@ -52,6 +53,7 @@
       background: var(--bg);
     }
 
+    /* Estructura fija: la barra ocupa la parte superior y el contenido muestra una pantalla a la vez. */
     .layout {
       height: calc(100vh / var(--ui-scale));
       min-height: calc(100vh / var(--ui-scale));
@@ -84,6 +86,7 @@
       transform: translateY(-110%);
     }
 
+    /* Marca anclada a la izquierda de la barra; las dimensiones se controlan con --brand-*. */
     .brand {
       position: absolute;
       left: var(--topbar-padding-x);
@@ -118,6 +121,7 @@
       display: none;
     }
 
+    /* Pestañas de navegacion: --nav-* define su tamano y separacion visual. */
     .nav {
       display: flex;
       align-items: center;
@@ -155,6 +159,7 @@
       border-bottom-color: var(--sidebar-active);
     }
 
+    /* Area de trabajo: las pantallas iframe se superponen y solo la activa recibe interaccion. */
     .content {
       position: relative;
       height: calc(100vh / var(--ui-scale));
@@ -191,6 +196,7 @@
       background: var(--bg);
     }
 
+    /* Ficha de vehiculo a pantalla completa, abierta desde la pantalla de Stock. */
     .vehicle-overlay {
       position: fixed;
       inset: 0;
@@ -253,6 +259,7 @@
 </head>
 <body>
   <div class="layout">
+    <!-- Barra superior persistente: logo a la izquierda y selector de pantalla al centro. -->
     <header class="topbar" aria-label="Navegacion principal">
       <div class="brand">
         <div class="brand-logo-wrap">
@@ -270,6 +277,7 @@
       </nav>
     </header>
 
+    <!-- Vistas principales: cada seccion carga una pantalla independiente dentro de un iframe. -->
     <main class="content" aria-live="polite">
       <section class="screen" data-screen="stock">
         <iframe src="/stitch-export/stock.html" title="Stock"></iframe>
@@ -291,6 +299,7 @@
       </section>
     </main>
   </div>
+  <!-- Dialogo global de ficha: Stock envia el vehiculo seleccionado mediante postMessage. -->
   <div aria-hidden="true" aria-labelledby="hub-vehicle-title" aria-modal="true" class="vehicle-overlay" id="hub-vehicle-overlay" role="dialog">
     <section class="vehicle-sheet" role="document">
       <header class="vehicle-sheet-header">
@@ -320,6 +329,7 @@
       var vehicleTitle = document.getElementById('hub-vehicle-title');
       var vehicleClose = document.getElementById('hub-vehicle-close');
 
+      // Escala toda la carcasa para conservar la composicion de escritorio en resoluciones menores o mayores que FHD.
       function applyUiScale() {
         var fhdWidth = 1920;
         var fhdHeight = 1080;
@@ -475,6 +485,7 @@
           });
       }
 
+      // Construye la ficha visible del vehiculo, incluyendo documentos y el resumen de arriendo.
       function renderVehicleOverlay(vehicle, rental, rentalError) {
         if (!vehicleContent || !vehicleTitle) return;
         var value = function (item) { return escapeHtml(item || 'No registrado'); };
@@ -515,6 +526,7 @@
         ].join('');
       }
 
+      // Abre la ficha de Stock primero con datos base y luego completa el arriendo de forma asincrona.
       function openVehicleOverlay(vehicle) {
         if (!vehicleOverlay || !vehicleContent || !vehicleTitle) return;
         renderVehicleOverlay(vehicle, null, '');
@@ -538,6 +550,7 @@
         applyTopbarVisibility(true);
       }
 
+      // Recibe desde el iframe de Stock la orden de abrir o cerrar la ficha global.
       window.addEventListener('message', function (event) {
         if (event.origin !== window.location.origin || !event.data || event.data.type !== 'ucars:vehicle-detail') {
           return;
@@ -558,6 +571,7 @@
         if (event.key === 'Escape') closeVehicleOverlay();
       });
 
+      // Oculta o muestra la barra superior segun el desplazamiento de la pantalla iframe activa.
       function syncTopbarVisibility() {
         var currentScrollY = getCurrentScrollY(activeScrollSource);
         var delta = currentScrollY - lastScrollY;

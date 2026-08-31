@@ -132,6 +132,7 @@
     <script defer src="/stitch-export/shared.js"></script>
 </head>
 <body class="text-on-background font-body-md antialiased overflow-x-hidden flex">
+<!-- Navegacion lateral: accesos persistentes entre los modulos del administrador. -->
 <!-- SideNavBar (Shared Component) -->
 <aside class="hidden md:flex flex-col h-screen w-[260px] fixed left-0 top-0 bg-primary dark:bg-primary-container shadow-md py-stack-md z-40">
 <div class="px-container-padding mb-8">
@@ -208,6 +209,7 @@
 </div>
 </header>
 <!-- Main Canvas -->
+<!-- Area de Agenda: controles de fecha y asesor, calendario semanal y panel del dia seleccionado. -->
 <main class="flex-1 pt-24 p-container-padding max-w-[1600px] mx-auto w-full flex flex-col gap-card-gap">
 <!-- Page Header & Controls -->
 <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface-lowest p-6 rounded-xl border border-outline-variant shadow-[0_2px_4px_rgba(0,0,0,0.04)]">
@@ -480,6 +482,7 @@
 </div>
 </div>
 <script>
+    // Estado y renderizado de la agenda: sincroniza calendario, filtros, eventos y formularios modales.
             (function () {
                 var monthLabel = document.getElementById('agenda-month-label');
                 var totalLabel = document.getElementById('agenda-total-label');

@@ -1,6 +1,8 @@
 (function () {
+  // Ruta actual usada para resaltar el modulo activo y evitar navegar hacia la misma pantalla.
   var currentPath = window.location.pathname;
 
+  // Sincroniza el estado visual y accesible de los enlaces de la barra lateral.
   function markActiveNav() {
     var navLinks = document.querySelectorAll('a[href^="/stitch-export/"]');
     navLinks.forEach(function (link) {
@@ -16,6 +18,7 @@
     });
   }
 
+  // Aplica una breve transicion de salida antes de cambiar entre pantallas exportadas.
   function enableSmoothNavigation() {
     document.addEventListener('click', function (event) {
       var target = event.target;
@@ -40,6 +43,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    // Prepara navegacion y revela el contenido solo cuando el DOM ya esta disponible.
     markActiveNav();
     enableSmoothNavigation();
 

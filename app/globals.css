@@ -1,3 +1,4 @@
+/* Tokens globales: cambiar estas variables ajusta la identidad visual de las pantallas React. */
 :root {
   --bg: #f2ebe1;
   --surface: #f9f9ff;
@@ -61,6 +62,7 @@ textarea {
   font: inherit;
 }
 
+/* Cascaron administrativo de dos columnas: barra lateral fija y contenido principal. */
 .shell {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -173,6 +175,7 @@ textarea {
   margin: 0;
 }
 
+/* Area de trabajo y ancho maximo que comparten los paneles de cada modulo. */
 .content {
   padding: 32px;
 }
@@ -267,6 +270,7 @@ textarea {
   gap: 18px;
 }
 
+/* Pantalla de acceso: panel centrado con informacion y formulario de autenticacion. */
 .login-shell {
   min-height: 100vh;
   display: grid;
@@ -391,6 +395,7 @@ textarea {
   }
 }
 
+/* Rejillas reutilizables para KPI, paneles y columnas de las pantallas administrativas. */
 .metrics {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }

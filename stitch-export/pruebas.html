@@ -51,6 +51,7 @@
 <script defer src="/stitch-export/shared.js"></script>
 </head>
 <body class="antialiased min-h-screen">
+<!-- Navegacion lateral compartida entre las pantallas administrativas. -->
 <!-- SideNavBar -->
 <nav class="hidden md:flex fixed left-0 top-0 h-full w-[260px] bg-primary dark:bg-primary-container shadow-md flex-col py-stack-md z-20">
 <div class="px-container-padding mb-8 flex flex-col items-start gap-4">
@@ -101,7 +102,7 @@
 <span class="text-title-sm font-title-sm font-bold text-primary">Pruebas</span>
 </div>
 </header>
-<!-- Main Content Canvas -->
+<!-- Lienzo de pruebas: selector del rango de Sheets y tabla de resultados. -->
 <main class="md:ml-[260px] mt-6 md:mt-24 p-4 md:p-container-padding min-h-screen pb-24 md:pb-container-padding">
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
 <div>
@@ -137,6 +138,7 @@
 </section>
 </main>
 <script>
+        // Actualiza la tabla visible al cargar un rango de Google Sheets o al cambiarlo el usuario.
         (function () {
                 var rangeInput = document.getElementById('sheet-range-input');
                 var loadBtn = document.getElementById('sheet-range-load');

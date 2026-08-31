@@ -1,3 +1,4 @@
+/* Estado visual base y transicion de entrada/salida de cada pantalla iframe. */
 html {
   background: #f8f9ff;
 }
@@ -18,7 +19,7 @@ body.stitch-leaving {
   transform: translateY(4px);
 }
 
-/* Keep side navigation visually consistent across exported Stitch screens. */
+/* Navegacion lateral comun: unifica ancho, fondo y contraste en las pantallas exportadas. */
 body > nav.fixed.left-0,
 body > aside.fixed.left-0,
 body > nav[class*="fixed"][class*="left-0"],

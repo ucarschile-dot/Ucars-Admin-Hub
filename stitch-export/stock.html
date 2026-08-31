@@ -213,6 +213,7 @@
 <script defer src="/stitch-export/shared.js"></script>
 </head>
 <body class="bg-background text-on-background min-h-screen font-body-md overflow-x-hidden flex">
+<!-- Navegacion lateral compartida: mantiene el acceso entre modulos en escritorio. -->
 <!-- SideNavBar -->
 <nav class="fixed left-0 top-0 h-full w-[260px] bg-primary dark:bg-primary-container shadow-md flex flex-col py-stack-md z-50 hidden md:flex" id="legacy-stock-sidebar">
 <div class="px-container-padding mb-8">
@@ -290,6 +291,7 @@
 </div>
 </header>
 <!-- Main Content Area -->
+<!-- Lienzo de Stock: titulo, filtros, resumen y grilla de vehiculos. -->
 <main class="flex-1 px-4 pt-8 pb-8 md:px-container-padding">
 <!-- Page Header & Filters -->
 <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
@@ -470,6 +472,7 @@
 </div>
 </div>
 <script>
+        // Control de la pantalla: carga el stock y actualiza filtros, tarjetas y modales visibles.
         (function () {
                 var grid = document.getElementById('stock-cards-grid');
                 var brandFilter = document.getElementById('brand-filter');

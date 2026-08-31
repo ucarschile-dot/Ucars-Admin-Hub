@@ -33,12 +33,14 @@
   </style>
 </head>
 <body class="antialiased min-h-screen">
+  <!-- Tablero de Prospectos: titulo del modulo, KPIs resumidos y estado de la integracion. -->
   <main class="max-w-[1400px] mx-auto px-6 py-10">
     <header class="flex flex-col gap-2 mb-8">
       <h1 class="text-3xl font-bold text-primary">Panel de Prospectos</h1>
       <p class="text-sm text-text-muted">Proximamente: visor de campanas Meta Ads y desempeno de ventas por vehiculo.</p>
     </header>
 
+    <!-- Tarjetas KPI: reservar para las metricas que lleguen desde Meta Ads y ventas. -->
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
       <article class="bg-surface rounded-xl border border-outline p-5">
         <p class="text-xs uppercase tracking-wide text-text-muted">Leads del dia</p>
@@ -58,6 +60,7 @@
       </article>
     </section>
 
+    <!-- Lista de tareas pendientes antes de habilitar datos reales en este panel. -->
     <section class="bg-surface rounded-xl border border-outline p-6">
       <h2 class="text-lg font-semibold text-primary mb-3">Estado de integracion</h2>
       <ul class="space-y-2 text-sm text-text-muted">

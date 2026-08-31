@@ -11,6 +11,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const nextPath = resolvedSearchParams?.next || '/';
 
   return (
+    // Pantalla de acceso: texto contextual a la izquierda y formulario autenticado a la derecha.
     <main className="login-shell">
       <section className="login-panel">
         <div className="login-copy">

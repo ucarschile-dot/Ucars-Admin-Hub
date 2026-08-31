@@ -112,6 +112,7 @@
     <script defer src="/stitch-export/shared.js"></script>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen flex">
+<!-- Navegacion lateral compartida: perfil, accion principal y enlaces entre modulos. -->
 <!-- SideNavBar -->
 <nav class="hidden md:flex flex-col h-full py-stack-md bg-primary dark:bg-primary-container fixed left-0 top-0 h-full w-[260px] shadow-md z-20">
 <div class="px-container-padding mb-stack-md flex items-center gap-3">
@@ -173,7 +174,7 @@
 </li>
 </ul>
 </nav>
-<!-- Main Content Area -->
+<!-- Contenido principal: encabezado, filtro por destinatario y listado de notificaciones. -->
 <main class="flex-1 md:ml-[260px] pt-24 md:pt-24 min-h-screen flex flex-col">
 <!-- TopAppBar (Mobile & Tablet mostly, but styling implies fixed top) -->
 <header class="md:hidden fixed top-0 right-0 left-0 h-16 bg-surface-lowest dark:bg-background border-b border-outline-variant dark:border-outline flex justify-between items-center px-container-padding w-full z-20">
@@ -205,7 +206,7 @@
 <input class="w-full sm:w-64 pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-body-sm font-body-sm" placeholder="Filtrar por ucariano..." type="text"/>
 </div>
 </div>
-<!-- Notifications Feed Container -->
+<!-- Tabla visual del feed: encabezados y filas de comunicaciones leidas/no leidas. -->
 <div class="bg-surface-container-lowest rounded-lg border border-outline-variant shadow-[0_2px_4px_rgba(0,0,0,0.04)] overflow-hidden">
 <!-- Header Row -->
 <div class="grid grid-cols-12 gap-4 px-stack-md py-3 bg-[#F1F5F9] border-b border-outline-variant items-center text-label-caps font-label-caps text-on-surface-variant">

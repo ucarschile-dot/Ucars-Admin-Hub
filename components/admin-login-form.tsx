@@ -7,6 +7,7 @@ type AdminLoginFormProps = {
 };
 
 export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
+  // Estado de los controles visibles y de los mensajes de respuesta del formulario.
   const [email, setEmail] = useState('');
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
@@ -41,6 +42,7 @@ export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
   }
 
   return (
+    // Campos de acceso y accion principal que componen el panel derecho de la pantalla de login.
     <form className="login-form" onSubmit={handleSubmit}>
       <label className="login-field">
         <span>Email</span>
@@ -70,6 +72,7 @@ export function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
         />
       </label>
 
+      {/* Mensaje visible cuando la validacion no permite iniciar sesion. */}
       {error ? <p className="login-error">{error}</p> : null}
 
       <button type="submit" className="login-submit" disabled={submitting}>

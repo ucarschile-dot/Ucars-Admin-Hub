@@ -1,4 +1,5 @@
 import { mockDataset } from '@/lib/mock-data';
+import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
 
 type NotionProperty = Record<string, unknown> & {
   type?: string;
@@ -215,15 +216,18 @@ function toAgendaItem(
 }
 
 async function queryDatabaseRows(databaseId: string) {
+  const notionToken = process.env.NOTION_API_KEY as string;
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
-        'Notion-Version': '2022-06-28',
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -330,10 +334,11 @@ export async function GET() {
 type AgendaSchemaProperty = { type?: string; select?: { options?: Array<{ name?: string }> } };
 
 async function getNotionDatabaseSchema(databaseId: string, notionToken: string) {
-  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+  const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
     headers: {
       Authorization: `Bearer ${notionToken}`,
-      'Notion-Version': '2022-06-28'
+      'Notion-Version': NOTION_VERSION
     },
     cache: 'no-store'
   });
@@ -368,7 +373,7 @@ async function getVehicleInfo(vehicleId: string, notionToken: string) {
     const response = await fetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28'
+        'Notion-Version': NOTION_VERSION
       },
       cache: 'no-store'
     });
@@ -445,11 +450,11 @@ async function notifyUcariano(options: {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        parent: { database_id: notificationsDb },
+        parent: { data_source_id: await resolveDataSourceId(notificationsDb, notionToken) },
         properties
       })
     });
@@ -542,7 +547,7 @@ export async function PATCH(request: Request) {
     const currentPageResponse = await fetch(`https://api.notion.com/v1/pages/${id}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28'
+        'Notion-Version': NOTION_VERSION
       },
       cache: 'no-store'
     });
@@ -559,7 +564,7 @@ export async function PATCH(request: Request) {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ properties })
@@ -703,11 +708,11 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        parent: { database_id: agendaDb },
+        parent: { data_source_id: await resolveDataSourceId(agendaDb, notionToken) },
         properties
       })
     });

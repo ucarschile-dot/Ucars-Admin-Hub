@@ -1,3 +1,5 @@
+import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
+
 type NotionProperty = Record<string, unknown> & {
   type?: string;
   title?: Array<{ plain_text?: string }>;
@@ -84,15 +86,16 @@ function getNumber(property?: NotionProperty | null) {
 }
 
 async function queryRows(databaseId: string, notionToken: string) {
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ start_cursor: cursor, page_size: 100 }),
@@ -111,7 +114,7 @@ async function queryRows(databaseId: string, notionToken: string) {
 
 async function getPageTitle(pageId: string, notionToken: string) {
   const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-    headers: { Authorization: `Bearer ${notionToken}`, 'Notion-Version': '2022-06-28' },
+    headers: { Authorization: `Bearer ${notionToken}`, 'Notion-Version': NOTION_VERSION },
     cache: 'no-store'
   });
   const page = (await response.json()) as { properties?: Record<string, NotionProperty> };

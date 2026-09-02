@@ -1,4 +1,5 @@
 import { mockDataset } from '@/lib/mock-data';
+import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
 
 const DEFAULT_PUBLIC_SITE_URL = 'https://ucars.cl';
 const DEFAULT_VEEKLS_API_URL = 'https://public.api.veekls.com';
@@ -633,15 +634,18 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
 }
 
 async function queryStockRows(databaseId: string) {
+  const notionToken = process.env.NOTION_API_KEY as string;
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
-        'Notion-Version': '2022-06-28',
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -670,10 +674,11 @@ async function queryStockRows(databaseId: string) {
 }
 
 async function getDatabaseSchema(databaseId: string, notionToken: string) {
-  const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+  const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
     headers: {
       Authorization: `Bearer ${notionToken}`,
-      'Notion-Version': '2022-06-28'
+      'Notion-Version': NOTION_VERSION
     },
     cache: 'no-store'
   });
@@ -785,7 +790,7 @@ async function updateNotionPage(pageId: string, notionToken: string, properties:
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${notionToken}`,
-      'Notion-Version': '2022-06-28',
+      'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ properties })
@@ -799,15 +804,16 @@ async function updateNotionPage(pageId: string, notionToken: string, properties:
 }
 
 async function createNotionPage(stockDb: string, notionToken: string, properties: Record<string, unknown>) {
+  const dataSourceId = await resolveDataSourceId(stockDb, notionToken);
   const response = await fetch('https://api.notion.com/v1/pages', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${notionToken}`,
-      'Notion-Version': '2022-06-28',
+      'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      parent: { database_id: stockDb },
+      parent: { data_source_id: dataSourceId },
       properties
     })
   });
@@ -826,7 +832,7 @@ async function archiveNotionPage(pageId: string, notionToken: string) {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${notionToken}`,
-      'Notion-Version': '2022-06-28',
+      'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ archived: true })
@@ -1087,10 +1093,10 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const schemaResponse = await fetch(`https://api.notion.com/v1/databases/${stockDb}`, {
+    const schemaResponse = await fetch(`https://api.notion.com/v1/data_sources/${await resolveDataSourceId(stockDb, notionToken)}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28'
+        'Notion-Version': NOTION_VERSION
       },
       cache: 'no-store'
     });
@@ -1149,7 +1155,7 @@ export async function PATCH(request: Request) {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${notionToken}`,
-        'Notion-Version': '2022-06-28',
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

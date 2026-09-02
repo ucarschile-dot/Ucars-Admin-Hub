@@ -1,4 +1,5 @@
 import { hasGoogleSheetsConfig, fetchSheetOrExcelValues, rowsToObjects } from './google-sheets';
+import { NOTION_VERSION, resolveDataSourceId } from './notion-data-source';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 
@@ -59,7 +60,7 @@ async function notionFetch(path: string, token: string, init?: RequestInit) {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Notion-Version': '2022-06-28',
+      'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json',
       ...(init?.headers || {})
     },
@@ -75,8 +76,8 @@ async function notionFetch(path: string, token: string, init?: RequestInit) {
   return payload;
 }
 
-async function getSchema(databaseId: string, token: string) {
-  const schema = (await notionFetch(`/databases/${databaseId}`, token)) as {
+async function getSchema(dataSourceId: string, token: string) {
+  const schema = (await notionFetch(`/data_sources/${dataSourceId}`, token)) as {
     properties?: Record<string, NotionSchemaProperty>;
   };
   return schema.properties || {};
@@ -119,12 +120,12 @@ function getPropertyText(property?: NotionPropertyValue) {
   return '';
 }
 
-async function queryAllRows(databaseId: string, token: string) {
+async function queryAllRows(dataSourceId: string, token: string) {
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
 
   do {
-    const payload = (await notionFetch(`/databases/${databaseId}/query`, token, {
+    const payload = (await notionFetch(`/data_sources/${dataSourceId}/query`, token, {
       method: 'POST',
       body: JSON.stringify({ start_cursor: cursor, page_size: 100 })
     })) as { results?: NotionRow[]; has_more?: boolean; next_cursor?: string | null };
@@ -167,7 +168,8 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
     const rawRows = await fetchSheetOrExcelValues(spreadsheetId, range);
     const sheetRows = rowsToObjects(rawRows);
 
-    const schema = await getSchema(databaseId, notionToken);
+    const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+    const schema = await getSchema(dataSourceId, notionToken);
     const titlePropName = getTitlePropertyName(schema);
     const namePropName = findPropertyName(schema, ['Nombre', 'Name']);
     const emailPropName = findPropertyName(schema, ['Email', 'Correo', 'Mail']);
@@ -178,7 +180,7 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
       return result;
     }
 
-    const existingRows = await queryAllRows(databaseId, notionToken);
+    const existingRows = await queryAllRows(dataSourceId, notionToken);
     const existingByRut = new Map<string, NotionRow>();
 
     for (const row of existingRows) {
@@ -231,7 +233,7 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
         } else {
           await notionFetch('/pages', notionToken, {
             method: 'POST',
-            body: JSON.stringify({ parent: { database_id: databaseId }, properties })
+            body: JSON.stringify({ parent: { data_source_id: dataSourceId }, properties })
           });
           result.created += 1;
         }

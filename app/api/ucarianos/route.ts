@@ -1,5 +1,6 @@
 import { mockDataset } from '@/lib/mock-data';
 import { syncUcarianosSheetToNotion } from '@/lib/ucarianos-sync';
+import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
 
 type NotionProperty = Record<string, unknown> & {
   type?: string;
@@ -204,15 +205,18 @@ function toCard(row: NotionRow): UcarianoCard | null {
 }
 
 async function queryRows(databaseId: string) {
+  const notionToken = process.env.NOTION_API_KEY as string;
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+
   const rows: NotionRow[] = [];
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
+    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
-        'Notion-Version': '2022-06-28',
+        Authorization: `Bearer ${notionToken}`,
+        'Notion-Version': NOTION_VERSION,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

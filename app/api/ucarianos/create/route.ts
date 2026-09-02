@@ -7,6 +7,9 @@ const RUT_CANDIDATES = ['RUT', 'Rut', 'RUN', 'Run', 'Documento'];
 const EMAIL_CANDIDATES = ['Email', 'Correo', 'Mail'];
 const PHONE_CANDIDATES = ['Teléfono', 'Telefono', 'Phone', 'Celular'];
 const CITY_CANDIDATES = ['Ciudad', 'City', 'Sucursal'];
+const ADDRESS_CANDIDATES = ['Dirección Casa', 'Direccion Casa', 'Dirección', 'Direccion', 'Domicilio', 'Address'];
+const BIRTHDATE_CANDIDATES = ['Fecha de Nacimiento', 'Fecha Nacimiento', 'Fecha de nacimiento', 'Cumpleaños', 'Cumpleanos'];
+const ENTRY_DATE_CANDIDATES = ['Fecha de Ingreso', 'Fecha Ingreso', 'Fecha de ingreso', 'Ingreso'];
 const POSTULATION_STATUS_CANDIDATES = [
   'Estado Postulación',
   'Estado Postulacion',
@@ -21,6 +24,15 @@ type PostulanteInput = {
   correo_electronico?: string;
   numero_de_telefono?: string;
   ciudad?: string;
+};
+
+type ManualUcarianoInput = {
+  nombre?: string;
+  telefono?: string;
+  email?: string;
+  rut?: string;
+  direccionCasa?: string;
+  fechaNacimiento?: string;
 };
 
 function findPropertyName(properties: Record<string, NotionSchemaProperty>, candidates: string[]) {
@@ -110,23 +122,53 @@ function buildPropertiesFromPostulante(
 
 function buildPropertiesFromManualInput(
   schema: Record<string, NotionSchemaProperty>,
-  rawProperties: Record<string, unknown>
+  input: ManualUcarianoInput
 ) {
   const properties: Record<string, unknown> = {};
 
-  for (const [name, raw] of Object.entries(rawProperties)) {
-    const type = schema[name]?.type;
-    if (!type) {
-      continue;
-    }
+  const titlePropName = getTitlePropertyName(schema);
+  const namePropName = findPropertyName(schema, NAME_CANDIDATES);
+  if (titlePropName) {
+    properties[titlePropName] = buildPropertyValue('title', input.nombre || '');
+  }
+  if (namePropName && namePropName !== titlePropName) {
+    properties[namePropName] = buildPropertyValue(schema[namePropName]?.type, input.nombre || '');
+  }
 
-    const value = buildPropertyValue(type, raw);
-    if (value !== undefined) {
-      properties[name] = value;
-    }
+  const rutPropName = findPropertyName(schema, RUT_CANDIDATES);
+  if (rutPropName) {
+    properties[rutPropName] = buildPropertyValue(schema[rutPropName]?.type, input.rut || '');
+  }
+
+  const emailPropName = findPropertyName(schema, EMAIL_CANDIDATES);
+  if (emailPropName) {
+    properties[emailPropName] = buildPropertyValue(schema[emailPropName]?.type, input.email || '');
+  }
+
+  const phonePropName = findPropertyName(schema, PHONE_CANDIDATES);
+  if (phonePropName) {
+    properties[phonePropName] = buildPropertyValue(schema[phonePropName]?.type, input.telefono || '');
+  }
+
+  const addressPropName = findPropertyName(schema, ADDRESS_CANDIDATES);
+  if (addressPropName) {
+    properties[addressPropName] = buildPropertyValue(schema[addressPropName]?.type, input.direccionCasa || '');
+  }
+
+  const birthdatePropName = findPropertyName(schema, BIRTHDATE_CANDIDATES);
+  if (birthdatePropName && input.fechaNacimiento) {
+    properties[birthdatePropName] = buildPropertyValue('date', input.fechaNacimiento);
   }
 
   return properties;
+}
+
+// La fecha de ingreso siempre es la fecha de aprobacion (hoy), nunca un dato pedido en el formulario.
+function applyEntryDate(schema: Record<string, NotionSchemaProperty>, properties: Record<string, unknown>) {
+  const entryDatePropName = findPropertyName(schema, ENTRY_DATE_CANDIDATES);
+  if (entryDatePropName) {
+    properties[entryDatePropName] = buildPropertyValue('date', new Date().toISOString().slice(0, 10));
+  }
 }
 
 // Crea un Ucariano en Notion a partir de un postulante aprobado del Sheet, o desde un formulario manual.
@@ -141,7 +183,7 @@ export async function POST(request: Request) {
   let body: {
     mode?: 'fromPostulante' | 'manual';
     postulante?: PostulanteInput;
-    properties?: Record<string, unknown>;
+    manual?: ManualUcarianoInput;
   };
 
   try {
@@ -155,12 +197,14 @@ export async function POST(request: Request) {
 
     const properties =
       body.mode === 'manual'
-        ? buildPropertiesFromManualInput(schema, body.properties || {})
+        ? buildPropertiesFromManualInput(schema, body.manual || {})
         : buildPropertiesFromPostulante(schema, body.postulante || {});
 
     if (Object.keys(properties).length === 0) {
       return Response.json({ error: 'No hay campos validos para crear el ucariano.' }, { status: 422 });
     }
+
+    applyEntryDate(schema, properties);
 
     const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
     const response = await notionApiFetch('https://api.notion.com/v1/pages', {

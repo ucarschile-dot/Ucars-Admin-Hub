@@ -369,7 +369,31 @@
 </div>
 
 <form class="hidden space-y-3" id="panel-manual">
-<div class="space-y-3" id="manual-fields">Cargando esquema de Notion...</div>
+<div>
+<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1" for="manual-nombre">Nombre</label>
+<input class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" id="manual-nombre" required="" type="text"/>
+</div>
+<div>
+<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1" for="manual-telefono">Telefono</label>
+<input class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" id="manual-telefono" type="tel"/>
+</div>
+<div>
+<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1" for="manual-email">Email</label>
+<input class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" id="manual-email" type="email"/>
+</div>
+<div>
+<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1" for="manual-rut">RUT</label>
+<input class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" id="manual-rut" type="text"/>
+</div>
+<div>
+<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1" for="manual-direccion">Direccion casa</label>
+<input class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" id="manual-direccion" type="text"/>
+</div>
+<div>
+<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1" for="manual-fecha-nacimiento">Fecha de nacimiento</label>
+<input class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" id="manual-fecha-nacimiento" type="date"/>
+</div>
+<p class="text-body-sm font-body-sm text-on-surface-variant">La fecha de ingreso se registra automaticamente con la fecha de hoy.</p>
 <button class="bg-[#282828] text-white py-2 px-4 rounded text-title-sm font-title-sm hover:bg-tertiary-container transition-colors" type="submit">Crear ucariano</button>
 </form>
 
@@ -399,7 +423,6 @@
                 var postulantePreview = document.getElementById('postulante-preview');
                 var approveBtn = document.getElementById('postulante-approve-btn');
                 var rejectBtn = document.getElementById('postulante-reject-btn');
-                var manualFields = document.getElementById('manual-fields');
                 var addStatus = document.getElementById('add-ucariano-status');
 
                 if (!grid || !visibleCount || !searchInput) {
@@ -417,7 +440,6 @@
                 var sheetRows = [];
                 var reviewList = [];
                 var selectedPostulante = null;
-                var schemaCache = null;
 
                 function escapeHtml(value) {
                         return String(value || '')
@@ -724,10 +746,6 @@
                         tabManual.classList.toggle('text-primary', !isFromPostulante);
                         tabManual.classList.toggle('border-transparent', isFromPostulante);
                         tabManual.classList.toggle('text-on-surface-variant', isFromPostulante);
-
-                        if (!isFromPostulante && !schemaCache) {
-                                loadSchemaAndRenderForm();
-                        }
                 }
 
                 function renderPostulanteResults(query) {
@@ -776,92 +794,15 @@
                         rejectBtn.disabled = false;
                 }
 
-                function manualFieldInputHtml(property) {
-                        var label = '<label class="text-body-sm font-body-sm text-on-surface-variant block mb-1">' + escapeHtml(property.name) + '</label>';
-                        var attrs = 'class="w-full bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded" data-field-name="' + escapeHtml(property.name) + '" data-field-type="' + escapeHtml(property.type) + '"';
-
-                        if (property.type === 'select' || property.type === 'status') {
-                                var options = ['<option value="">Sin seleccionar</option>'].concat((property.options || []).map(function (option) {
-                                        return '<option value="' + escapeHtml(option) + '">' + escapeHtml(option) + '</option>';
-                                }));
-                                return label + '<select ' + attrs + '>' + options.join('') + '</select>';
-                        }
-
-                        if (property.type === 'multi_select') {
-                                var checkboxes = (property.options || []).map(function (option) {
-                                        return '<label class="inline-flex items-center gap-1 mr-3 text-body-sm font-body-sm text-on-surface">' +
-                                                '<input data-field-name="' + escapeHtml(property.name) + '" data-field-type="multi_select" type="checkbox" value="' + escapeHtml(option) + '"/>' +
-                                                escapeHtml(option) + '</label>';
-                                }).join('');
-                                return label + '<div>' + (checkboxes || '<span class="text-body-sm text-on-surface-variant">Sin opciones</span>') + '</div>';
-                        }
-
-                        if (property.type === 'checkbox') {
-                                return '<label class="inline-flex items-center gap-2 text-body-sm font-body-sm text-on-surface">' +
-                                        '<input ' + attrs + ' type="checkbox"/>' + escapeHtml(property.name) + '</label>';
-                        }
-
-                        var inputType = property.type === 'number' ? 'number'
-                                : property.type === 'date' ? 'date'
-                                : property.type === 'email' ? 'email'
-                                : property.type === 'phone_number' ? 'tel'
-                                : property.type === 'url' ? 'url'
-                                : 'text';
-
-                        return label + '<input ' + attrs + ' type="' + inputType + '"/>';
-                }
-
-                function loadSchemaAndRenderForm() {
-                        manualFields.innerHTML = 'Cargando esquema de Notion...';
-
-                        fetch('/api/ucarianos/schema', { cache: 'no-store' })
-                                .then(function (response) {
-                                        return response.json().then(function (payload) {
-                                                if (!response.ok) {
-                                                        throw new Error(payload.error || 'No se pudo leer el esquema de Notion.');
-                                                }
-                                                return payload;
-                                        });
-                                })
-                                .then(function (payload) {
-                                        schemaCache = Array.isArray(payload.properties) ? payload.properties : [];
-                                        manualFields.innerHTML = schemaCache.map(function (property) {
-                                                return '<div>' + manualFieldInputHtml(property) + '</div>';
-                                        }).join('');
-                                })
-                                .catch(function (error) {
-                                        console.error(error);
-                                        manualFields.innerHTML = '<p class="text-body-sm font-body-sm text-error">' + escapeHtml(error.message || 'No se pudo leer el esquema de Notion.') + '</p>';
-                                });
-                }
-
-                function gatherManualProperties() {
-                        var properties = {};
-                        var fields = manualFields.querySelectorAll('[data-field-name]');
-
-                        fields.forEach(function (field) {
-                                var name = field.getAttribute('data-field-name');
-                                var type = field.getAttribute('data-field-type');
-
-                                if (type === 'multi_select') {
-                                        if (!properties[name]) {
-                                                properties[name] = [];
-                                        }
-                                        if (field.checked) {
-                                                properties[name].push(field.value);
-                                        }
-                                        return;
-                                }
-
-                                if (type === 'checkbox') {
-                                        properties[name] = field.checked;
-                                        return;
-                                }
-
-                                properties[name] = field.value;
-                        });
-
-                        return properties;
+                function manualUcarianoInput() {
+                        return {
+                                nombre: document.getElementById('manual-nombre').value.trim(),
+                                telefono: document.getElementById('manual-telefono').value.trim(),
+                                email: document.getElementById('manual-email').value.trim(),
+                                rut: document.getElementById('manual-rut').value.trim(),
+                                direccionCasa: document.getElementById('manual-direccion').value.trim(),
+                                fechaNacimiento: document.getElementById('manual-fecha-nacimiento').value
+                        };
                 }
 
                 addBtn.addEventListener('click', openModal);
@@ -973,7 +914,7 @@
                                 fetch('/api/ucarianos/create', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ mode: 'manual', properties: gatherManualProperties() })
+                                        body: JSON.stringify({ mode: 'manual', manual: manualUcarianoInput() })
                                 })
                                         .then(function (response) {
                                                 return response.json().then(function (payload) {

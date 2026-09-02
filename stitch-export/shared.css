@@ -11,7 +11,9 @@ body {
 
 body.stitch-ready {
   opacity: 1;
-  transform: translateY(0);
+  /* "none" (not translateY(0)) so this element stops creating a containing block for
+     position:fixed descendants (e.g. modals), which would otherwise scroll with the page. */
+  transform: none;
 }
 
 body.stitch-leaving {

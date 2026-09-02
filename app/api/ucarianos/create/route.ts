@@ -10,6 +10,7 @@ const CITY_CANDIDATES = ['Ciudad', 'City', 'Sucursal'];
 const ADDRESS_CANDIDATES = ['Dirección Casa', 'Direccion Casa', 'Dirección', 'Direccion', 'Domicilio', 'Address'];
 const BIRTHDATE_CANDIDATES = ['Fecha de Nacimiento', 'Fecha Nacimiento', 'Fecha de nacimiento', 'Cumpleaños', 'Cumpleanos'];
 const ENTRY_DATE_CANDIDATES = ['Fecha de Ingreso', 'Fecha Ingreso', 'Fecha de ingreso', 'Ingreso'];
+const ROLE_CANDIDATES = ['Cargo', 'Rol', 'Role', 'Puesto'];
 const POSTULATION_STATUS_CANDIDATES = [
   'Estado Postulación',
   'Estado Postulacion',
@@ -109,14 +110,6 @@ function buildPropertiesFromPostulante(
     properties[cityPropName] = buildPropertyValue(schema[cityPropName]?.type, postulante.ciudad || '');
   }
 
-  const postulationStatusPropName = findPropertyName(schema, POSTULATION_STATUS_CANDIDATES);
-  if (postulationStatusPropName) {
-    const type = schema[postulationStatusPropName]?.type;
-    if (type === 'select' || type === 'status') {
-      properties[postulationStatusPropName] = buildPropertyValue(type, 'Aprobado');
-    }
-  }
-
   return properties;
 }
 
@@ -171,6 +164,22 @@ function applyEntryDate(schema: Record<string, NotionSchemaProperty>, properties
   }
 }
 
+// Todo Ucariano creado (aprobado desde un postulante o desde cero) queda Aprobado y con rol Ventas.
+function applyApprovalDefaults(schema: Record<string, NotionSchemaProperty>, properties: Record<string, unknown>) {
+  const postulationStatusPropName = findPropertyName(schema, POSTULATION_STATUS_CANDIDATES);
+  if (postulationStatusPropName) {
+    const type = schema[postulationStatusPropName]?.type;
+    if (type === 'select' || type === 'status') {
+      properties[postulationStatusPropName] = buildPropertyValue(type, 'Aprobado');
+    }
+  }
+
+  const rolePropName = findPropertyName(schema, ROLE_CANDIDATES);
+  if (rolePropName) {
+    properties[rolePropName] = buildPropertyValue(schema[rolePropName]?.type, 'Ventas');
+  }
+}
+
 // Crea un Ucariano en Notion a partir de un postulante aprobado del Sheet, o desde un formulario manual.
 export async function POST(request: Request) {
   const databaseId = process.env.NOTION_USERS_DATABASE_ID;
@@ -205,6 +214,7 @@ export async function POST(request: Request) {
     }
 
     applyEntryDate(schema, properties);
+    applyApprovalDefaults(schema, properties);
 
     const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
     const response = await notionApiFetch('https://api.notion.com/v1/pages', {

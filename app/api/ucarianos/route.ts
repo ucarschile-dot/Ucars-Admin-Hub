@@ -12,6 +12,7 @@ type NotionProperty = Record<string, unknown> & {
   phone_number?: string | null;
   url?: string | null;
   checkbox?: boolean;
+  relation?: Array<{ id?: string }>;
   files?: Array<{
     type?: 'external' | 'file';
     external?: { url?: string };
@@ -40,6 +41,33 @@ type UcarianoCard = {
 };
 
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+
+const ASSIGNED_UCARIANO_CANDIDATES = [
+  'Ucariano Asignado',
+  'Ucariano',
+  'Advisor',
+  'Ejecutivo',
+  'Asignado',
+  'Asignado a',
+  'Assigned Ucariano',
+  'Assigned Advisor'
+];
+
+// Cuenta los vehiculos del Stock cuya relacion 'Ucariano Asignado' apunta a cada pagina de Ucariano.
+function buildAssignedCarsCountMap(stockRows: NotionRow[]) {
+  const counts = new Map<string, number>();
+
+  for (const row of stockRows) {
+    const property = pickProperty(row.properties, ASSIGNED_UCARIANO_CANDIDATES);
+    const ucarianoId = Array.isArray(property?.relation) ? property?.relation[0]?.id : undefined;
+
+    if (ucarianoId) {
+      counts.set(ucarianoId, (counts.get(ucarianoId) || 0) + 1);
+    }
+  }
+
+  return counts;
+}
 
 function getText(property?: NotionProperty | null) {
   if (!property) {
@@ -153,7 +181,7 @@ function normalizeStatus(properties: Record<string, NotionProperty>) {
   return status || '';
 }
 
-function toCard(row: NotionRow): UcarianoCard | null {
+function toCard(row: NotionRow, assignedCarsCountMap?: Map<string, number>): UcarianoCard | null {
   const properties = row.properties;
 
   const status = normalizeStatus(properties);
@@ -172,7 +200,7 @@ function toCard(row: NotionRow): UcarianoCard | null {
     pickProperty(properties, ['Tipo', 'Type', 'Categoria', 'Categoría', 'Perfil', 'Etapa', 'Stage'])
   );
   const branch = getText(pickProperty(properties, ['Sucursal', 'Branch', 'Sede'])) || 'Sin sucursal';
-  const assignedCars = getNumber(
+  const assignedCars = assignedCarsCountMap?.get(row.id) ?? getNumber(
     pickProperty(properties, [
       'Autos Asignados',
       'Vehiculos Asignados',
@@ -302,9 +330,15 @@ export async function GET() {
   }
 
   try {
-    const rows = await queryRows(usersDb);
+    const stockDb = process.env.NOTION_STOCK_DATABASE_ID;
+    const [rows, stockRows] = await Promise.all([
+      queryRows(usersDb),
+      stockDb ? queryRows(stockDb).catch(() => [] as NotionRow[]) : Promise.resolve([] as NotionRow[])
+    ]);
+
+    const assignedCarsCountMap = buildAssignedCarsCountMap(stockRows);
     const cards = rows
-      .map(toCard)
+      .map((row) => toCard(row, assignedCarsCountMap))
       .filter((item): item is UcarianoCard => item !== null);
 
     const postulantes = cards.filter(

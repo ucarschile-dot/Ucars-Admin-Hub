@@ -4,7 +4,7 @@ import { hasGoogleSheetsConfig, fetchSheetOrExcelValues, rowsToObjects } from '@
 export async function GET(request: Request) {
   const spreadsheetId = process.env.GOOGLE_SHEET_UCARIANOS_DB_ID;
   const { searchParams } = new URL(request.url);
-  const range = searchParams.get('range')?.trim() || process.env.GOOGLE_SHEET_UCARIANOS_DB_RANGE || 'Ucarianos';
+  const range = searchParams.get('range')?.trim() || process.env.GOOGLE_SHEET_UCARIANOS_DB_RANGE || 'Final Leads';
 
   if (!hasGoogleSheetsConfig() || !spreadsheetId) {
     return Response.json(

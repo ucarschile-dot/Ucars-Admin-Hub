@@ -158,7 +158,7 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
   }
 
   const spreadsheetId = process.env.GOOGLE_SHEET_UCARIANOS_DB_ID as string;
-  const range = process.env.GOOGLE_SHEET_UCARIANOS_DB_RANGE || 'Ucarianos';
+  const range = process.env.GOOGLE_SHEET_UCARIANOS_DB_RANGE || 'Final Leads';
   const databaseId = process.env.NOTION_USERS_DATABASE_ID as string;
   const notionToken = process.env.NOTION_API_KEY as string;
 

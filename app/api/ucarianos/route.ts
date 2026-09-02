@@ -1,4 +1,5 @@
 import { mockDataset } from '@/lib/mock-data';
+import { syncUcarianosSheetToNotion } from '@/lib/ucarianos-sync';
 
 type NotionProperty = Record<string, unknown> & {
   type?: string;
@@ -297,6 +298,12 @@ export async function GET() {
     );
   }
 
+  // El Google Sheet de Ucarianos es la fuente principal; se reescribe Notion antes de leerlo.
+  const sheetSync = await syncUcarianosSheetToNotion().catch((error) => {
+    console.error('Error al sincronizar Ucarianos desde Google Sheets hacia Notion.', error);
+    return { ranSync: false, created: 0, updated: 0, archived: 0, errors: [String(error)] };
+  });
+
   try {
     const rows = await queryRows(usersDb);
     const cards = rows
@@ -311,7 +318,7 @@ export async function GET() {
     );
 
     return Response.json(
-      { source: 'notion', profiles: cards, ucarianos, postulantes },
+      { source: 'notion', profiles: cards, ucarianos, postulantes, sheetSync },
       {
         headers: {
           'Cache-Control': 'no-store'

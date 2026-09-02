@@ -178,7 +178,12 @@
       opacity: 0;
       transform: translateY(6px);
       pointer-events: none;
-      transition: opacity 200ms ease, transform 200ms ease;
+      transition: opacity 200ms ease, transform 200ms ease, top 220ms ease;
+    }
+
+    /* Cuando la barra se oculta al hacer scroll, el contenido recupera ese espacio en vez de dejarlo en blanco. */
+    .content.topbar-hidden .screen {
+      top: var(--content-gap);
     }
 
     .screen.is-active {
@@ -385,6 +390,10 @@
           topbar.classList.toggle('is-hidden', !nextVisible);
         }
 
+        var content = document.querySelector('.content');
+        if (content) {
+          content.classList.toggle('topbar-hidden', !nextVisible);
+        }
       }
 
       function escapeHtml(value) {

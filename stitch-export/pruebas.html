@@ -140,12 +140,12 @@
 <section class="space-y-4 mt-10">
 <div class="border-t border-outline-variant pt-8">
 <h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background">Sheet de Ucarianos (fuente principal)</h2>
-<p class="text-body-md font-body-md text-on-surface-variant mt-1">Prueba aislada del Sheet dedicado "Datos Ucarianos" (pestana "Final Leads", ~603 filas) y de su sincronizacion hacia Notion, antes de activarla en la pestana Ucarianos.</p>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Prueba aislada del Sheet dedicado "Datos Ucarianos" (pestana "Final Leads", ~603 filas). Solo lectura: los Ucarianos pasan a Notion unicamente al aprobarlos manualmente mas abajo.</p>
 </div>
 
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
 <button class="bg-[#282828] text-white py-2 px-4 rounded text-title-sm font-title-sm hover:bg-tertiary-container transition-colors shrink-0" id="ucarianos-db-load" type="button">Cargar hoja Ucarianos</button>
-<button class="bg-secondary text-white py-2 px-4 rounded text-title-sm font-title-sm hover:opacity-90 transition-colors shrink-0" id="ucarianos-db-sync" type="button">Sincronizar con Notion (prueba)</button>
+<button class="bg-error text-white py-2 px-4 rounded text-title-sm font-title-sm hover:opacity-90 transition-colors shrink-0" id="ucarianos-wipe-btn" type="button">Eliminar TODOS los ucarianos en Notion</button>
 <span class="text-body-sm font-body-sm text-on-surface-variant" id="ucarianos-db-sync-status"></span>
 </div>
 
@@ -320,17 +320,18 @@
         })();
 </script>
 <script>
-        // Prueba aislada del Sheet dedicado de Ucarianos y su sincronizacion hacia Notion.
+        // Prueba aislada del Sheet dedicado de Ucarianos (solo lectura) + boton de emergencia para
+        // vaciar por completo la base de Ucarianos en Notion.
         (function () {
                 var loadBtn = document.getElementById('ucarianos-db-load');
-                var syncBtn = document.getElementById('ucarianos-db-sync');
+                var wipeBtn = document.getElementById('ucarianos-wipe-btn');
                 var syncStatus = document.getElementById('ucarianos-db-sync-status');
                 var tableHead = document.getElementById('ucarianos-db-table-head');
                 var tableBody = document.getElementById('ucarianos-db-table-body');
                 var visibleCount = document.getElementById('ucarianos-db-visible-count');
                 var rangeLabel = document.getElementById('ucarianos-db-range-label');
 
-                if (!loadBtn || !syncBtn || !tableHead || !tableBody) {
+                if (!loadBtn || !wipeBtn || !tableHead || !tableBody) {
                         return;
                 }
 
@@ -403,65 +404,62 @@
 
                 loadBtn.addEventListener('click', loadUcarianosDb);
 
-                function runSyncChunk(offset, totals) {
-                        return fetch('/api/ucarianos/sync', {
+                function runWipeChunk(offset, totals) {
+                        return fetch('/api/ucarianos/wipe', {
                                 method: 'POST',
                                 cache: 'no-store',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ offset: offset, limit: 100 })
+                                body: JSON.stringify({ offset: offset, limit: 50 })
                         })
                                 .then(function (response) {
                                         return response.json().then(function (payload) {
                                                 if (!response.ok) {
-                                                        throw new Error(payload.error || 'No se pudo sincronizar con Notion.');
+                                                        throw new Error(payload.error || 'No se pudo eliminar Ucarianos en Notion.');
                                                 }
 
                                                 return payload;
                                         });
                                 })
                                 .then(function (result) {
-                                        totals.created += result.created || 0;
-                                        totals.updated += result.updated || 0;
                                         totals.archived += result.archived || 0;
                                         totals.errors = totals.errors.concat(Array.isArray(result.errors) ? result.errors : []);
 
                                         var processedSoFar = Math.min((result.nextOffset ?? result.total) || result.total || 0, result.total || 0);
-                                        syncStatus.textContent = 'Sincronizando... ' + processedSoFar + '/' + (result.total || 0) +
-                                                ' | Creados: ' + totals.created + ' | Actualizados: ' + totals.updated + ' | Archivados: ' + totals.archived;
+                                        syncStatus.textContent = 'Eliminando... ' + processedSoFar + '/' + (result.total || 0) + ' | Archivados: ' + totals.archived;
 
                                         if (!result.done && result.nextOffset !== null && result.nextOffset !== undefined) {
-                                                return runSyncChunk(result.nextOffset, totals);
+                                                return runWipeChunk(result.nextOffset, totals);
                                         }
 
                                         return totals;
                                 });
                 }
 
-                syncBtn.addEventListener('click', function () {
-                        var confirmed = window.confirm('Esto va a crear/actualizar/archivar paginas reales en la base de Ucarianos de Notion segun el Sheet. Puede tardar varios minutos con 600+ filas. Continuar?');
+                wipeBtn.addEventListener('click', function () {
+                        var confirmed = window.confirm('Esto va a ARCHIVAR (eliminar) TODAS las paginas de la base de Ucarianos en Notion, sin excepcion. Puede tardar varios minutos con 600+ filas. Estas seguro?');
                         if (!confirmed) {
                                 return;
                         }
 
-                        syncStatus.textContent = 'Sincronizando...';
-                        syncBtn.disabled = true;
+                        var doubleConfirmed = window.confirm('Confirma de nuevo: se eliminaran TODOS los ucarianos de Notion ahora mismo.');
+                        if (!doubleConfirmed) {
+                                return;
+                        }
 
-                        runSyncChunk(0, { created: 0, updated: 0, archived: 0, errors: [] })
+                        syncStatus.textContent = 'Eliminando...';
+                        wipeBtn.disabled = true;
+
+                        runWipeChunk(0, { archived: 0, errors: [] })
                                 .then(function (totals) {
                                         var errorSummary = totals.errors.length > 0 ? ' | Errores: ' + totals.errors.join('; ') : '';
-                                        syncStatus.textContent = 'Listo. Creados: ' + totals.created +
-                                                ' | Actualizados: ' + totals.updated +
-                                                ' | Archivados: ' + totals.archived +
-                                                errorSummary;
-
-                                        return loadUcarianosDb();
+                                        syncStatus.textContent = 'Listo. Archivados: ' + totals.archived + errorSummary;
                                 })
                                 .catch(function (error) {
                                         console.error(error);
-                                        syncStatus.textContent = error.message || 'No se pudo sincronizar con Notion.';
+                                        syncStatus.textContent = error.message || 'No se pudo eliminar Ucarianos en Notion.';
                                 })
                                 .finally(function () {
-                                        syncBtn.disabled = false;
+                                        wipeBtn.disabled = false;
                                 });
                 });
 

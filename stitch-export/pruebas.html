@@ -136,6 +136,37 @@
 </table>
 </div>
 </section>
+
+<section class="space-y-4 mt-10">
+<div class="border-t border-outline-variant pt-8">
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background">Sheet de Ucarianos (fuente principal)</h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Prueba aislada del Sheet dedicado (GOOGLE_SHEET_UCARIANOS_DB_ID) y de su sincronizacion hacia Notion, antes de activarla en la pestana Ucarianos.</p>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+<button class="bg-[#282828] text-white py-2 px-4 rounded text-title-sm font-title-sm hover:bg-tertiary-container transition-colors shrink-0" id="ucarianos-db-load" type="button">Cargar hoja Ucarianos</button>
+<button class="bg-secondary text-white py-2 px-4 rounded text-title-sm font-title-sm hover:opacity-90 transition-colors shrink-0" id="ucarianos-db-sync" type="button">Sincronizar con Notion (prueba)</button>
+<span class="text-body-sm font-body-sm text-on-surface-variant" id="ucarianos-db-sync-status"></span>
+</div>
+
+<div class="flex items-center justify-between">
+<h3 class="text-title-sm font-title-sm text-primary">Filas del Sheet <span class="text-on-surface-variant" id="ucarianos-db-visible-count">(0)</span></h3>
+<span class="text-label-caps font-label-caps text-on-surface-variant" id="ucarianos-db-range-label"></span>
+</div>
+
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-x-auto">
+<table class="w-full text-left border-collapse" id="ucarianos-db-table">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant" id="ucarianos-db-table-head"></tr>
+</thead>
+<tbody id="ucarianos-db-table-body">
+<tr>
+<td class="p-4 text-body-sm font-body-sm text-on-surface-variant">Sin cargar todavia.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 </main>
 <script>
         // Actualiza la tabla visible al cargar un rango de Google Sheets o al cambiarlo el usuario.
@@ -229,6 +260,133 @@
                 }
 
                 loadRange('');
+        })();
+</script>
+<script>
+        // Prueba aislada del Sheet dedicado de Ucarianos y su sincronizacion hacia Notion.
+        (function () {
+                var loadBtn = document.getElementById('ucarianos-db-load');
+                var syncBtn = document.getElementById('ucarianos-db-sync');
+                var syncStatus = document.getElementById('ucarianos-db-sync-status');
+                var tableHead = document.getElementById('ucarianos-db-table-head');
+                var tableBody = document.getElementById('ucarianos-db-table-body');
+                var visibleCount = document.getElementById('ucarianos-db-visible-count');
+                var rangeLabel = document.getElementById('ucarianos-db-range-label');
+
+                if (!loadBtn || !syncBtn || !tableHead || !tableBody) {
+                        return;
+                }
+
+                function escapeHtml(value) {
+                        return String(value || '')
+                                .replaceAll('&', '&amp;')
+                                .replaceAll('<', '&lt;')
+                                .replaceAll('>', '&gt;')
+                                .replaceAll('"', '&quot;')
+                                .replaceAll("'", '&#39;');
+                }
+
+                function emptyRowHtml(message) {
+                        return '<tr><td class="p-4 text-body-sm font-body-sm text-on-surface-variant">' + escapeHtml(message) + '</td></tr>';
+                }
+
+                function renderTable(rows) {
+                        if (rows.length === 0) {
+                                tableHead.innerHTML = '';
+                                tableBody.innerHTML = emptyRowHtml('No hay filas en la hoja Ucarianos del Sheet dedicado.');
+                                visibleCount.textContent = '(0)';
+                                return;
+                        }
+
+                        var headers = Object.keys(rows[0]);
+
+                        tableHead.innerHTML = headers.map(function (header) {
+                                return '<th class="p-3 text-label-caps font-label-caps text-on-surface-variant whitespace-nowrap">' + escapeHtml(header) + '</th>';
+                        }).join('');
+
+                        tableBody.innerHTML = rows.map(function (row) {
+                                return '<tr class="border-b border-outline-variant/50 last:border-0">' +
+                                        headers.map(function (header) {
+                                                return '<td class="p-3 text-body-sm font-body-sm text-on-surface align-top">' + escapeHtml(row[header]) + '</td>';
+                                        }).join('') +
+                                        '</tr>';
+                        }).join('');
+
+                        visibleCount.textContent = '(' + rows.length + ')';
+                }
+
+                function loadUcarianosDb() {
+                        tableHead.innerHTML = '';
+                        tableBody.innerHTML = emptyRowHtml('Cargando datos desde el Sheet dedicado de Ucarianos...');
+
+                        return fetch('/api/sheets/ucarianos-db', { cache: 'no-store' })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudo consultar el Sheet dedicado de Ucarianos.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (payload) {
+                                        if (rangeLabel) {
+                                                rangeLabel.textContent = payload.range ? 'Rango: ' + payload.range : '';
+                                        }
+
+                                        renderTable(Array.isArray(payload.rows) ? payload.rows : []);
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        tableHead.innerHTML = '';
+                                        tableBody.innerHTML = emptyRowHtml(error.message || 'No se pudo consultar el Sheet dedicado de Ucarianos.');
+                                        visibleCount.textContent = '(0)';
+                                });
+                }
+
+                loadBtn.addEventListener('click', loadUcarianosDb);
+
+                syncBtn.addEventListener('click', function () {
+                        var confirmed = window.confirm('Esto va a crear/actualizar/archivar paginas reales en la base de Ucarianos de Notion segun el Sheet. Continuar?');
+                        if (!confirmed) {
+                                return;
+                        }
+
+                        syncStatus.textContent = 'Sincronizando...';
+                        syncBtn.disabled = true;
+
+                        fetch('/api/ucarianos/sync', { method: 'POST', cache: 'no-store' })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudo sincronizar con Notion.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (result) {
+                                        var errorSummary = Array.isArray(result.errors) && result.errors.length > 0
+                                                ? ' | Errores: ' + result.errors.join('; ')
+                                                : '';
+
+                                        syncStatus.textContent = 'Creados: ' + (result.created || 0) +
+                                                ' | Actualizados: ' + (result.updated || 0) +
+                                                ' | Archivados: ' + (result.archived || 0) +
+                                                errorSummary;
+
+                                        return loadUcarianosDb();
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        syncStatus.textContent = error.message || 'No se pudo sincronizar con Notion.';
+                                })
+                                .finally(function () {
+                                        syncBtn.disabled = false;
+                                });
+                });
+
+                loadUcarianosDb();
         })();
 </script>
 </body></html>

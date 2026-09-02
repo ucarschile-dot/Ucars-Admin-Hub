@@ -646,10 +646,15 @@
                                 return;
                         }
 
-                        var LIMIT = 200;
+                        // Sin busqueda solo se muestran los primeros 20; el resto se debe buscar por nombre o RUT.
+                        var LIMIT = query ? 200 : 20;
                         var visible = filtered.slice(0, LIMIT);
                         reviewBody.innerHTML = visible.map(reviewRowHtml).join('') +
-                                (filtered.length > LIMIT ? reviewEmptyRowHtml('Mostrando ' + LIMIT + ' de ' + filtered.length + '. Refina la busqueda para ver mas.') : '');
+                                (filtered.length > LIMIT
+                                        ? reviewEmptyRowHtml(query
+                                                ? 'Mostrando ' + LIMIT + ' de ' + filtered.length + '. Refina la busqueda para ver mas.'
+                                                : 'Mostrando los primeros ' + LIMIT + ' de ' + filtered.length + '. Busca por nombre o RUT para encontrar al resto.')
+                                        : '');
                 }
 
                 function loadSheetRows() {

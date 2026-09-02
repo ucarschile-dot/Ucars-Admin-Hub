@@ -1,4 +1,7 @@
-import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
+import { NOTION_VERSION, resolveDataSourceId, notionApiFetch } from '@/lib/notion-data-source';
+
+// Resolver el nombre de auto/ucariano por relacion puede sumar varias llamadas a Notion.
+export const maxDuration = 60;
 
 type NotionProperty = Record<string, unknown> & {
   type?: string;
@@ -91,7 +94,7 @@ async function queryRows(databaseId: string, notionToken: string) {
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
+    const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
@@ -113,7 +116,7 @@ async function queryRows(databaseId: string, notionToken: string) {
 }
 
 async function getPageTitle(pageId: string, notionToken: string) {
-  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+  const response = await notionApiFetch(`https://api.notion.com/v1/pages/${pageId}`, {
     headers: { Authorization: `Bearer ${notionToken}`, 'Notion-Version': NOTION_VERSION },
     cache: 'no-store'
   });

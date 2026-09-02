@@ -1,4 +1,4 @@
-import { NOTION_VERSION, getDataSourceSchema, resolveDataSourceId } from '@/lib/notion-data-source';
+import { NOTION_VERSION, getDataSourceSchema, resolveDataSourceId, notionApiFetch } from '@/lib/notion-data-source';
 
 type NotionSchemaProperty = { type?: string };
 
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
     }
 
     const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
-    const response = await fetch('https://api.notion.com/v1/pages', {
+    const response = await notionApiFetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,

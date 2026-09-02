@@ -1,5 +1,5 @@
 import { hasGoogleSheetsConfig, fetchSheetOrExcelValues, rowsToObjects } from './google-sheets';
-import { NOTION_VERSION, resolveDataSourceId } from './notion-data-source';
+import { NOTION_VERSION, resolveDataSourceId, notionApiFetch } from './notion-data-source';
 
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 
@@ -23,6 +23,10 @@ export type UcarianosSyncResult = {
   updated: number;
   archived: number;
   errors: string[];
+  total: number;
+  processed: number;
+  nextOffset: number | null;
+  done: boolean;
 };
 
 function normalizeKey(value: string) {
@@ -56,7 +60,7 @@ function pickField(row: Record<string, string>, candidateKeys: string[]) {
 }
 
 async function notionFetch(path: string, token: string, init?: RequestInit) {
-  const response = await fetch(`${NOTION_API_BASE}${path}`, {
+  const response = await notionApiFetch(`${NOTION_API_BASE}${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -149,9 +153,25 @@ export function hasUcarianosSheetSyncConfig() {
 /**
  * Sincroniza la hoja de Google Sheets (fuente principal de Ucarianos) hacia Notion: crea o
  * actualiza paginas por RUT y archiva en Notion los Ucarianos que ya no estan en la hoja.
+ *
+ * Notion permite ~3 requests/segundo, y esta hoja puede tener cientos de filas, asi que cada
+ * llamada solo procesa una porcion (offset/limit) para no exceder el tiempo maximo de una
+ * funcion serverless; el llamador debe repetir la llamada con el `nextOffset` hasta que `done`
+ * sea true. El archivado (paginas que ya no estan en el sheet) solo corre en la ultima porcion,
+ * ya que necesita ver la hoja completa para saber que RUTs siguen activos.
  */
-export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult> {
-  const result: UcarianosSyncResult = { ranSync: false, created: 0, updated: 0, archived: 0, errors: [] };
+export async function syncUcarianosSheetToNotion(offset = 0, limit = 100): Promise<UcarianosSyncResult> {
+  const result: UcarianosSyncResult = {
+    ranSync: false,
+    created: 0,
+    updated: 0,
+    archived: 0,
+    errors: [],
+    total: 0,
+    processed: 0,
+    nextOffset: null,
+    done: true
+  };
 
   if (!hasUcarianosSheetSyncConfig()) {
     return result;
@@ -167,6 +187,13 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
   try {
     const rawRows = await fetchSheetOrExcelValues(spreadsheetId, range);
     const sheetRows = rowsToObjects(rawRows);
+    result.total = sheetRows.length;
+
+    const chunk = sheetRows.slice(offset, offset + limit);
+    const isLastChunk = offset + limit >= sheetRows.length;
+    result.processed = chunk.length;
+    result.nextOffset = isLastChunk ? null : offset + limit;
+    result.done = isLastChunk;
 
     const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
     const schema = await getSchema(dataSourceId, notionToken);
@@ -190,17 +217,23 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
       }
     }
 
+    // Se calcula sobre TODA la hoja (barata, una sola llamada a Sheets) para que el archivado
+    // final tenga la vista completa, aunque esta llamada solo escriba el `chunk` actual.
     const activeRuts = new Set<string>();
-
     for (const sheetRow of sheetRows) {
+      const rutForActiveSet = normalizeRut(pickField(sheetRow, RUT_FIELD_KEYS));
+      if (rutForActiveSet) {
+        activeRuts.add(rutForActiveSet);
+      }
+    }
+
+    for (const sheetRow of chunk) {
       const rutRaw = pickField(sheetRow, RUT_FIELD_KEYS);
       const rut = normalizeRut(rutRaw);
 
       if (!rut) {
         continue;
       }
-
-      activeRuts.add(rut);
 
       const nombre = pickField(sheetRow, NAME_FIELD_KEYS);
       const email = pickField(sheetRow, EMAIL_FIELD_KEYS);
@@ -242,16 +275,18 @@ export async function syncUcarianosSheetToNotion(): Promise<UcarianosSyncResult>
       }
     }
 
-    for (const [rut, row] of existingByRut.entries()) {
-      if (!activeRuts.has(rut)) {
-        try {
-          await notionFetch(`/pages/${row.id}`, notionToken, {
-            method: 'PATCH',
-            body: JSON.stringify({ archived: true })
-          });
-          result.archived += 1;
-        } catch (error) {
-          result.errors.push(error instanceof Error ? error.message : `No se pudo archivar el RUT ${rut}.`);
+    if (isLastChunk) {
+      for (const [rut, row] of existingByRut.entries()) {
+        if (!activeRuts.has(rut)) {
+          try {
+            await notionFetch(`/pages/${row.id}`, notionToken, {
+              method: 'PATCH',
+              body: JSON.stringify({ archived: true })
+            });
+            result.archived += 1;
+          } catch (error) {
+            result.errors.push(error instanceof Error ? error.message : `No se pudo archivar el RUT ${rut}.`);
+          }
         }
       }
     }

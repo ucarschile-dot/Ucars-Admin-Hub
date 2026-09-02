@@ -1,5 +1,8 @@
 import { mockDataset } from '@/lib/mock-data';
-import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
+import { NOTION_VERSION, resolveDataSourceId, notionApiFetch } from '@/lib/notion-data-source';
+
+// Sincronizar el stock web hacia Notion puede hacer muchas llamadas secuenciales; se deja mas margen.
+export const maxDuration = 60;
 
 const DEFAULT_PUBLIC_SITE_URL = 'https://ucars.cl';
 const DEFAULT_VEEKLS_API_URL = 'https://public.api.veekls.com';
@@ -641,7 +644,7 @@ async function queryStockRows(databaseId: string) {
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
+    const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
@@ -675,7 +678,7 @@ async function queryStockRows(databaseId: string) {
 
 async function getDatabaseSchema(databaseId: string, notionToken: string) {
   const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
-  const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+  const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
     headers: {
       Authorization: `Bearer ${notionToken}`,
       'Notion-Version': NOTION_VERSION
@@ -786,7 +789,7 @@ function buildNotionPropertiesFromWebVehicle(
 }
 
 async function updateNotionPage(pageId: string, notionToken: string, properties: Record<string, unknown>) {
-  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+  const response = await notionApiFetch(`https://api.notion.com/v1/pages/${pageId}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${notionToken}`,
@@ -805,7 +808,7 @@ async function updateNotionPage(pageId: string, notionToken: string, properties:
 
 async function createNotionPage(stockDb: string, notionToken: string, properties: Record<string, unknown>) {
   const dataSourceId = await resolveDataSourceId(stockDb, notionToken);
-  const response = await fetch('https://api.notion.com/v1/pages', {
+  const response = await notionApiFetch('https://api.notion.com/v1/pages', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${notionToken}`,
@@ -828,7 +831,7 @@ async function createNotionPage(stockDb: string, notionToken: string, properties
 }
 
 async function archiveNotionPage(pageId: string, notionToken: string) {
-  const response = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
+  const response = await notionApiFetch(`https://api.notion.com/v1/pages/${pageId}`, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${notionToken}`,
@@ -1093,7 +1096,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const schemaResponse = await fetch(`https://api.notion.com/v1/data_sources/${await resolveDataSourceId(stockDb, notionToken)}`, {
+    const schemaResponse = await notionApiFetch(`https://api.notion.com/v1/data_sources/${await resolveDataSourceId(stockDb, notionToken)}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
         'Notion-Version': NOTION_VERSION
@@ -1151,7 +1154,7 @@ export async function PATCH(request: Request) {
         );
     }
 
-    const updateResponse = await fetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
+    const updateResponse = await notionApiFetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${notionToken}`,

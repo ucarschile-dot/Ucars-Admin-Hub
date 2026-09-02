@@ -1,5 +1,8 @@
 import { mockDataset } from '@/lib/mock-data';
-import { NOTION_VERSION, resolveDataSourceId } from '@/lib/notion-data-source';
+import { NOTION_VERSION, resolveDataSourceId, notionApiFetch } from '@/lib/notion-data-source';
+
+// Notificar/crear/editar citas puede encadenar varias llamadas a Notion; se deja mas margen.
+export const maxDuration = 60;
 
 type NotionProperty = Record<string, unknown> & {
   type?: string;
@@ -223,7 +226,7 @@ async function queryDatabaseRows(databaseId: string) {
   let cursor: string | undefined;
 
   do {
-    const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
+    const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
@@ -335,7 +338,7 @@ type AgendaSchemaProperty = { type?: string; select?: { options?: Array<{ name?:
 
 async function getNotionDatabaseSchema(databaseId: string, notionToken: string) {
   const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
-  const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+  const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
     headers: {
       Authorization: `Bearer ${notionToken}`,
       'Notion-Version': NOTION_VERSION
@@ -370,7 +373,7 @@ const NOTIFICATION_VEHICLE_CANDIDATES = ['Vehículo', 'Vehiculo', 'Auto', 'Auto 
 
 async function getVehicleInfo(vehicleId: string, notionToken: string) {
   try {
-    const response = await fetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
+    const response = await notionApiFetch(`https://api.notion.com/v1/pages/${vehicleId}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
         'Notion-Version': NOTION_VERSION
@@ -446,7 +449,7 @@ async function notifyUcariano(options: {
       properties[vehiclePropName] = { relation: [{ id: vehicleId }] };
     }
 
-    const response = await fetch('https://api.notion.com/v1/pages', {
+    const response = await notionApiFetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,
@@ -544,7 +547,7 @@ export async function PATCH(request: Request) {
       return Response.json({ error: 'No hay campos validos para actualizar.' }, { status: 422 });
     }
 
-    const currentPageResponse = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+    const currentPageResponse = await notionApiFetch(`https://api.notion.com/v1/pages/${id}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
         'Notion-Version': NOTION_VERSION
@@ -560,7 +563,7 @@ export async function PATCH(request: Request) {
         ? currentVehicleProperty.relation[0]?.id || null
         : null;
 
-    const updateResponse = await fetch(`https://api.notion.com/v1/pages/${id}`, {
+    const updateResponse = await notionApiFetch(`https://api.notion.com/v1/pages/${id}`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${notionToken}`,
@@ -704,7 +707,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const createResponse = await fetch('https://api.notion.com/v1/pages', {
+    const createResponse = await notionApiFetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${notionToken}`,

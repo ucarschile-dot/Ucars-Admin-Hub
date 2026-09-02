@@ -403,16 +403,13 @@
 
                 loadBtn.addEventListener('click', loadUcarianosDb);
 
-                syncBtn.addEventListener('click', function () {
-                        var confirmed = window.confirm('Esto va a crear/actualizar/archivar paginas reales en la base de Ucarianos de Notion segun el Sheet. Continuar?');
-                        if (!confirmed) {
-                                return;
-                        }
-
-                        syncStatus.textContent = 'Sincronizando...';
-                        syncBtn.disabled = true;
-
-                        fetch('/api/ucarianos/sync', { method: 'POST', cache: 'no-store' })
+                function runSyncChunk(offset, totals) {
+                        return fetch('/api/ucarianos/sync', {
+                                method: 'POST',
+                                cache: 'no-store',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ offset: offset, limit: 100 })
+                        })
                                 .then(function (response) {
                                         return response.json().then(function (payload) {
                                                 if (!response.ok) {
@@ -423,13 +420,38 @@
                                         });
                                 })
                                 .then(function (result) {
-                                        var errorSummary = Array.isArray(result.errors) && result.errors.length > 0
-                                                ? ' | Errores: ' + result.errors.join('; ')
-                                                : '';
+                                        totals.created += result.created || 0;
+                                        totals.updated += result.updated || 0;
+                                        totals.archived += result.archived || 0;
+                                        totals.errors = totals.errors.concat(Array.isArray(result.errors) ? result.errors : []);
 
-                                        syncStatus.textContent = 'Creados: ' + (result.created || 0) +
-                                                ' | Actualizados: ' + (result.updated || 0) +
-                                                ' | Archivados: ' + (result.archived || 0) +
+                                        var processedSoFar = Math.min((result.nextOffset ?? result.total) || result.total || 0, result.total || 0);
+                                        syncStatus.textContent = 'Sincronizando... ' + processedSoFar + '/' + (result.total || 0) +
+                                                ' | Creados: ' + totals.created + ' | Actualizados: ' + totals.updated + ' | Archivados: ' + totals.archived;
+
+                                        if (!result.done && result.nextOffset !== null && result.nextOffset !== undefined) {
+                                                return runSyncChunk(result.nextOffset, totals);
+                                        }
+
+                                        return totals;
+                                });
+                }
+
+                syncBtn.addEventListener('click', function () {
+                        var confirmed = window.confirm('Esto va a crear/actualizar/archivar paginas reales en la base de Ucarianos de Notion segun el Sheet. Puede tardar varios minutos con 600+ filas. Continuar?');
+                        if (!confirmed) {
+                                return;
+                        }
+
+                        syncStatus.textContent = 'Sincronizando...';
+                        syncBtn.disabled = true;
+
+                        runSyncChunk(0, { created: 0, updated: 0, archived: 0, errors: [] })
+                                .then(function (totals) {
+                                        var errorSummary = totals.errors.length > 0 ? ' | Errores: ' + totals.errors.join('; ') : '';
+                                        syncStatus.textContent = 'Listo. Creados: ' + totals.created +
+                                                ' | Actualizados: ' + totals.updated +
+                                                ' | Archivados: ' + totals.archived +
                                                 errorSummary;
 
                                         return loadUcarianosDb();

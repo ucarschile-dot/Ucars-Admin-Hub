@@ -3,6 +3,42 @@
 // with "Databases with multiple data sources are not supported in this API version."
 export const NOTION_VERSION = '2025-09-03';
 
+export function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Notion's API allows ~3 requests/second per integration; a fixed gap between calls keeps
+// sequential loops (e.g. syncing hundreds of Sheet rows) from tripping "rate limited" errors.
+let lastNotionCallAt = 0;
+const MIN_GAP_MS = 350;
+
+async function throttleNotionCall() {
+  const wait = lastNotionCallAt + MIN_GAP_MS - Date.now();
+  if (wait > 0) {
+    await sleep(wait);
+  }
+  lastNotionCallAt = Date.now();
+}
+
+/** fetch() wrapper for the Notion API that throttles calls and retries on 429 (rate limited). */
+export async function notionApiFetch(url: string, init?: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    await throttleNotionCall();
+    const response = await fetch(url, init);
+
+    if (response.status !== 429 || attempt === maxRetries) {
+      return response;
+    }
+
+    const retryAfterHeader = Number(response.headers.get('Retry-After'));
+    const backoffMs = Number.isFinite(retryAfterHeader) && retryAfterHeader > 0 ? retryAfterHeader * 1000 : 1000 * (attempt + 1);
+    await sleep(backoffMs);
+  }
+
+  // Unreachable, but keeps TypeScript happy about the return type.
+  return fetch(url, init);
+}
+
 const dataSourceCache = new Map<string, Promise<string>>();
 
 export async function resolveDataSourceId(databaseId: string, notionToken: string): Promise<string> {
@@ -12,7 +48,7 @@ export async function resolveDataSourceId(databaseId: string, notionToken: strin
   }
 
   const promise = (async () => {
-    const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
+    const response = await notionApiFetch(`https://api.notion.com/v1/databases/${databaseId}`, {
       headers: {
         Authorization: `Bearer ${notionToken}`,
         'Notion-Version': NOTION_VERSION
@@ -57,7 +93,7 @@ export async function getDataSourceSchema(
 ): Promise<Record<string, NotionSchemaProperty>> {
   const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
 
-  const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+  const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
     headers: {
       Authorization: `Bearer ${notionToken}`,
       'Notion-Version': NOTION_VERSION

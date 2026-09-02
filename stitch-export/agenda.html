@@ -1006,7 +1006,8 @@
                             return (item.advisorName || 'Sin asesor') === selected;
                         });
 
-                    referenceDate = agendaItems.length > 0 ? new Date(agendaItems[0].date) : new Date();
+                    // Cambiar/aplicar el filtro de ucariano no debe mover el calendario lejos de hoy.
+                    referenceDate = new Date();
                     renderAgendaViews();
                 }
 

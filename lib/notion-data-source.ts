@@ -42,3 +42,37 @@ export async function resolveDataSourceId(databaseId: string, notionToken: strin
 
   return promise;
 }
+
+export type NotionSchemaProperty = {
+  type?: string;
+  select?: { options?: Array<{ name?: string }> };
+  status?: { options?: Array<{ name?: string }> };
+  multi_select?: { options?: Array<{ name?: string }> };
+};
+
+/** Retrieves a data source's full property schema (types + select/status/multi_select options). */
+export async function getDataSourceSchema(
+  databaseId: string,
+  notionToken: string
+): Promise<Record<string, NotionSchemaProperty>> {
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+
+  const response = await fetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION
+    },
+    cache: 'no-store'
+  });
+
+  const payload = (await response.json()) as {
+    properties?: Record<string, NotionSchemaProperty>;
+    message?: string;
+  };
+
+  if (!response.ok || !payload.properties) {
+    throw new Error(payload.message || 'No se pudo leer el esquema en Notion.');
+  }
+
+  return payload.properties;
+}

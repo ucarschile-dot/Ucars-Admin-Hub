@@ -360,13 +360,19 @@ export async function PATCH(request: Request) {
   try {
     const schema = await getDataSourceSchema(databaseId, notionToken);
     const properties: Record<string, unknown> = {};
+    // Campos que el operador pidio guardar pero que no tienen una columna equivalente en Notion:
+    // se reportan al cliente para que no crea que quedaron guardados cuando en realidad se ignoraron.
+    const missingFields: string[] = [];
 
     for (const [field, candidates] of Object.entries(ARRIENDO_EDITABLE_FIELDS)) {
       const value = body[field];
       if (value === undefined) continue;
 
       const propertyName = pickSchemaPropertyName(schema, candidates);
-      if (!propertyName) continue;
+      if (!propertyName) {
+        missingFields.push(field);
+        continue;
+      }
 
       const payload = buildPropertyPayload(schema[propertyName]?.type, value);
       if (payload) properties[propertyName] = payload;
@@ -397,7 +403,10 @@ export async function PATCH(request: Request) {
     }
 
     if (Object.keys(properties).length === 0) {
-      return Response.json({ error: 'Ningun campo enviado coincide con propiedades existentes en Notion.' }, { status: 422 });
+      return Response.json(
+        { error: 'Ningun campo enviado coincide con propiedades existentes en Notion.', missingFields },
+        { status: 422 }
+      );
     }
 
     const updateResponse = await notionApiFetch(`https://api.notion.com/v1/pages/${arriendoId}`, {
@@ -415,7 +424,7 @@ export async function PATCH(request: Request) {
       throw new Error(updatePayload.message || 'No se pudo actualizar el contrato en Notion.');
     }
 
-    return Response.json({ id: arriendoId, updated: true }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json({ id: arriendoId, updated: true, missingFields }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('Error al editar el arriendo en Notion.', error);
     return Response.json(

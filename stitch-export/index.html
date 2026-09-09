@@ -269,6 +269,7 @@
     .contract-status { font-size: 0.8rem; color: #444748; }
     .contract-status.is-error { color: #93000a; }
     .contract-status.is-ok { color: #157a5a; }
+    .contract-status.is-warning { color: #785a00; }
     .contract-empty { padding: 12px; border: 1px dashed #c4c7c7; border-radius: 6px; color: #444748; font-size: 0.875rem; }
     @media (max-width: 700px) {
       .vehicle-sheet-header, .vehicle-sheet-body { padding: 16px; }
@@ -649,6 +650,13 @@
           statusEl.textContent = message || '';
           statusEl.classList.toggle('is-error', kind === 'error');
           statusEl.classList.toggle('is-ok', kind === 'ok');
+          statusEl.classList.toggle('is-warning', kind === 'warning');
+        }
+
+        // Traduce los nombres internos de campo a las etiquetas visibles del formulario para el mensaje de aviso.
+        function fieldLabel(field) {
+          var definition = CONTRACT_FIELDS.find(function (item) { return item.field === field; });
+          return definition ? definition.label : field;
         }
 
         form.addEventListener('submit', function (event) {
@@ -675,8 +683,13 @@
                 return payload;
               });
             })
-            .then(function () {
-              setStatus('Contrato actualizado.', 'ok');
+            .then(function (payload) {
+              var missingFields = Array.isArray(payload.missingFields) ? payload.missingFields : [];
+              if (missingFields.length > 0) {
+                setStatus('Guardado, pero estos campos no existen como columna en Notion y no se guardaron: ' + missingFields.map(fieldLabel).join(', ') + '.', 'warning');
+              } else {
+                setStatus('Contrato actualizado.', 'ok');
+              }
             })
             .catch(function (error) {
               setStatus(error.message || 'No se pudo guardar el contrato.', 'error');

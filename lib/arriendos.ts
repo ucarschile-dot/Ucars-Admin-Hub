@@ -1,4 +1,4 @@
-import { NOTION_VERSION, notionApiFetch } from '@/lib/notion-data-source';
+import { NOTION_VERSION, notionApiFetch, resolveDataSourceId, getDataSourceSchema } from '@/lib/notion-data-source';
 
 // Helpers compartidos entre app/api/arriendos/route.ts (listar/crear/editar arriendos en Notion)
 // y app/api/arriendos/contrato/route.ts (armar el contrato PDF/HTML desde la plantilla).
@@ -47,6 +47,146 @@ export const UCARIANO_EMAIL_CANDIDATES = ['Email', 'Correo', 'Mail'];
 export const UCARIANO_PHONE_CANDIDATES = ['Teléfono', 'Telefono', 'Phone', 'Celular'];
 export const UCARIANO_ADDRESS_CANDIDATES = ['Domicilio', 'Dirección', 'Direccion', 'Address'];
 export const UCARIANO_COMMUNE_CANDIDATES = ['Comuna', 'Commune'];
+
+export const CONTRACT_PDF_CANDIDATES = ['Contrato PDF', 'Contrato (PDF)', 'PDF Contrato', 'Archivo del contrato'];
+
+// Propiedades que el contrato de arriendo necesita en Notion; si alguna no existe se crea automaticamente
+// (ver ensureArriendoSchema) para que generar el contrato nunca dependa de configurar Notion a mano primero.
+type ArriendoPropertySpec = { candidates: string[]; type: 'rich_text' | 'number' | 'date' | 'files' };
+
+const ARRIENDO_REQUIRED_PROPERTIES: ArriendoPropertySpec[] = [
+  { candidates: START_DATE_CANDIDATES, type: 'date' },
+  { candidates: END_DATE_CANDIDATES, type: 'date' },
+  { candidates: TERM_CANDIDATES, type: 'number' },
+  { candidates: CONTRACT_NUMBER_CANDIDATES, type: 'rich_text' },
+  { candidates: COMMISSION_TERM_CANDIDATES, type: 'number' },
+  { candidates: ARRIENDO_PRICE_CANDIDATES, type: 'number' },
+  { candidates: ARRIENDO_PLATE_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_MILEAGE_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_UCARIANO_RUT_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_UCARIANO_ADDRESS_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_UCARIANO_COMMUNE_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_UCARIANO_PHONE_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_UCARIANO_EMAIL_CANDIDATES, type: 'rich_text' },
+  { candidates: CONTRACT_PDF_CANDIDATES, type: 'files' }
+];
+
+function emptyPropertyConfig(type: ArriendoPropertySpec['type']) {
+  switch (type) {
+    case 'number':
+      return { number: { format: 'number' } };
+    case 'date':
+      return { date: {} };
+    case 'files':
+      return { files: {} };
+    default:
+      return { rich_text: {} };
+  }
+}
+
+/** Crea en Notion las columnas del contrato de arriendo que todavia no existan (best-effort, idempotente). */
+export async function ensureArriendoSchema(
+  databaseId: string,
+  notionToken: string
+): Promise<Record<string, NotionSchemaProperty>> {
+  const schema = await getDataSourceSchema(databaseId, notionToken);
+  const toCreate: Record<string, unknown> = {};
+
+  for (const spec of ARRIENDO_REQUIRED_PROPERTIES) {
+    if (!pickSchemaPropertyName(schema, spec.candidates)) {
+      toCreate[spec.candidates[0]] = emptyPropertyConfig(spec.type);
+    }
+  }
+
+  if (Object.keys(toCreate).length === 0) {
+    return schema;
+  }
+
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+  const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ properties: toCreate })
+  });
+
+  const payload = (await response.json()) as { properties?: Record<string, NotionSchemaProperty>; message?: string };
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudieron crear las columnas faltantes del contrato en Notion.');
+  }
+
+  return payload.properties || (await getDataSourceSchema(databaseId, notionToken));
+}
+
+/** Sube un archivo binario a Notion (File Upload API, modo single_part) y devuelve el id del file_upload. */
+export async function uploadFileToNotion(fileBuffer: Buffer, filename: string, contentType: string, notionToken: string) {
+  const createResponse = await notionApiFetch('https://api.notion.com/v1/file_uploads', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ mode: 'single_part', filename, content_type: contentType })
+  });
+
+  const created = (await createResponse.json()) as { id?: string; upload_url?: string; message?: string };
+  if (!createResponse.ok || !created.id || !created.upload_url) {
+    throw new Error(created.message || 'No se pudo iniciar la subida del archivo a Notion.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', new Blob([new Uint8Array(fileBuffer)], { type: contentType }), filename);
+
+  const sendResponse = await notionApiFetch(created.upload_url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION
+    },
+    body: formData
+  });
+
+  const sendPayload = (await sendResponse.json()) as { message?: string };
+  if (!sendResponse.ok) {
+    throw new Error(sendPayload.message || 'No se pudo enviar el archivo a Notion.');
+  }
+
+  return created.id;
+}
+
+/** Adjunta un file_upload ya subido a una propiedad tipo "files" de una pagina de Notion. */
+export async function attachFileToPageProperty(
+  pageId: string,
+  propertyName: string,
+  fileUploadId: string,
+  filename: string,
+  notionToken: string
+) {
+  const response = await notionApiFetch(`https://api.notion.com/v1/pages/${pageId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      properties: {
+        [propertyName]: {
+          files: [{ type: 'file_upload', file_upload: { id: fileUploadId }, name: filename }]
+        }
+      }
+    })
+  });
+
+  const payload = (await response.json()) as { message?: string };
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudo adjuntar el PDF a la pagina del arriendo en Notion.');
+  }
+}
 
 // Campos editables del contrato de arriendo: fechas/plazo, mas los datos del ucariano y del vehiculo que se
 // autocompletan desde Notion (Stock/Ucarianos) pero el operador puede sobrescribir para este contrato en particular.

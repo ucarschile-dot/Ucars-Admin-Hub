@@ -1,4 +1,4 @@
-import { NOTION_VERSION, resolveDataSourceId, notionApiFetch, getDataSourceSchema } from '@/lib/notion-data-source';
+import { NOTION_VERSION, resolveDataSourceId, notionApiFetch } from '@/lib/notion-data-source';
 import {
   AUTO_CANDIDATES,
   UCARIANO_CANDIDATES,
@@ -31,7 +31,9 @@ import {
   buildPropertyPayload,
   buildRelationPayload,
   todayIso,
-  addDaysIso
+  addDaysIso,
+  ensureArriendoSchema,
+  CONTRACT_PDF_CANDIDATES
 } from '@/lib/arriendos';
 
 // Resolver el nombre de auto/ucariano por relacion puede sumar varias llamadas a Notion.
@@ -45,6 +47,7 @@ type NotionProperty = Record<string, unknown> & {
   formula?: { string?: string | null; number?: number | null } | null;
   date?: { start?: string | null } | null;
   relation?: Array<{ id?: string }>;
+  files?: Array<{ type?: 'external' | 'file'; external?: { url?: string }; file?: { url?: string } }>;
 };
 
 type NotionRow = {
@@ -72,6 +75,7 @@ type Arriendo = {
   ucarianoComuna: string;
   ucarianoTelefono: string;
   ucarianoEmail: string;
+  contratoPdfUrl: string;
 };
 
 function getText(property?: NotionProperty | null) {
@@ -121,6 +125,11 @@ function getNumber(property?: NotionProperty | null) {
 
   const parsed = Number(getText(property).replace(',', '.').replace(/[^\d.-]/g, ''));
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getFileUrl(property?: NotionProperty | null) {
+  const file = property?.files?.[0];
+  return file?.external?.url || file?.file?.url || '';
 }
 
 async function queryRows(databaseId: string, notionToken: string) {
@@ -202,7 +211,8 @@ function toArriendo(row: NotionRow, auto: RelationInfo, ucariano: RelationInfo):
     ucarianoDomicilio: getText(pickProperty(properties, ARRIENDO_UCARIANO_ADDRESS_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_ADDRESS_CANDIDATES)),
     ucarianoComuna: getText(pickProperty(properties, ARRIENDO_UCARIANO_COMMUNE_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_COMMUNE_CANDIDATES)),
     ucarianoTelefono: getText(pickProperty(properties, ARRIENDO_UCARIANO_PHONE_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_PHONE_CANDIDATES)),
-    ucarianoEmail: getText(pickProperty(properties, ARRIENDO_UCARIANO_EMAIL_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_EMAIL_CANDIDATES))
+    ucarianoEmail: getText(pickProperty(properties, ARRIENDO_UCARIANO_EMAIL_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_EMAIL_CANDIDATES)),
+    contratoPdfUrl: getFileUrl(pickProperty(properties, CONTRACT_PDF_CANDIDATES))
   };
 }
 
@@ -256,7 +266,7 @@ export async function POST(request: Request) {
 
   try {
     const [schema, dataSourceId, existingRows, autoProps, ucarianoProps] = await Promise.all([
-      getDataSourceSchema(databaseId, notionToken),
+      ensureArriendoSchema(databaseId, notionToken),
       resolveDataSourceId(databaseId, notionToken),
       queryRows(databaseId, notionToken),
       fetchNotionPage(vehicleId, notionToken).catch(() => ({})),
@@ -358,7 +368,7 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const schema = await getDataSourceSchema(databaseId, notionToken);
+    const schema = await ensureArriendoSchema(databaseId, notionToken);
     const properties: Record<string, unknown> = {};
     // Campos que el operador pidio guardar pero que no tienen una columna equivalente en Notion:
     // se reportan al cliente para que no crea que quedaron guardados cuando en realidad se ignoraron.

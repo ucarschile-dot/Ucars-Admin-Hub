@@ -27,10 +27,10 @@ export const DEADLINE_CANDIDATES = ['Deadline', 'Fecha Deadline', 'Vencimiento',
 export const REMAINING_DAYS_CANDIDATES = ['Días restantes', 'Dias restantes', 'Días de arriendo restantes', 'Dias de arriendo restantes', 'Remaining Days'];
 
 export const CONTRACT_NUMBER_CANDIDATES = ['N° Contrato', 'Numero de Contrato', 'Número de Contrato', 'Contrato N°', 'Contract Number'];
+export const COMMISSION_TERM_CANDIDATES = ['Plazo pago comisión', 'Plazo pago comision', 'Plazo de pago de comisión'];
 export const ARRIENDO_PRICE_CANDIDATES = ['Precio autorizado', 'Precio de venta autorizado', 'Precio Autorizado'];
 export const ARRIENDO_PLATE_CANDIDATES = ['Patente'];
 export const ARRIENDO_MILEAGE_CANDIDATES = ['Kilometraje', 'Kilometraje a la entrega'];
-export const COMMISSION_TERM_CANDIDATES = ['Plazo pago comisión', 'Plazo pago comision', 'Plazo de pago de comisión'];
 export const ARRIENDO_UCARIANO_RUT_CANDIDATES = ['RUT Ucariano', 'RUT'];
 export const ARRIENDO_UCARIANO_ADDRESS_CANDIDATES = ['Domicilio Ucariano', 'Domicilio'];
 export const ARRIENDO_UCARIANO_COMMUNE_CANDIDATES = ['Comuna Ucariano', 'Comuna'];
@@ -48,17 +48,18 @@ export const UCARIANO_PHONE_CANDIDATES = ['Teléfono', 'Telefono', 'Phone', 'Cel
 export const UCARIANO_ADDRESS_CANDIDATES = ['Domicilio', 'Dirección', 'Direccion', 'Address'];
 export const UCARIANO_COMMUNE_CANDIDATES = ['Comuna', 'Commune'];
 
-// Campos editables del contrato de arriendo (los que el operador puede modificar desde la ficha del vehiculo).
+// Campos editables del contrato de arriendo: fechas/plazo, mas los datos del ucariano y del vehiculo que se
+// autocompletan desde Notion (Stock/Ucarianos) pero el operador puede sobrescribir para este contrato en particular.
 export const ARRIENDO_EDITABLE_FIELDS: Record<string, string[]> = {
   fechaInicio: START_DATE_CANDIDATES,
   fechaTermino: END_DATE_CANDIDATES,
   plazo: TERM_CANDIDATES,
   deadline: DEADLINE_CANDIDATES,
   numeroContrato: CONTRACT_NUMBER_CANDIDATES,
+  plazoPagoComision: COMMISSION_TERM_CANDIDATES,
   precioAutorizado: ARRIENDO_PRICE_CANDIDATES,
   patente: ARRIENDO_PLATE_CANDIDATES,
   kilometraje: ARRIENDO_MILEAGE_CANDIDATES,
-  plazoPagoComision: COMMISSION_TERM_CANDIDATES,
   ucarianoRut: ARRIENDO_UCARIANO_RUT_CANDIDATES,
   ucarianoDomicilio: ARRIENDO_UCARIANO_ADDRESS_CANDIDATES,
   ucarianoComuna: ARRIENDO_UCARIANO_COMMUNE_CANDIDATES,
@@ -218,6 +219,8 @@ export async function fetchArriendoContractDetail(arriendoId: string, notionToke
 
   const fechaInicio = getText(pickProperty(arriendoProps, START_DATE_CANDIDATES)) || todayIso();
 
+  // Datos del vehiculo y del ucariano: se autocompletan desde Stock/Ucarianos, pero el operador puede
+  // sobrescribirlos para este contrato (el valor guardado en el Arriendo tiene prioridad si existe).
   const precioAutorizado =
     getNumber(pickProperty(arriendoProps, ARRIENDO_PRICE_CANDIDATES)) ??
     getNumber(pickProperty(autoProps, STOCK_PRICE_CANDIDATES)) ??

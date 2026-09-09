@@ -9,10 +9,10 @@ import {
   REMAINING_DAYS_CANDIDATES,
   ARRIENDO_EDITABLE_FIELDS,
   CONTRACT_NUMBER_CANDIDATES,
+  COMMISSION_TERM_CANDIDATES,
   ARRIENDO_PRICE_CANDIDATES,
   ARRIENDO_PLATE_CANDIDATES,
   ARRIENDO_MILEAGE_CANDIDATES,
-  COMMISSION_TERM_CANDIDATES,
   ARRIENDO_UCARIANO_RUT_CANDIDATES,
   ARRIENDO_UCARIANO_ADDRESS_CANDIDATES,
   ARRIENDO_UCARIANO_COMMUNE_CANDIDATES,
@@ -151,23 +151,30 @@ async function queryRows(databaseId: string, notionToken: string) {
   return rows;
 }
 
-async function getPageTitle(pageId: string, notionToken: string) {
+async function getPage(pageId: string, notionToken: string) {
   const response = await notionApiFetch(`https://api.notion.com/v1/pages/${pageId}`, {
     headers: { Authorization: `Bearer ${notionToken}`, 'Notion-Version': NOTION_VERSION },
     cache: 'no-store'
   });
   const page = (await response.json()) as { properties?: Record<string, NotionProperty> };
-  if (!response.ok || !page.properties) return pageId;
-  const title = Object.values(page.properties).find((property) => property.type === 'title' && property.title?.length);
+  return response.ok && page.properties ? page.properties : {};
+}
+
+function getPageTitle(properties: Record<string, NotionProperty>, pageId: string) {
+  const title = Object.values(properties).find((property) => property.type === 'title' && property.title?.length);
   return getText(title) || pageId;
 }
 
 async function resolveRelation(property: NotionProperty | undefined, notionToken: string) {
   const id = getRelationId(property);
-  return { id, name: id ? await getPageTitle(id, notionToken) : getText(property) || 'Sin asignar' };
+  const properties = id ? await getPage(id, notionToken) : {};
+  const name = id ? (getPageTitle(properties, id) || 'Sin asignar') : getText(property) || 'Sin asignar';
+  return { id, name, properties };
 }
 
-function toArriendo(row: NotionRow, auto: { id: string | null; name: string }, ucariano: { id: string | null; name: string }): Arriendo {
+type RelationInfo = { id: string | null; name: string; properties: Record<string, NotionProperty> };
+
+function toArriendo(row: NotionRow, auto: RelationInfo, ucariano: RelationInfo): Arriendo {
   const properties = row.properties;
   const fechaInicio = getDate(pickProperty(properties, START_DATE_CANDIDATES));
   const fechaTermino = getDate(pickProperty(properties, END_DATE_CANDIDATES));
@@ -187,15 +194,17 @@ function toArriendo(row: NotionRow, auto: { id: string | null; name: string }, u
     deadline,
     diasArriendoRestantes: remainingDaysFromNotion ?? getRemainingDays(fechaTermino),
     numeroContrato: getText(pickProperty(properties, CONTRACT_NUMBER_CANDIDATES)),
-    precioAutorizado: getText(pickProperty(properties, ARRIENDO_PRICE_CANDIDATES)),
-    patente: getText(pickProperty(properties, ARRIENDO_PLATE_CANDIDATES)),
-    kilometraje: getText(pickProperty(properties, ARRIENDO_MILEAGE_CANDIDATES)),
+    // Datos del vehiculo y del ucariano: se autocompletan desde Stock/Ucarianos, pero el valor guardado en
+    // el Arriendo (si el operador lo edito) tiene prioridad.
+    precioAutorizado: getText(pickProperty(properties, ARRIENDO_PRICE_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_PRICE_CANDIDATES)),
+    patente: getText(pickProperty(properties, ARRIENDO_PLATE_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_PLATE_CANDIDATES)),
+    kilometraje: getText(pickProperty(properties, ARRIENDO_MILEAGE_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_MILEAGE_CANDIDATES)),
     plazoPagoComision: getText(pickProperty(properties, COMMISSION_TERM_CANDIDATES)),
-    ucarianoRut: getText(pickProperty(properties, ARRIENDO_UCARIANO_RUT_CANDIDATES)),
-    ucarianoDomicilio: getText(pickProperty(properties, ARRIENDO_UCARIANO_ADDRESS_CANDIDATES)),
-    ucarianoComuna: getText(pickProperty(properties, ARRIENDO_UCARIANO_COMMUNE_CANDIDATES)),
-    ucarianoTelefono: getText(pickProperty(properties, ARRIENDO_UCARIANO_PHONE_CANDIDATES)),
-    ucarianoEmail: getText(pickProperty(properties, ARRIENDO_UCARIANO_EMAIL_CANDIDATES))
+    ucarianoRut: getText(pickProperty(properties, ARRIENDO_UCARIANO_RUT_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_RUT_CANDIDATES)),
+    ucarianoDomicilio: getText(pickProperty(properties, ARRIENDO_UCARIANO_ADDRESS_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_ADDRESS_CANDIDATES)),
+    ucarianoComuna: getText(pickProperty(properties, ARRIENDO_UCARIANO_COMMUNE_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_COMMUNE_CANDIDATES)),
+    ucarianoTelefono: getText(pickProperty(properties, ARRIENDO_UCARIANO_PHONE_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_PHONE_CANDIDATES)),
+    ucarianoEmail: getText(pickProperty(properties, ARRIENDO_UCARIANO_EMAIL_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_EMAIL_CANDIDATES))
   };
 }
 
@@ -291,6 +300,7 @@ export async function POST(request: Request) {
     setTextField(DEADLINE_CANDIDATES, fechaTermino);
     setTextField(CONTRACT_NUMBER_CANDIDATES, String(existingRows.length + 1));
     setTextField(COMMISSION_TERM_CANDIDATES, '5');
+    // Valores iniciales autocompletados desde Stock/Ucarianos; el operador puede editarlos despues via PATCH.
     setTextField(ARRIENDO_PRICE_CANDIDATES, getText(pickProperty(autoProps, STOCK_PRICE_CANDIDATES)));
     setTextField(ARRIENDO_PLATE_CANDIDATES, getText(pickProperty(autoProps, STOCK_PLATE_CANDIDATES)));
     setTextField(ARRIENDO_MILEAGE_CANDIDATES, getText(pickProperty(autoProps, STOCK_MILEAGE_CANDIDATES)));

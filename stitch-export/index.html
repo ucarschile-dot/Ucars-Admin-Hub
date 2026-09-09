@@ -510,22 +510,35 @@
       }
 
       // Construye la ficha visible del vehiculo, incluyendo documentos y el resumen de arriendo.
+      // Identidad del contrato (relaciones fijas): solo de lectura.
+      var CONTRACT_IDENTITY_FIELDS = [
+        { field: 'auto', label: 'Vehiculo' },
+        { field: 'ucariano', label: 'Ucariano' }
+      ];
+
+      // Datos del ucariano/vehiculo y del contrato: se autocompletan desde Notion (Stock/Ucarianos)
+      // pero el operador puede editarlos y sobrescribirlos para este contrato en particular.
       var CONTRACT_FIELDS = [
         { field: 'numeroContrato', label: 'N° contrato' },
         { field: 'fechaInicio', label: 'Fecha de inicio', type: 'date' },
         { field: 'fechaTermino', label: 'Fecha de termino', type: 'date' },
         { field: 'plazo', label: 'Plazo (dias)' },
         { field: 'deadline', label: 'Deadline', type: 'date' },
+        { field: 'plazoPagoComision', label: 'Plazo pago comision (dias habiles)' },
         { field: 'precioAutorizado', label: 'Precio autorizado ($)' },
         { field: 'patente', label: 'Patente' },
         { field: 'kilometraje', label: 'Kilometraje' },
-        { field: 'plazoPagoComision', label: 'Plazo pago comision (dias habiles)' },
         { field: 'ucarianoRut', label: 'RUT ucariano' },
         { field: 'ucarianoDomicilio', label: 'Domicilio ucariano' },
         { field: 'ucarianoComuna', label: 'Comuna ucariano' },
         { field: 'ucarianoTelefono', label: 'Telefono ucariano' },
         { field: 'ucarianoEmail', label: 'Email ucariano' }
       ];
+
+      function identityFieldHtml(definition, rental) {
+        var value = escapeHtml(rental[definition.field] || 'No registrado');
+        return '<div class="vehicle-detail"><span class="vehicle-detail-label">' + definition.label + '</span><span class="vehicle-detail-value">' + value + '</span></div>';
+      }
 
       function contractFieldHtml(definition, rental) {
         var value = rental ? (rental[definition.field] || '') : '';
@@ -539,6 +552,9 @@
         }
 
         return [
+          '<div class="vehicle-details" style="margin-bottom: 16px;">',
+          CONTRACT_IDENTITY_FIELDS.map(function (definition) { return identityFieldHtml(definition, rental); }).join(''),
+          '</div>',
           '<form id="vehicle-contract-form" data-rental-id="' + escapeHtml(rental.id) + '">',
           '<div class="contract-form">',
           CONTRACT_FIELDS.map(function (definition) { return contractFieldHtml(definition, rental); }).join(''),

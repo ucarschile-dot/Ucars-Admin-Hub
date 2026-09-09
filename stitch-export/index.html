@@ -255,9 +255,24 @@
     .vehicle-document { display: flex; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #c4c7c7; border-radius: 6px; color: #0b1c30; text-decoration: none; }
     .vehicle-document[href]:hover { border-color: #785a00; background: #fffdf7; }
     .vehicle-document-empty { color: #444748; background: #eff4ff; }
+    .contract-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .contract-field { display: flex; flex-direction: column; gap: 4px; }
+    .contract-field label { color: #444748; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .contract-field input { padding: 8px 10px; border: 1px solid #c4c7c7; border-radius: 6px; font: inherit; color: #0b1c30; background: #fff; }
+    .contract-field input:disabled { background: #eff4ff; color: #444748; }
+    .contract-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+    .contract-btn { padding: 9px 16px; border-radius: 6px; border: 1px solid transparent; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .contract-btn-primary { background: #0b1c30; color: #fff; }
+    .contract-btn-primary:disabled { background: #a5b1be; cursor: not-allowed; }
+    .contract-btn-secondary { background: #fdcb52; color: #0b1c30; }
+    .contract-btn-secondary:disabled { background: #eff4ff; color: #a5b1be; cursor: not-allowed; }
+    .contract-status { font-size: 0.8rem; color: #444748; }
+    .contract-status.is-error { color: #93000a; }
+    .contract-status.is-ok { color: #157a5a; }
+    .contract-empty { padding: 12px; border: 1px dashed #c4c7c7; border-radius: 6px; color: #444748; font-size: 0.875rem; }
     @media (max-width: 700px) {
       .vehicle-sheet-header, .vehicle-sheet-body { padding: 16px; }
-      .vehicle-details, .vehicle-documents { grid-template-columns: 1fr; }
+      .vehicle-details, .vehicle-documents, .contract-form { grid-template-columns: 1fr; }
     }
 
   </style>
@@ -495,6 +510,48 @@
       }
 
       // Construye la ficha visible del vehiculo, incluyendo documentos y el resumen de arriendo.
+      var CONTRACT_FIELDS = [
+        { field: 'numeroContrato', label: 'N° contrato' },
+        { field: 'fechaInicio', label: 'Fecha de inicio', type: 'date' },
+        { field: 'fechaTermino', label: 'Fecha de termino', type: 'date' },
+        { field: 'plazo', label: 'Plazo (dias)' },
+        { field: 'deadline', label: 'Deadline', type: 'date' },
+        { field: 'precioAutorizado', label: 'Precio autorizado ($)' },
+        { field: 'patente', label: 'Patente' },
+        { field: 'kilometraje', label: 'Kilometraje' },
+        { field: 'plazoPagoComision', label: 'Plazo pago comision (dias habiles)' },
+        { field: 'ucarianoRut', label: 'RUT ucariano' },
+        { field: 'ucarianoDomicilio', label: 'Domicilio ucariano' },
+        { field: 'ucarianoComuna', label: 'Comuna ucariano' },
+        { field: 'ucarianoTelefono', label: 'Telefono ucariano' },
+        { field: 'ucarianoEmail', label: 'Email ucariano' }
+      ];
+
+      function contractFieldHtml(definition, rental) {
+        var value = rental ? (rental[definition.field] || '') : '';
+        return '<div class="contract-field"><label for="contract-' + definition.field + '">' + definition.label + '</label>' +
+          '<input id="contract-' + definition.field + '" type="' + (definition.type || 'text') + '" data-field="' + definition.field + '" value="' + escapeHtml(value) + '"' + (rental ? '' : ' disabled') + '/></div>';
+      }
+
+      function contractSectionHtml(rental) {
+        if (!rental || !rental.id) {
+          return '<div class="contract-empty">Aun no hay un contrato de arriendo asociado a este vehiculo. Asigna un ucariano desde Stock para generarlo automaticamente.</div>';
+        }
+
+        return [
+          '<form id="vehicle-contract-form" data-rental-id="' + escapeHtml(rental.id) + '">',
+          '<div class="contract-form">',
+          CONTRACT_FIELDS.map(function (definition) { return contractFieldHtml(definition, rental); }).join(''),
+          '</div>',
+          '<div class="contract-actions">',
+          '<button type="submit" class="contract-btn contract-btn-primary" id="vehicle-contract-save">Guardar cambios</button>',
+          '<button type="button" class="contract-btn contract-btn-secondary" id="vehicle-contract-generate">Generar contrato</button>',
+          '<span class="contract-status" id="vehicle-contract-status"></span>',
+          '</div>',
+          '</form>'
+        ].join('');
+      }
+
       function renderVehicleOverlay(vehicle, rental, rentalError) {
         if (!vehicleContent || !vehicleTitle) return;
         var value = function (item) { return escapeHtml(item || 'No registrado'); };
@@ -531,8 +588,72 @@
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Comision de venta (3%)</span><span class="vehicle-detail-value">' + getSalesCommission(vehicle.price) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Pago de arriendo al dia</span><span class="vehicle-detail-value">' + paymentText + '</span><span class="vehicle-detail-label" style="margin-top: 6px; text-transform: none;">' + value(paymentDetail) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Comision restante</span><span class="vehicle-detail-value">' + commissionBalanceText + '</span></div>',
-          '</div>' + rentalErrorHtml + '</section>'
+          '</div>' + rentalErrorHtml + '</section>',
+          '<section class="vehicle-section"><h3>Contrato del programa Ucariano</h3>',
+          contractSectionHtml(rental),
+          '</section>'
         ].join('');
+
+        bindContractFormHandlers(vehicle, rental);
+      }
+
+      // Conecta el formulario de contrato (guardar cambios via PATCH y generar el PDF via /api/arriendos/contrato).
+      function bindContractFormHandlers(vehicle, rental) {
+        var form = document.getElementById('vehicle-contract-form');
+        if (!form) return;
+
+        var statusEl = document.getElementById('vehicle-contract-status');
+        var generateBtn = document.getElementById('vehicle-contract-generate');
+
+        function setStatus(message, kind) {
+          if (!statusEl) return;
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('is-error', kind === 'error');
+          statusEl.classList.toggle('is-ok', kind === 'ok');
+        }
+
+        form.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var saveBtn = document.getElementById('vehicle-contract-save');
+          var rentalId = form.getAttribute('data-rental-id');
+          var body = { id: rentalId };
+
+          form.querySelectorAll('[data-field]').forEach(function (input) {
+            body[input.getAttribute('data-field')] = input.value;
+          });
+
+          if (saveBtn) saveBtn.disabled = true;
+          setStatus('Guardando...', '');
+
+          fetch('/api/arriendos', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+            .then(function (response) {
+              return response.json().then(function (payload) {
+                if (!response.ok) throw new Error(payload.error || 'No se pudo guardar el contrato.');
+                return payload;
+              });
+            })
+            .then(function () {
+              setStatus('Contrato actualizado.', 'ok');
+            })
+            .catch(function (error) {
+              setStatus(error.message || 'No se pudo guardar el contrato.', 'error');
+            })
+            .finally(function () {
+              if (saveBtn) saveBtn.disabled = false;
+            });
+        });
+
+        if (generateBtn) {
+          generateBtn.addEventListener('click', function () {
+            var rentalId = form.getAttribute('data-rental-id');
+            if (!rentalId) return;
+            window.open('/api/arriendos/contrato?id=' + encodeURIComponent(rentalId) + '&imprimir=1', '_blank', 'noopener');
+          });
+        }
       }
 
       // Abre la ficha de Stock primero con datos base y luego completa el arriendo de forma asincrona.

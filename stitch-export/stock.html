@@ -754,6 +754,23 @@
                         grid.innerHTML = filtered.map(cardHtml).join('');
                 }
 
+                function createRentalContract(vehicle, ucarianoId, ucarianoName) {
+                        return fetchJson('/api/arriendos', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                        vehicleId: vehicle.id,
+                                        vehicleName: vehicle.name || 'Vehiculo',
+                                        ucarianoId: ucarianoId,
+                                        ucarianoName: ucarianoName || 'Ucariano'
+                                })
+                        }, 'No se pudo generar el contrato de arriendo en Notion.').catch(function (error) {
+                                console.error(error);
+                                window.alert('El ucariano quedo asignado, pero no se pudo generar el contrato de arriendo: ' + (error.message || 'error desconocido.'));
+                                return null;
+                        });
+                }
+
                 function assignUcariano(vehicleId, ucarianoId, ucarianoName, selectEl) {
                         selectEl.disabled = true;
 
@@ -775,6 +792,12 @@
 
                                         fillFilterOptions();
                                         renderFilteredVehicles();
+
+                                        if (vehicle && ucarianoId) {
+                                                return createRentalContract(vehicle, ucarianoId, ucarianoName).then(function () {
+                                                        openVehicleDetail(vehicleId);
+                                                });
+                                        }
                                 })
                                 .catch(function (error) {
                                         console.error(error);

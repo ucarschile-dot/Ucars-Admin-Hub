@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Contrato Marco de Agencia Ucariano — {{NUMERO_CONTRATO}}</title>
+
+<!--
+====================================================================
+  UCARS · PLANTILLA DE CONTRATO MARCO DE AGENCIA UCARIANO
+  Reemplazar cada {{VARIABLE}} antes de renderizar o imprimir.
+====================================================================
+
+  VARIABLES DE ENTRADA (las ingresa el operador)
+  ------------------------------------------------------------------
+  {{NUMERO_CONTRATO}}        118
+  {{FECHA_LARGA}}            9 de septiembre de 2026
+  {{UCARIANO_NOMBRE}}        SANTIAGO CRUZ DOBERTI
+  {{UCARIANO_RUT}}           21.478.058-5
+  {{UCARIANO_DOMICILIO}}     Mallalil 17575
+  {{UCARIANO_COMUNA}}        LO BARNECHEA
+  {{UCARIANO_TELEFONO}}      +56 9 3388 2770
+  {{UCARIANO_EMAIL}}         sa.cruzdoberti@gmail.com
+  {{VEHICULO}}               SUBARU CROSSTREK 2024
+  {{PATENTE}}                TBTJ-34
+  {{KILOMETRAJE}}            42.500 km
+  {{PRECIO_AUTORIZADO}}      $17.990.000        (formateado, con signo y puntos)
+  {{PLAZO_PAGO_COMISION}}    5                  (días hábiles)
+
+  VARIABLES CALCULADAS (las deriva el programa)
+  ------------------------------------------------------------------
+  {{COMISION}}          = precio × 0,03            → $539.700
+  {{TARIFA_TURBO}}      = precio × 0,0002          → $3.598
+  {{TARIFA_LENTO}}      = precio × 0,0005          → $8.995
+  {{TARIFA_CARO}}       = precio × 0,0008          → $14.392
+  {{TARIFA_CRITICO}}    = precio × 0,0014          → $25.186
+
+  CONSTANTES (no cambian; editar aquí si algún día cambian)
+  ------------------------------------------------------------------
+  Garantía UF 20 · Plazo 45 días corridos · Comisión 3%
+  Automotora GyD SpA · RUT 77.985.905-3
+  Gerardo Domínguez Rodríguez · CI 8.233.509-9
+  Camino El Alarife N° 13.360, Lo Barnechea
+
+  EJEMPLO DE CÁLCULO EN JAVASCRIPT
+  ------------------------------------------------------------------
+  const clp = n => '$' + Math.round(n).toLocaleString('es-CL');
+  const p   = 17990000;
+  const v = {
+    PRECIO_AUTORIZADO: clp(p),
+    COMISION:          clp(p * 0.03),
+    TARIFA_TURBO:      clp(p * 0.0002),
+    TARIFA_LENTO:      clp(p * 0.0005),
+    TARIFA_CARO:       clp(p * 0.0008),
+    TARIFA_CRITICO:    clp(p * 0.0014)
+  };
+  html = plantilla.replace(/\{\{(\w+)\}\}/g, (_, k) => v[k] ?? '');
+====================================================================
+-->
+
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt; line-height: 1.55; color: #1A1A1A;
+    max-width: 174mm; margin: 0 auto; padding: 12mm 0;
+  }
+  .marca { font-size: 17pt; font-weight: bold; color: #0D1F35; letter-spacing: 1px; }
+  .marca span { color: #1D9E75; }
+  .cintillo { text-align: right; font-size: 7.5pt; color: #5A6B80; margin-bottom: 14mm; }
+  h1 { font-size: 15pt; text-align: center; color: #0D1F35; margin: 0 0 2mm; letter-spacing: .3px; }
+  .sub { text-align: center; font-size: 9.5pt; font-weight: bold; color: #157A5A; letter-spacing: 2px; margin-bottom: 8mm; }
+  table.datos { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+  table.datos td { border: .5pt solid #E9EDF1; padding: 2.2mm 3mm; font-size: 9.5pt; vertical-align: middle; }
+  table.datos td.k { background: #F5F8FA; font-weight: bold; width: 40%; }
+  .declara { text-align: center; font-size: 8pt; font-style: italic; color: #5A6B80; margin-bottom: 8mm; line-height: 1.5; }
+  h2 { font-size: 10pt; color: #0D1F35; margin: 6mm 0 2.5mm; page-break-after: avoid; }
+  p { text-align: justify; margin: 0 0 2.8mm; }
+  ol.letras { margin: 0 0 3mm; padding-left: 7mm; }
+  ol.letras li { margin-bottom: 1.6mm; text-align: justify; }
+  table.tarifa { width: 100%; border-collapse: collapse; margin: 3mm 0 4mm; page-break-inside: avoid; }
+  table.tarifa th { background: #0D1F35; color: #fff; font-size: 8.5pt; padding: 2.2mm 3mm; text-align: left; }
+  table.tarifa td { border: .5pt solid #E9EDF1; padding: 2.2mm 3mm; font-size: 9pt; }
+  table.tarifa td:first-child { font-weight: bold; }
+  .firmas { width: 100%; margin-top: 22mm; page-break-inside: avoid; }
+  .firmas td { width: 50%; text-align: center; vertical-align: top; padding: 0 6mm; border: none; }
+  .linea { border-top: .8pt solid #1A1A1A; margin-bottom: 2.5mm; }
+  .fnombre { font-weight: bold; font-size: 9.5pt; }
+  .fcargo { font-size: 8.5pt; color: #5A6B80; }
+  .pie { text-align: center; font-size: 7.5pt; color: #A5B1BE; margin-top: 10mm; }
+  .nota { font-size: 8pt; font-style: italic; color: #5A6B80; text-align: center; margin-top: 6mm; }
+  @media print { body { padding: 0; } .nota { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="marca">UCARS<span>.</span></div>
+<div class="cintillo">Automotora GyD SpA · RUT 77.985.905-3 · Contrato Marco de Agencia Ucariano</div>
+
+<h1>CONTRATO MARCO DE AGENCIA</h1>
+<div class="sub">PROGRAMA UCARIANO</div>
+
+<table class="datos">
+  <tr><td class="k">N° Contrato</td><td>{{NUMERO_CONTRATO}}</td></tr>
+  <tr><td class="k">Fecha</td><td>{{FECHA_LARGA}}</td></tr>
+  <tr><td class="k">Ucariano (Agente)</td><td><b>{{UCARIANO_NOMBRE}}</b></td></tr>
+  <tr><td class="k">RUT Ucariano</td><td>{{UCARIANO_RUT}}</td></tr>
+  <tr><td class="k">Domicilio</td><td>{{UCARIANO_DOMICILIO}}</td></tr>
+  <tr><td class="k">Comuna</td><td>{{UCARIANO_COMUNA}}</td></tr>
+  <tr><td class="k">Teléfono</td><td>{{UCARIANO_TELEFONO}}</td></tr>
+  <tr><td class="k">Email</td><td>{{UCARIANO_EMAIL}}</td></tr>
+  <tr><td class="k">Vehículo</td><td><b>{{VEHICULO}}</b></td></tr>
+  <tr><td class="k">Patente</td><td><b>{{PATENTE}}</b></td></tr>
+  <tr><td class="k">Kilometraje a la entrega</td><td>{{KILOMETRAJE}}</td></tr>
+  <tr><td class="k">Precio de venta autorizado ($)</td><td><b>{{PRECIO_AUTORIZADO}}</b></td></tr>
+  <tr><td class="k">Comisión Ucariano (3%)</td><td><b>{{COMISION}}</b></td></tr>
+  <tr><td class="k">Garantía</td><td><b>UF 20</b></td></tr>
+  <tr><td class="k">Plazo del contrato</td><td><b>45 días corridos</b></td></tr>
+</table>
+
+<p class="declara">El Ucariano declara haber leído, comprendido y aceptado íntegramente el presente contrato antes de su firma. Este documento es de naturaleza comercial independiente y no crea vínculo laboral de ninguna especie.</p>
+
+<h2>PREÁMBULO</h2>
+<p>En Santiago, a {{FECHA_LARGA}}, comparecen: por una parte, <b>AUTOMOTORA GYD SpA</b>, RUT N° 77.985.905-3, representada por don Gerardo Domínguez Rodríguez, cédula de identidad N° 8.233.509-9, domiciliada en Camino El Alarife N° 13.360, comuna de Lo Barnechea, en adelante “la PRINCIPAL” o “UCARS”; y por otra parte, la persona individualizada en el encabezado del presente instrumento, en adelante “el AGENTE” o “UCARIANO”.</p>
+<p>UCARS se dedica a la comercialización de vehículos usados mediante un modelo en el que el vehículo permanece en uso mientras está en proceso de venta, siendo el AGENTE quien lo utiliza como vehículo personal y colabora activamente en su comercialización. La relación entre las partes es de naturaleza comercial independiente, sin vínculo laboral de ninguna especie.</p>
+
+<h2>CLÁUSULA PRIMERA: OBJETO DEL CONTRATO</h2>
+<p>1.1 La PRINCIPAL encarga al AGENTE la promoción, gestión y cierre de la venta del vehículo individualizado en el encabezado, con la máxima diligencia y conforme a las instrucciones de la PRINCIPAL.</p>
+<p>1.2 Como parte esencial del encargo, la PRINCIPAL entregará el vehículo al AGENTE para uso personal y diario durante la vigencia del contrato, a fin de mostrarlo a potenciales compradores de manera natural y continua.</p>
+<p>1.3 El AGENTE actuará siempre en nombre de la PRINCIPAL al negociar con potenciales compradores, sin poder comprometer a la PRINCIPAL fuera de las condiciones expresamente autorizadas en el presente contrato.</p>
+<p>1.4 Queda expresamente prohibido al AGENTE tercerizar su encargo bajo cualquier forma. El incumplimiento de esta prohibición es causal de término inmediato sin indemnización.</p>
+
+<h2>CLÁUSULA SEGUNDA: ENTREGA DEL VEHÍCULO Y ESTADO</h2>
+<p>2.1 La entrega se documentará mediante acta suscrita por ambas partes, con peritaje del estado del vehículo y registro fotográfico de 360 grados, que formará parte integrante de este contrato.</p>
+<p>2.2 El AGENTE declara recibir el vehículo en el estado consignado en el acta, con la totalidad de sus accesorios, documentación, llaves y elementos de seguridad reglamentarios.</p>
+<p>2.3 A la restitución se practicará un peritaje de salida que se comparará con el de entrada. Los daños no consignados en el acta de entrega se valorizarán mediante informe técnico y se descontarán de la garantía.</p>
+
+<h2>CLÁUSULA TERCERA: VERIFICACIÓN DE DOMICILIO Y CUSTODIA</h2>
+<p>3.1 Constituye condición esencial de este contrato que el AGENTE mantenga el domicilio declarado en el encabezado y que el vehículo pernocte en un estacionamiento cerrado, techado y asignado, verificado por la PRINCIPAL con anterioridad a la entrega.</p>
+<p>3.2 El AGENTE declara haber entregado documentación de domicilio a su nombre y autoriza a la PRINCIPAL a verificarla mediante las fuentes que estime pertinentes.</p>
+<p>3.3 Todo cambio de domicilio o de lugar de pernoctación del vehículo deberá comunicarse por escrito a la PRINCIPAL dentro de las cuarenta y ocho horas siguientes. La omisión de este aviso es causal de término inmediato del contrato.</p>
+
+<h2>CLÁUSULA CUARTA: USO DEL VEHÍCULO</h2>
+<p>4.1 El uso autorizado es exclusivamente particular. Queda expresamente prohibido destinar el vehículo a transporte remunerado de pasajeros, aplicaciones de movilidad, reparto, arriendo a terceros, competencias, remolque no autorizado o cualquier actividad comercial distinta de la contemplada en este contrato.</p>
+<p>4.2 Solo podrán conducir el vehículo el AGENTE y las personas expresamente nominadas en el encabezado o en anexo suscrito con anterioridad a la entrega. La conducción por persona no autorizada es causal de término inmediato y deja sin cobertura el siniestro que pudiere producirse.</p>
+<p>4.3 El vehículo no podrá salir del territorio nacional sin autorización escrita y previa de la PRINCIPAL.</p>
+
+<h2>CLÁUSULA QUINTA: TARIFA DE USO</h2>
+<p>5.1 El AGENTE pagará a la PRINCIPAL una tarifa diaria por el uso del vehículo, proporcional al valor de éste y creciente por tramos, conforme a la siguiente escala:</p>
+<table class="tarifa">
+  <tr><th>Tramo</th><th>Días</th><th>Tarifa diaria</th><th>Monto diario</th></tr>
+  <tr><td>TURBO</td><td>1 – 10</td><td>0,02% del valor</td><td>{{TARIFA_TURBO}}</td></tr>
+  <tr><td>LENTO</td><td>11 – 20</td><td>0,05% del valor</td><td>{{TARIFA_LENTO}}</td></tr>
+  <tr><td>CARO</td><td>21 – 40</td><td>0,08% del valor</td><td>{{TARIFA_CARO}}</td></tr>
+  <tr><td>CRÍTICO</td><td>41 – 45</td><td>0,14% del valor</td><td>{{TARIFA_CRITICO}}</td></tr>
+</table>
+<p>5.2 La tarifa se devenga por día corrido desde la fecha de entrega y se liquida al término del contrato o a la venta del vehículo, lo que ocurra primero. <b>Al día 45 la tarifa acumulada equivale al monto de la comisión pactada.</b></p>
+<p>5.3 La PRINCIPAL podrá eximir del cobro determinados días cuando la indisponibilidad del vehículo obedezca a causas que le sean imputables, tales como mantención, reparación o trámites administrativos. Dicha exención constará por escrito.</p>
+
+<h2>CLÁUSULA SEXTA: COMISIÓN DEL AGENTE</h2>
+<p>6.1 Concretada la venta del vehículo, el AGENTE tendrá derecho a una comisión equivalente al <b>3% del precio de venta efectivo, con un mínimo garantizado de {{COMISION}}</b>, correspondiente al 3% del precio de venta autorizado.</p>
+<p>6.2 De la comisión se descontará la tarifa de uso devengada conforme a la cláusula quinta, así como cualquier otro cargo pendiente a favor de la PRINCIPAL.</p>
+<p>6.3 La comisión se pagará dentro de {{PLAZO_PAGO_COMISION}} días hábiles contados desde la recepción íntegra del precio por parte de la PRINCIPAL y previa restitución conforme del vehículo.</p>
+<p>6.4 No se devengará comisión alguna si la venta se concreta con posterioridad a la restitución del vehículo por causa imputable al AGENTE, o si el contrato termina anticipadamente por incumplimiento de éste.</p>
+
+<h2>CLÁUSULA SÉPTIMA: GARANTÍA</h2>
+<p>7.1 Con anterioridad a la entrega del vehículo, el AGENTE constituirá a favor de la PRINCIPAL una garantía por el equivalente a UF 20, destinada a responder por deducibles, daños no consignados en el acta de entrega, multas, peajes y cualquier obligación pendiente derivada de este contrato.</p>
+<p>7.2 Restituido el vehículo conforme y pagadas las obligaciones pendientes, la garantía se devolverá íntegramente dentro del plazo que las partes acuerden.</p>
+<p>7.3 Si la garantía resultare consumida total o parcialmente durante la vigencia del contrato, el AGENTE deberá reponerla dentro de los cinco días hábiles siguientes al requerimiento de la PRINCIPAL, bajo apercibimiento de término inmediato.</p>
+
+<h2>CLÁUSULA OCTAVA: SEGURO Y SINIESTROS</h2>
+<p>8.1 La PRINCIPAL contratará y mantendrá vigente una póliza de seguro con cobertura de daños propios y a terceros sobre el vehículo, cuyo costo será de su cargo.</p>
+<p>8.2 El deducible de la póliza, ascendente a <b>UF 20</b>, será de cargo del AGENTE cuando el siniestro le sea imputable, y se descontará de la garantía.</p>
+<p>8.3 Ocurrido un siniestro, el AGENTE deberá dejar constancia ante Carabineros de Chile, registrar fotográficamente los daños antes de mover los vehículos, obtener los datos del tercero involucrado y dar aviso a la PRINCIPAL el mismo día.</p>
+
+<h2>CLÁUSULA NOVENA: GASTOS DE CARGO DEL AGENTE</h2>
+<p>Serán de cargo exclusivo del AGENTE durante la vigencia del contrato el combustible, los peajes y el sistema de telepeaje, las multas de tránsito y fotorradares, el deducible del seguro cuando el siniestro le sea imputable, y los daños que aparezcan entre el peritaje de entrada y el de salida.</p>
+
+<h2>CLÁUSULA DÉCIMA: TELEMETRÍA Y TRAZABILIDAD</h2>
+<p>10.1 El vehículo cuenta con dispositivo de posicionamiento satelital y telemetría instalado y gestionado por la PRINCIPAL. El AGENTE declara conocerlo y aceptarlo.</p>
+<p>10.2 Queda expresamente prohibida su desconexión, manipulación, obstrucción o alteración por cualquier medio. La infracción de esta prohibición es causal de término inmediato del contrato.</p>
+
+<h2>CLÁUSULA UNDÉCIMA: MATERIAL DE PROMOCIÓN Y ACTIVIDAD COMERCIAL</h2>
+<p>11.1 La PRINCIPAL producirá y entregará al AGENTE el material de promoción del vehículo, comprendiendo fotografías, video y textos de publicación. Dicho material es de propiedad exclusiva de la PRINCIPAL.</p>
+<p>11.2 El AGENTE se obliga a difundir el material entregado, a responder oportunamente las consultas de interesados y a mostrar el vehículo dentro de los plazos acordados con la PRINCIPAL.</p>
+<p>11.3 Queda prohibido al AGENTE editar o alterar el material, publicar un precio distinto al autorizado, o utilizar el material una vez concretada la venta o restituido el vehículo.</p>
+
+<h2>CLÁUSULA DUODÉCIMA: PROHIBICIONES EN LA GESTIÓN DE VENTA</h2>
+<p>Queda expresamente prohibido al AGENTE:</p>
+<ol class="letras" type="a">
+  <li>Recibir dinero, transferencias, abonos, reservas o pagos de cualquier naturaleza de parte de potenciales compradores. Todo pago se efectúa directamente a la PRINCIPAL.</li>
+  <li>Hacer entrega del vehículo al comprador. La entrega la efectúa la PRINCIPAL una vez perfeccionada la transferencia.</li>
+  <li>Convenir precios, descuentos, plazos o condiciones distintas a las autorizadas.</li>
+  <li>Suscribir documento alguno en representación de la PRINCIPAL.</li>
+</ol>
+
+<h2>CLÁUSULA DECIMOTERCERA: PLAZO Y RESTITUCIÓN</h2>
+<p>13.1 El presente contrato tendrá una vigencia de cuarenta y cinco días corridos contados desde la fecha de entrega del vehículo, sin renovación automática.</p>
+<p>13.2 Vencido el plazo sin haberse concretado la venta, el AGENTE restituirá el vehículo a la PRINCIPAL en el lugar y fecha que ésta indique. Las partes podrán acordar por escrito un nuevo ciclo con precio de venta ajustado y tarifa reiniciada, hasta un máximo de dos ciclos consecutivos.</p>
+<p>13.3 La restitución del vehículo será exigible por la PRINCIPAL sin necesidad de desahucio ni trámite previo alguno, en caso de término anticipado por las causales previstas en este contrato.</p>
+
+<h2>CLÁUSULA DECIMOCUARTA: TÉRMINO ANTICIPADO</h2>
+<p>La PRINCIPAL podrá poner término inmediato al contrato, sin indemnización de ninguna especie, en caso de: uso del vehículo para transporte remunerado o cualquier actividad comercial no autorizada; conducción por persona no nominada; manipulación del dispositivo de telemetría; incumplimiento del deber de informar cambio de domicilio; tercerización del encargo; recepción de dineros de compradores; o acumulación de tres incumplimientos de la actividad comercial comprometida, previamente notificados por escrito.</p>
+
+<h2>CLÁUSULA DECIMOQUINTA: NATURALEZA DE LA RELACIÓN</h2>
+<p>Las partes declaran expresamente que la relación que este contrato regula es de naturaleza comercial independiente. El AGENTE no se encuentra sujeto a jornada, horario, supervisión directa, exclusividad ni obligación de resultado, y no existe entre las partes vínculo de subordinación o dependencia de ninguna especie.</p>
+<p>Las recomendaciones contenidas en el Manual del Ucariano constituyen buenas prácticas comerciales sugeridas y no obligaciones contractuales exigibles.</p>
+
+<h2>CLÁUSULA DECIMOSEXTA: DATOS PERSONALES</h2>
+<p>El AGENTE autoriza a la PRINCIPAL a tratar sus datos personales para los fines de evaluación, celebración y ejecución de este contrato, conforme a la Ley N° 19.628 y, a contar de su entrada en vigencia, a la Ley N° 21.719.</p>
+
+<h2>CLÁUSULA DECIMOSÉPTIMA: DOMICILIO Y COMPETENCIA</h2>
+<p>Para todos los efectos derivados del presente contrato, las partes fijan su domicilio en la comuna y ciudad de Santiago y se someten a la competencia de sus tribunales ordinarios de justicia.</p>
+
+<h2>CLÁUSULA DECIMOCTAVA: EJEMPLARES</h2>
+<p>El presente contrato se firma en dos ejemplares de idéntico tenor y fecha, quedando uno en poder de cada parte.</p>
+
+<table class="firmas">
+  <tr>
+    <td>
+      <div class="linea"></div>
+      <div class="fnombre">Gerardo Domínguez Rodríguez</div>
+      <div class="fcargo">p.p. AUTOMOTORA GYD SpA</div>
+    </td>
+    <td>
+      <div class="linea"></div>
+      <div class="fnombre">{{UCARIANO_NOMBRE}}</div>
+      <div class="fcargo">EL UCARIANO · RUT {{UCARIANO_RUT}}</div>
+    </td>
+  </tr>
+</table>
+
+<div class="pie">UCARS — Documento Confidencial | ucars.cl</div>
+<div class="nota">Plantilla con variables. Reemplazar cada {{VARIABLE}} antes de generar el documento definitivo.</div>
+
+</body>
+</html>

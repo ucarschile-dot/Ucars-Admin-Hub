@@ -61,7 +61,6 @@ type Arriendo = {
   fechaInicio: string;
   fechaTermino: string;
   plazo: string;
-  deadline: string;
   diasArriendoRestantes: number | null;
   numeroContrato: string;
   precioAutorizado: string;
@@ -177,9 +176,9 @@ type RelationInfo = { id: string | null; name: string; properties: Record<string
 function toArriendo(row: NotionRow, auto: RelationInfo, ucariano: RelationInfo): Arriendo {
   const properties = row.properties;
   const fechaInicio = getDate(pickProperty(properties, START_DATE_CANDIDATES));
-  const fechaTermino = getDate(pickProperty(properties, END_DATE_CANDIDATES));
+  // Termino y Deadline son la misma fecha; se lee de la que exista en Notion.
+  const fechaTermino = getDate(pickProperty(properties, END_DATE_CANDIDATES)) || getDate(pickProperty(properties, DEADLINE_CANDIDATES));
   const plazo = getText(pickProperty(properties, TERM_CANDIDATES));
-  const deadline = getDate(pickProperty(properties, DEADLINE_CANDIDATES));
   const remainingDaysFromNotion = getNumber(pickProperty(properties, REMAINING_DAYS_CANDIDATES));
 
   return {
@@ -191,7 +190,6 @@ function toArriendo(row: NotionRow, auto: RelationInfo, ucariano: RelationInfo):
     fechaInicio,
     fechaTermino,
     plazo,
-    deadline,
     diasArriendoRestantes: remainingDaysFromNotion ?? getRemainingDays(fechaTermino),
     numeroContrato: getText(pickProperty(properties, CONTRACT_NUMBER_CANDIDATES)),
     // Datos del vehiculo y del ucariano: se autocompletan desde Stock/Ucarianos, pero el valor guardado en
@@ -372,6 +370,30 @@ export async function PATCH(request: Request) {
 
       const payload = buildPropertyPayload(schema[propertyName]?.type, value);
       if (payload) properties[propertyName] = payload;
+    }
+
+    // fechaTermino se calcula automaticamente (fechaInicio + plazo); Termino y Deadline son la misma fecha,
+    // asi que se escribe en ambas columnas de Notion si existen.
+    if (body.fechaInicio !== undefined || body.plazo !== undefined) {
+      const arriendoProps = await fetchNotionPage(arriendoId, notionToken).catch(() => ({}));
+      const fechaInicioValue = body.fechaInicio !== undefined ? body.fechaInicio : getDate(pickProperty(arriendoProps, START_DATE_CANDIDATES));
+      const plazoValue = body.plazo !== undefined ? body.plazo : getText(pickProperty(arriendoProps, TERM_CANDIDATES));
+
+      if (fechaInicioValue && plazoValue) {
+        const computedFechaTermino = addDaysIso(fechaInicioValue, Number(plazoValue) || 0);
+
+        const endName = pickSchemaPropertyName(schema, END_DATE_CANDIDATES);
+        if (endName) {
+          const payload = buildPropertyPayload(schema[endName]?.type, computedFechaTermino);
+          if (payload) properties[endName] = payload;
+        }
+
+        const deadlineName = pickSchemaPropertyName(schema, DEADLINE_CANDIDATES);
+        if (deadlineName && deadlineName !== endName) {
+          const payload = buildPropertyPayload(schema[deadlineName]?.type, computedFechaTermino);
+          if (payload) properties[deadlineName] = payload;
+        }
+      }
     }
 
     if (Object.keys(properties).length === 0) {

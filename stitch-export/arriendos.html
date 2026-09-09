@@ -22,7 +22,7 @@
     <div class="overflow-x-auto">
       <table class="w-full min-w-[900px] text-left text-sm">
         <thead class="bg-[#eff4ff] text-xs uppercase tracking-wide text-[#444748]"><tr>
-          <th class="px-4 py-3">Auto</th><th class="px-4 py-3">Ucariano</th><th class="px-4 py-3">Inicio</th><th class="px-4 py-3">Término</th><th class="px-4 py-3">Plazo</th><th class="px-4 py-3">Deadline</th><th class="px-4 py-3">Días restantes</th>
+          <th class="px-4 py-3">Auto</th><th class="px-4 py-3">Ucariano</th><th class="px-4 py-3">Inicio</th><th class="px-4 py-3">Término</th><th class="px-4 py-3">Plazo</th><th class="px-4 py-3">Días restantes</th>
         </tr></thead>
         <tbody id="arriendos-body"></tbody>
       </table>
@@ -43,10 +43,10 @@
       body.innerHTML = rows.length ? rows.map(function (item) {
         var days = item.diasArriendoRestantes;
         var tone = days !== null && days <= 7 ? 'text-[#ba1a1a] font-bold' : 'text-[#0b1c30]';
-        return '<tr>' + cell(item.auto) + cell(item.ucariano) + cell(item.fechaInicio) + cell(item.fechaTermino) + cell(item.plazo) + cell(item.deadline) + '<td class="border-t border-[#e5eeff] px-4 py-3 ' + tone + '">' + escapeHtml(days === null ? '-' : days) + '</td></tr>';
-      }).join('') : '<tr><td colspan="7" class="px-4 py-8 text-center text-[#444748]">No hay arriendos registrados.</td></tr>';
+        return '<tr>' + cell(item.auto) + cell(item.ucariano) + cell(item.fechaInicio) + cell(item.fechaTermino) + cell(item.plazo) + '<td class="border-t border-[#e5eeff] px-4 py-3 ' + tone + '">' + escapeHtml(days === null ? '-' : days) + '</td></tr>';
+      }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-[#444748]">No hay arriendos registrados.</td></tr>';
     })
-    .catch(function (error) { status.textContent = error.message; body.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-[#ba1a1a]">No fue posible cargar los arriendos.</td></tr>'; });
+    .catch(function (error) { status.textContent = error.message; body.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-[#ba1a1a]">No fue posible cargar los arriendos.</td></tr>'; });
 })();
 </script>
 </body>

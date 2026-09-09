@@ -50,11 +50,11 @@ export const UCARIANO_COMMUNE_CANDIDATES = ['Comuna', 'Commune'];
 
 // Campos editables del contrato de arriendo: fechas/plazo, mas los datos del ucariano y del vehiculo que se
 // autocompletan desde Notion (Stock/Ucarianos) pero el operador puede sobrescribir para este contrato en particular.
+// fechaTermino no esta aqui: se calcula automaticamente (fechaInicio + plazo) y se escribe tanto en la columna
+// de termino como en la de Deadline, que son la misma fecha (ver POST/PATCH en app/api/arriendos/route.ts).
 export const ARRIENDO_EDITABLE_FIELDS: Record<string, string[]> = {
   fechaInicio: START_DATE_CANDIDATES,
-  fechaTermino: END_DATE_CANDIDATES,
   plazo: TERM_CANDIDATES,
-  deadline: DEADLINE_CANDIDATES,
   numeroContrato: CONTRACT_NUMBER_CANDIDATES,
   plazoPagoComision: COMMISSION_TERM_CANDIDATES,
   precioAutorizado: ARRIENDO_PRICE_CANDIDATES,

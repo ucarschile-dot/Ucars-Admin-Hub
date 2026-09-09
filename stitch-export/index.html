@@ -518,12 +518,12 @@
 
       // Datos del ucariano/vehiculo y del contrato: se autocompletan desde Notion (Stock/Ucarianos)
       // pero el operador puede editarlos y sobrescribirlos para este contrato en particular.
+      // fechaTermino no se edita a mano: se recalcula siempre como fechaInicio + plazo (Termino y Deadline son la misma fecha).
       var CONTRACT_FIELDS = [
         { field: 'numeroContrato', label: 'N° contrato' },
         { field: 'fechaInicio', label: 'Fecha de inicio', type: 'date' },
-        { field: 'fechaTermino', label: 'Fecha de termino', type: 'date' },
         { field: 'plazo', label: 'Plazo (dias)' },
-        { field: 'deadline', label: 'Deadline', type: 'date' },
+        { field: 'fechaTermino', label: 'Fecha de termino (automatica)', type: 'date', computed: true },
         { field: 'plazoPagoComision', label: 'Plazo pago comision (dias habiles)' },
         { field: 'precioAutorizado', label: 'Precio autorizado ($)' },
         { field: 'patente', label: 'Patente' },
@@ -540,10 +540,21 @@
         return '<div class="vehicle-detail"><span class="vehicle-detail-label">' + definition.label + '</span><span class="vehicle-detail-value">' + value + '</span></div>';
       }
 
+      // Calcula fechaInicio + dias en UTC, igual que addDaysIso() en lib/arriendos.ts.
+      function computeFechaTermino(fechaInicioStr, plazoStr) {
+        var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(fechaInicioStr || '');
+        var plazoDias = Number(plazoStr);
+        if (!match || !Number.isFinite(plazoDias)) return '';
+        var date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+        date.setUTCDate(date.getUTCDate() + plazoDias);
+        return date.toISOString().slice(0, 10);
+      }
+
       function contractFieldHtml(definition, rental) {
         var value = rental ? (rental[definition.field] || '') : '';
+        var isDisabled = !rental || definition.computed;
         return '<div class="contract-field"><label for="contract-' + definition.field + '">' + definition.label + '</label>' +
-          '<input id="contract-' + definition.field + '" type="' + (definition.type || 'text') + '" data-field="' + definition.field + '" value="' + escapeHtml(value) + '"' + (rental ? '' : ' disabled') + '/></div>';
+          '<input id="contract-' + definition.field + '" type="' + (definition.type || 'text') + '" data-field="' + definition.field + '" value="' + escapeHtml(value) + '"' + (isDisabled ? ' disabled' : '') + '/></div>';
       }
 
       function contractSectionHtml(rental) {
@@ -620,6 +631,18 @@
 
         var statusEl = document.getElementById('vehicle-contract-status');
         var generateBtn = document.getElementById('vehicle-contract-generate');
+        var fechaInicioInput = document.getElementById('contract-fechaInicio');
+        var plazoInput = document.getElementById('contract-plazo');
+        var fechaTerminoInput = document.getElementById('contract-fechaTermino');
+
+        function refreshFechaTermino() {
+          if (!fechaInicioInput || !plazoInput || !fechaTerminoInput) return;
+          fechaTerminoInput.value = computeFechaTermino(fechaInicioInput.value, plazoInput.value);
+        }
+
+        if (fechaInicioInput) fechaInicioInput.addEventListener('input', refreshFechaTermino);
+        if (plazoInput) plazoInput.addEventListener('input', refreshFechaTermino);
+        refreshFechaTermino();
 
         function setStatus(message, kind) {
           if (!statusEl) return;

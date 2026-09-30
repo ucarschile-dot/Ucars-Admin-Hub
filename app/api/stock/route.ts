@@ -69,6 +69,8 @@ type WebVehicle = {
   combustible?: string;
   transmision?: string;
   color?: string;
+  vin?: string;
+  patente?: string;
   estado?: string;
   badge?: string;
   imagen?: string;
@@ -87,6 +89,14 @@ type VeeklsVehicle = {
   fuel?: string;
   gearbox?: string;
   color?: string;
+  vin?: unknown;
+  chassis?: unknown;
+  chasis?: unknown;
+  licensePlate?: unknown;
+  license_plate?: unknown;
+  plate?: unknown;
+  patente?: unknown;
+  [key: string]: unknown;
   reservedAt?: string | null;
   soldAt?: string | null;
   pictures?: string[];
@@ -196,6 +206,60 @@ function normalizeVeeklsVersion(version: unknown) {
   return '';
 }
 
+function normalizeVeeklsFieldKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function getVeeklsVehicleField(vehicle: VeeklsVehicle, aliases: string[]) {
+  const normalizedAliases = new Set(aliases.map(normalizeVeeklsFieldKey));
+  const visited = new Set<object>();
+
+  function find(value: unknown, depth: number): string {
+    if (!value || typeof value !== 'object' || depth > 4 || visited.has(value)) return '';
+    visited.add(value);
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (!item || typeof item !== 'object') continue;
+        const entry = item as Record<string, unknown>;
+        const label = [entry.label, entry.name, entry.key, entry.title, entry.field]
+          .find((part) => typeof part === 'string') as string | undefined;
+        if (label && normalizedAliases.has(normalizeVeeklsFieldKey(label))) {
+          const fieldValue = [entry.value, entry.text, entry.content]
+            .find((part) => typeof part === 'string' || typeof part === 'number');
+          if (fieldValue !== undefined && fieldValue !== null) return String(fieldValue).trim();
+        }
+        const nested = find(item, depth + 1);
+        if (nested) return nested;
+      }
+      return '';
+    }
+
+    const record = value as Record<string, unknown>;
+    for (const [key, fieldValue] of Object.entries(record)) {
+      if (!normalizedAliases.has(normalizeVeeklsFieldKey(key))) continue;
+      if (typeof fieldValue === 'string' || typeof fieldValue === 'number') return String(fieldValue).trim();
+      if (fieldValue && typeof fieldValue === 'object' && !Array.isArray(fieldValue)) {
+        const wrapped = fieldValue as Record<string, unknown>;
+        const unwrapped = [wrapped.value, wrapped.text, wrapped.content, wrapped.name]
+          .find((part) => typeof part === 'string' || typeof part === 'number');
+        if (unwrapped !== undefined && unwrapped !== null) return String(unwrapped).trim();
+      }
+    }
+    for (const nestedValue of Object.values(record)) {
+      const nested = find(nestedValue, depth + 1);
+      if (nested) return nested;
+    }
+    return '';
+  }
+
+  return find(vehicle, 0);
+}
+
 function buildPublicationUrl(vehicle: Pick<WebVehicle, 'id' | 'marca' | 'modelo' | 'version'>) {
   const vehicleId = String(vehicle.id || '').trim();
   if (!vehicleId) {
@@ -231,6 +295,8 @@ function mapVeeklsVehicleToWeb(vehicle: VeeklsVehicle): WebVehicle {
     combustible: decodeVeeklsEnum(vehicle.fuel),
     transmision: decodeVeeklsEnum(vehicle.gearbox),
     color: vehicle.color,
+    vin: getVeeklsVehicleField(vehicle, ['vin', 'chassis', 'chasis', 'vehicleChassis', 'chassisNumber', 'numeroChasis', 'numeroDeChasis']),
+    patente: getVeeklsVehicleField(vehicle, ['licensePlate', 'license_plate', 'plate', 'patente', 'registration', 'registrationNumber', 'plateNumber']),
     estado: status,
     imagen: image
   };
@@ -599,8 +665,8 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
       vehicle.url ||
       extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES)) ||
       buildPublicationUrl(vehicle);
-    const vin = getText(pickProperty(properties, VIN_CANDIDATES));
-    const licensePlate = getText(pickProperty(properties, LICENSE_PLATE_CANDIDATES));
+    const vin = vehicle.vin || getText(pickProperty(properties, VIN_CANDIDATES));
+    const licensePlate = vehicle.patente || getText(pickProperty(properties, LICENSE_PLATE_CANDIDATES));
     const origin = getText(pickProperty(properties, ORIGIN_CANDIDATES));
     const technicalInspectionUrl = extractFirstUrl(pickProperty(properties, TECHNICAL_INSPECTION_CANDIDATES));
     const circulationPermitUrl = extractFirstUrl(pickProperty(properties, CIRCULATION_PERMIT_CANDIDATES));
@@ -698,6 +764,36 @@ async function getDatabaseSchema(databaseId: string, notionToken: string) {
   return schema.properties;
 }
 
+async function ensureStockIdentifierSchema(databaseId: string, notionToken: string) {
+  const schema = await getDatabaseSchema(databaseId, notionToken);
+  const propertiesToCreate: Record<string, unknown> = {};
+
+  if (!findPropertyName(schema, VIN_CANDIDATES)) {
+    propertiesToCreate.VIN = { rich_text: {} };
+  }
+  if (!findPropertyName(schema, LICENSE_PLATE_CANDIDATES)) {
+    propertiesToCreate.Patente = { rich_text: {} };
+  }
+  if (Object.keys(propertiesToCreate).length === 0) return schema;
+
+  const dataSourceId = await resolveDataSourceId(databaseId, notionToken);
+  const response = await notionApiFetch(`https://api.notion.com/v1/data_sources/${dataSourceId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${notionToken}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ properties: propertiesToCreate })
+  });
+  const payload = (await response.json()) as { properties?: Record<string, NotionSchemaProperty>; message?: string };
+  if (!response.ok) {
+    throw new Error(payload.message || 'No se pudieron crear las columnas VIN y Patente en Stock.');
+  }
+
+  return payload.properties || getDatabaseSchema(databaseId, notionToken);
+}
+
 function findPropertyName(properties: Record<string, NotionSchemaProperty>, candidates: string[]) {
   return candidates.find((candidate) => Boolean(properties[candidate]));
 }
@@ -755,6 +851,8 @@ function buildNotionPropertiesFromWebVehicle(
     { candidates: ['Combustible', 'Fuel', 'Fuel Type'], rawValue: vehicle.combustible },
     { candidates: ['Tipo', 'Type', 'Categoria', 'Categoría'], rawValue: vehicle.tipo },
     { candidates: ['Color'], rawValue: vehicle.color },
+    { candidates: VIN_CANDIDATES, rawValue: vehicle.vin },
+    { candidates: LICENSE_PLATE_CANDIDATES, rawValue: vehicle.patente },
     { candidates: ['Estado', 'Status'], rawValue: vehicle.estado || 'Disponible' },
     {
       candidates: ['Fotos URL', 'Foto URL', 'Fotos', 'Foto', 'Imagen', 'Image', 'Photos'],
@@ -1005,7 +1103,7 @@ export async function GET() {
     const [existingRows, userRows, schemaProperties] = await Promise.all([
       queryStockRows(stockDb),
       usersDb ? queryStockRows(usersDb) : Promise.resolve([] as NotionRow[]),
-      getDatabaseSchema(stockDb, notionToken)
+      ensureStockIdentifierSchema(stockDb, notionToken)
     ]);
 
     const syncResult = await syncWebStockToNotion(webVehicles, existingRows, schemaProperties, stockDb, notionToken);

@@ -30,6 +30,7 @@ export const CONTRACT_NUMBER_CANDIDATES = ['N° Contrato', 'Numero de Contrato',
 export const COMMISSION_TERM_CANDIDATES = ['Plazo pago comisión', 'Plazo pago comision', 'Plazo de pago de comisión'];
 export const ARRIENDO_PRICE_CANDIDATES = ['Precio autorizado', 'Precio de venta autorizado', 'Precio Autorizado'];
 export const ARRIENDO_PLATE_CANDIDATES = ['Patente'];
+export const ARRIENDO_VIN_CANDIDATES = ['VIN', 'Chasis', 'Número de chasis', 'Numero de chasis'];
 export const ARRIENDO_MILEAGE_CANDIDATES = ['Kilometraje', 'Kilometraje a la entrega'];
 export const ARRIENDO_UCARIANO_RUT_CANDIDATES = ['RUT Ucariano', 'RUT'];
 export const ARRIENDO_UCARIANO_ADDRESS_CANDIDATES = ['Domicilio Ucariano', 'Domicilio'];
@@ -37,7 +38,8 @@ export const ARRIENDO_UCARIANO_COMMUNE_CANDIDATES = ['Comuna Ucariano', 'Comuna'
 export const ARRIENDO_UCARIANO_PHONE_CANDIDATES = ['Teléfono Ucariano', 'Telefono Ucariano'];
 export const ARRIENDO_UCARIANO_EMAIL_CANDIDATES = ['Email Ucariano'];
 
-export const STOCK_PLATE_CANDIDATES = ['Patente', 'Placa patente', 'Placa'];
+export const STOCK_PLATE_CANDIDATES = ['Patente', 'Placa patente', 'Placa', 'License Plate'];
+export const STOCK_VIN_CANDIDATES = ['VIN', 'Numero VIN', 'Número VIN', 'Chasis', 'Numero de chasis', 'Número de chasis'];
 export const STOCK_MILEAGE_CANDIDATES = ['Kilometraje', 'KM', 'Odómetro', 'Odometro'];
 export const STOCK_PRICE_CANDIDATES = ['Precio', 'Precio de venta', 'Price'];
 
@@ -62,6 +64,7 @@ const ARRIENDO_REQUIRED_PROPERTIES: ArriendoPropertySpec[] = [
   { candidates: COMMISSION_TERM_CANDIDATES, type: 'number' },
   { candidates: ARRIENDO_PRICE_CANDIDATES, type: 'number' },
   { candidates: ARRIENDO_PLATE_CANDIDATES, type: 'rich_text' },
+  { candidates: ARRIENDO_VIN_CANDIDATES, type: 'rich_text' },
   { candidates: ARRIENDO_MILEAGE_CANDIDATES, type: 'rich_text' },
   { candidates: ARRIENDO_UCARIANO_RUT_CANDIDATES, type: 'rich_text' },
   { candidates: ARRIENDO_UCARIANO_ADDRESS_CANDIDATES, type: 'rich_text' },
@@ -199,6 +202,7 @@ export const ARRIENDO_EDITABLE_FIELDS: Record<string, string[]> = {
   plazoPagoComision: COMMISSION_TERM_CANDIDATES,
   precioAutorizado: ARRIENDO_PRICE_CANDIDATES,
   patente: ARRIENDO_PLATE_CANDIDATES,
+  vin: ARRIENDO_VIN_CANDIDATES,
   kilometraje: ARRIENDO_MILEAGE_CANDIDATES,
   ucarianoRut: ARRIENDO_UCARIANO_RUT_CANDIDATES,
   ucarianoDomicilio: ARRIENDO_UCARIANO_ADDRESS_CANDIDATES,
@@ -329,6 +333,7 @@ export type ArriendoContractDetail = {
   fechaInicio: string;
   precioAutorizado: number;
   patente: string;
+  vin: string;
   kilometraje: string;
   plazoPagoComision: string;
   ucarianoRut: string;
@@ -370,6 +375,10 @@ export async function fetchArriendoContractDetail(arriendoId: string, notionToke
     getText(pickProperty(arriendoProps, ARRIENDO_PLATE_CANDIDATES)) ||
     getText(pickProperty(autoProps, STOCK_PLATE_CANDIDATES));
 
+  const vin =
+    getText(pickProperty(arriendoProps, ARRIENDO_VIN_CANDIDATES)) ||
+    getText(pickProperty(autoProps, STOCK_VIN_CANDIDATES));
+
   const kilometraje =
     getText(pickProperty(arriendoProps, ARRIENDO_MILEAGE_CANDIDATES)) ||
     getText(pickProperty(autoProps, STOCK_MILEAGE_CANDIDATES));
@@ -408,6 +417,7 @@ export async function fetchArriendoContractDetail(arriendoId: string, notionToke
     fechaInicio,
     precioAutorizado,
     patente,
+    vin,
     kilometraje,
     plazoPagoComision,
     ucarianoRut,
@@ -433,6 +443,7 @@ export function buildTemplateValues(detail: ArriendoContractDetail): Record<stri
     UCARIANO_EMAIL: detail.ucarianoEmail || 'No registrado',
     VEHICULO: detail.autoName,
     PATENTE: detail.patente || 'No registrada',
+    VIN: detail.vin || 'No registrado',
     KILOMETRAJE: detail.kilometraje ? `${detail.kilometraje} km` : 'No registrado',
     PRECIO_AUTORIZADO: clp(price),
     PLAZO_PAGO_COMISION: detail.plazoPagoComision || '5',

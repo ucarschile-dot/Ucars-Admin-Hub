@@ -226,7 +226,7 @@ function getVeeklsVehicleField(vehicle: VeeklsVehicle, aliases: string[]) {
       for (const item of value) {
         if (!item || typeof item !== 'object') continue;
         const entry = item as Record<string, unknown>;
-        const label = [entry.label, entry.name, entry.key, entry.title, entry.field]
+        const label = [entry.label, entry.displayName, entry.name, entry.key, entry.title, entry.field, entry.fieldName, entry.propertyName]
           .find((part) => typeof part === 'string') as string | undefined;
         if (label && normalizedAliases.has(normalizeVeeklsFieldKey(label))) {
           const fieldValue = [entry.value, entry.text, entry.content]
@@ -295,7 +295,11 @@ function mapVeeklsVehicleToWeb(vehicle: VeeklsVehicle): WebVehicle {
     combustible: decodeVeeklsEnum(vehicle.fuel),
     transmision: decodeVeeklsEnum(vehicle.gearbox),
     color: vehicle.color,
-    vin: getVeeklsVehicleField(vehicle, ['vin', 'chassis', 'chasis', 'vehicleChassis', 'chassisNumber', 'numeroChasis', 'numeroDeChasis']),
+    vin: getVeeklsVehicleField(vehicle, [
+      'vin', 'vinNumber', 'vin_number', 'vehicleVin', 'vehicleVIN', 'vehicleIdentificationNumber',
+      'chassis', 'chasis', 'vehicleChassis', 'vehicleChassisNumber', 'chassisNumber', 'chassis_number',
+      'chassisNo', 'chassisCode', 'serialNumber', 'frameNumber', 'numeroChasis', 'numeroDeChasis'
+    ]),
     patente: getVeeklsVehicleField(vehicle, ['licensePlate', 'license_plate', 'plate', 'patente', 'registration', 'registrationNumber', 'plateNumber']),
     estado: status,
     imagen: image

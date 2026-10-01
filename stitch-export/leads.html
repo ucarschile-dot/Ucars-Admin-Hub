@@ -30,45 +30,330 @@
       background: #f8f9ff;
       color: #0b1c30;
     }
+    .leads-table th, .leads-table td { padding: 0.6rem 0.9rem; }
+    .leads-table tbody tr:nth-child(even) { background: #fafbff; }
+    .leads-table tfoot td { font-weight: 700; background: #eff4ff; }
+    .leads-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; user-select: none; }
+    .leads-legend-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
   </style>
 </head>
 <body class="antialiased min-h-screen">
-  <!-- Tablero de Prospectos: titulo del modulo, KPIs resumidos y estado de la integracion. -->
   <main class="max-w-[1400px] mx-auto px-6 py-10">
-    <header class="flex flex-col gap-2 mb-8">
-      <h1 class="text-3xl font-bold text-primary">Panel de Prospectos</h1>
-      <p class="text-sm text-text-muted">Proximamente: visor de campanas Meta Ads y desempeno de ventas por vehiculo.</p>
+    <header class="flex flex-col gap-4 mb-8 md:flex-row md:items-end md:justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-primary">Panel de Prospectos</h1>
+        <p class="text-sm text-text-muted mt-1">Leads por ucariano, leidos desde el Google Sheet publico de campanas.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-xs uppercase tracking-wide text-text-muted" for="leads-date-input">Fecha</label>
+        <input class="bg-surface border border-outline rounded-lg py-2 px-3 text-sm" id="leads-date-input" type="date"/>
+      </div>
     </header>
 
-    <!-- Tarjetas KPI: reservar para las metricas que lleguen desde Meta Ads y ventas. -->
+    <div id="leads-status" class="mb-6 text-sm text-text-muted">Cargando datos de Prospectos...</div>
+
     <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
       <article class="bg-surface rounded-xl border border-outline p-5">
         <p class="text-xs uppercase tracking-wide text-text-muted">Leads del dia</p>
-        <p class="text-3xl font-bold mt-2">--</p>
+        <p class="text-3xl font-bold mt-2" id="kpi-leads-dia">--</p>
       </article>
       <article class="bg-surface rounded-xl border border-outline p-5">
-        <p class="text-xs uppercase tracking-wide text-text-muted">Costo por lead</p>
-        <p class="text-3xl font-bold mt-2">--</p>
+        <p class="text-xs uppercase tracking-wide text-text-muted">Leads del mes</p>
+        <p class="text-3xl font-bold mt-2" id="kpi-leads-mes">--</p>
       </article>
       <article class="bg-surface rounded-xl border border-outline p-5">
-        <p class="text-xs uppercase tracking-wide text-text-muted">Conversion a cita</p>
-        <p class="text-3xl font-bold mt-2">--</p>
+        <p class="text-xs uppercase tracking-wide text-text-muted">Costo por resultado (mensual)</p>
+        <p class="text-3xl font-bold mt-2" id="kpi-costo-resultado">--</p>
       </article>
       <article class="bg-surface rounded-xl border border-outline p-5">
-        <p class="text-xs uppercase tracking-wide text-text-muted">Vehiculo top</p>
-        <p class="text-3xl font-bold mt-2">--</p>
+        <p class="text-xs uppercase tracking-wide text-text-muted">Importe gastado (mensual)</p>
+        <p class="text-3xl font-bold mt-2" id="kpi-importe-gastado">--</p>
       </article>
     </section>
 
-    <!-- Lista de tareas pendientes antes de habilitar datos reales en este panel. -->
+    <section class="bg-surface rounded-xl border border-outline p-6 mb-8 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-primary mb-4">Resumen por ucariano</h2>
+      <table class="leads-table w-full text-left text-sm border-collapse min-w-[720px]">
+        <thead class="bg-surface-soft text-xs uppercase tracking-wide text-text-muted">
+          <tr>
+            <th>Ucariano</th><th>Auto</th><th>Estado</th><th>Resultados</th><th>Costo/Resultado</th><th>Importe gastado</th>
+          </tr>
+        </thead>
+        <tbody id="resumen-table-body"></tbody>
+        <tfoot id="resumen-table-foot"></tfoot>
+      </table>
+    </section>
+
+    <section class="bg-surface rounded-xl border border-outline p-6 mb-8">
+      <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+        <h2 class="text-lg font-semibold text-primary">Prospectos por dia</h2>
+        <div class="flex items-center gap-2">
+          <label class="text-xs uppercase tracking-wide text-text-muted" for="leads-ucariano-filter">Ucariano</label>
+          <select class="bg-surface-soft border border-outline rounded-lg py-2 px-3 text-sm" id="leads-ucariano-filter">
+            <option value="">Total</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-sm text-text-muted" id="leads-dia-label">--</p>
+      <p class="text-5xl font-bold text-primary mt-1" id="leads-dia-valor">--</p>
+    </section>
+
     <section class="bg-surface rounded-xl border border-outline p-6">
-      <h2 class="text-lg font-semibold text-primary mb-3">Estado de integracion</h2>
-      <ul class="space-y-2 text-sm text-text-muted">
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-base">schedule</span> Conectar API de Meta Ads.</li>
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-base">schedule</span> Definir modelo de atribucion por vehiculo.</li>
-        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-base">schedule</span> Activar KPIs por campana y sucursal.</li>
-      </ul>
+      <h2 class="text-lg font-semibold text-primary mb-1">Leads diarios por ucariano</h2>
+      <p class="text-sm text-text-muted mb-4">Elige que lineas mostrar.</p>
+      <div id="leads-chart-legend" class="flex flex-wrap gap-x-4 gap-y-2 mb-3"></div>
+      <div id="leads-chart-container" class="w-full overflow-x-auto"></div>
     </section>
   </main>
+
+  <script>
+    (function () {
+      var dateInput = document.getElementById('leads-date-input');
+      var statusEl = document.getElementById('leads-status');
+      var filterSelect = document.getElementById('leads-ucariano-filter');
+      var diaLabel = document.getElementById('leads-dia-label');
+      var diaValor = document.getElementById('leads-dia-valor');
+      var resumenBody = document.getElementById('resumen-table-body');
+      var resumenFoot = document.getElementById('resumen-table-foot');
+      var chartLegend = document.getElementById('leads-chart-legend');
+      var chartContainer = document.getElementById('leads-chart-container');
+
+      var currentData = null;
+      var visibleHeaders = null;
+      var CHART_COLORS = ['#157a5a', '#785a00', '#93000a', '#0b1c30', '#5a3ea6', '#c2185b', '#0097a7', '#f57c00', '#2e7d32', '#6d4c41'];
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value)
+          .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+      }
+
+      function formatCurrency(amount) {
+        return '$' + Math.round(amount || 0).toLocaleString('es-CL');
+      }
+
+      function formatInt(value) {
+        return Math.round(value || 0).toLocaleString('es-CL');
+      }
+
+      function todayIsoLocal() {
+        var now = new Date();
+        var month = String(now.getMonth() + 1).padStart(2, '0');
+        var day = String(now.getDate()).padStart(2, '0');
+        return now.getFullYear() + '-' + month + '-' + day;
+      }
+
+      function statusBadge(estado) {
+        var normalized = String(estado || '').toLowerCase();
+        var cls = normalized.indexOf('activ') >= 0
+          ? 'bg-[#dff3e8] text-[#157a5a]'
+          : 'bg-[#f1f1f1] text-text-muted';
+        return '<span class="px-2 py-0.5 rounded text-xs font-medium ' + cls + '">' + escapeHtml(estado || '-') + '</span>';
+      }
+
+      function renderResumen(data) {
+        if (data.resumen.length === 0) {
+          resumenBody.innerHTML = '<tr><td colspan="6" class="p-4 text-text-muted">Sin datos de resumen para este mes.</td></tr>';
+          resumenFoot.innerHTML = '';
+          return;
+        }
+
+        resumenBody.innerHTML = data.resumen.map(function (row) {
+          return '<tr class="border-t border-outline/60">' +
+            '<td class="font-medium">' + escapeHtml(row.ucariano) + '</td>' +
+            '<td>' + escapeHtml(row.auto) + '</td>' +
+            '<td>' + statusBadge(row.estado) + '</td>' +
+            '<td>' + formatInt(row.resultados) + '</td>' +
+            '<td>' + formatCurrency(row.costoResultado) + '</td>' +
+            '<td>' + formatCurrency(row.importeGastado) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        if (data.resumenTotal) {
+          resumenFoot.innerHTML = '<tr class="border-t border-outline">' +
+            '<td colspan="3">TOTAL</td>' +
+            '<td>' + formatInt(data.resumenTotal.resultados) + '</td>' +
+            '<td>' + formatCurrency(data.resumenTotal.costoResultado) + '</td>' +
+            '<td>' + formatCurrency(data.resumenTotal.importeGastado) + '</td>' +
+            '</tr>';
+        } else {
+          resumenFoot.innerHTML = '';
+        }
+      }
+
+      function renderKpis(data) {
+        document.getElementById('kpi-leads-mes').textContent = formatInt(
+          data.dailyRows.reduce(function (sum, row) { return sum + (row.total || 0); }, 0)
+        );
+        document.getElementById('kpi-costo-resultado').textContent = data.resumenTotal
+          ? formatCurrency(data.resumenTotal.costoResultado)
+          : '--';
+        document.getElementById('kpi-importe-gastado').textContent = data.resumenTotal
+          ? formatCurrency(data.resumenTotal.importeGastado)
+          : '--';
+      }
+
+      function updateDiaCard(data) {
+        var filterValue = filterSelect.value;
+        var dayNumber = Number(data.date.slice(8, 10));
+        diaLabel.textContent = dayNumber + ' de ' + data.monthName + ' de ' + data.year + (filterValue ? ' \u00b7 ' + filterValue : ' \u00b7 Total');
+
+        if (!data.selectedDay) {
+          diaValor.textContent = '0';
+          document.getElementById('kpi-leads-dia').textContent = '0';
+          return;
+        }
+
+        var value = filterValue ? (data.selectedDay.values[filterValue] || 0) : data.selectedDay.total;
+        diaValor.textContent = formatInt(value);
+        document.getElementById('kpi-leads-dia').textContent = formatInt(data.selectedDay.total);
+      }
+
+      function renderFilterOptions(data) {
+        var previousValue = filterSelect.value;
+        filterSelect.innerHTML = ['<option value="">Total</option>']
+          .concat(data.dailyHeaders.map(function (header) {
+            return '<option value="' + escapeHtml(header) + '">' + escapeHtml(header) + '</option>';
+          }))
+          .join('');
+
+        if (data.dailyHeaders.indexOf(previousValue) >= 0) {
+          filterSelect.value = previousValue;
+        }
+      }
+
+      function renderLegend(data) {
+        if (!visibleHeaders) {
+          visibleHeaders = new Set(data.dailyHeaders);
+        }
+
+        chartLegend.innerHTML = data.dailyHeaders.map(function (header, index) {
+          var color = CHART_COLORS[index % CHART_COLORS.length];
+          var checked = visibleHeaders.has(header) ? ' checked' : '';
+          return '<label class="leads-legend-item">' +
+            '<input type="checkbox" data-header="' + escapeHtml(header) + '"' + checked + '/>' +
+            '<span class="leads-legend-swatch" style="background:' + color + '"></span>' +
+            escapeHtml(header) +
+            '</label>';
+        }).join('');
+
+        Array.prototype.forEach.call(chartLegend.querySelectorAll('input[type="checkbox"]'), function (input) {
+          input.addEventListener('change', function () {
+            var header = input.getAttribute('data-header');
+            if (input.checked) {
+              visibleHeaders.add(header);
+            } else {
+              visibleHeaders.delete(header);
+            }
+            renderChart(data);
+          });
+        });
+      }
+
+      function renderChart(data) {
+        var rows = data.dailyRows;
+        var headers = data.dailyHeaders;
+
+        if (rows.length === 0 || headers.length === 0) {
+          chartContainer.innerHTML = '<p class="text-sm text-text-muted">Sin datos diarios para graficar este mes.</p>';
+          return;
+        }
+
+        var width = Math.max(760, rows.length * 24);
+        var height = 320;
+        var padding = { top: 16, right: 16, bottom: 32, left: 44 };
+        var innerW = width - padding.left - padding.right;
+        var innerH = height - padding.top - padding.bottom;
+
+        var maxValue = 1;
+        rows.forEach(function (row) {
+          headers.forEach(function (header) {
+            maxValue = Math.max(maxValue, row.values[header] || 0);
+          });
+        });
+
+        var stepX = rows.length > 1 ? innerW / (rows.length - 1) : 0;
+        function xFor(i) { return padding.left + stepX * i; }
+        function yFor(v) { return padding.top + innerH - (v / maxValue) * innerH; }
+
+        var gridLines = [0, 0.25, 0.5, 0.75, 1].map(function (fraction) {
+          var y = padding.top + innerH * (1 - fraction);
+          var label = Math.round(maxValue * fraction);
+          return '<line x1="' + padding.left + '" y1="' + y + '" x2="' + (width - padding.right) + '" y2="' + y + '" stroke="#e5eeff" stroke-width="1"/>' +
+            '<text x="' + (padding.left - 8) + '" y="' + (y + 4) + '" font-size="10" fill="#444748" text-anchor="end">' + label + '</text>';
+        }).join('');
+
+        var labelEvery = Math.max(1, Math.ceil(rows.length / 15));
+        var xLabels = rows.map(function (row, i) {
+          if (i % labelEvery !== 0) return '';
+          var dayNumber = parseInt(row.fecha, 10);
+          return '<text x="' + xFor(i) + '" y="' + (height - padding.bottom + 16) + '" font-size="10" fill="#444748" text-anchor="middle">' + (Number.isFinite(dayNumber) ? dayNumber : '') + '</text>';
+        }).join('');
+
+        var paths = headers.map(function (header, index) {
+          if (!visibleHeaders.has(header)) return '';
+          var color = CHART_COLORS[index % CHART_COLORS.length];
+          var d = rows.map(function (row, i) {
+            return (i === 0 ? 'M' : 'L') + xFor(i).toFixed(1) + ',' + yFor(row.values[header] || 0).toFixed(1);
+          }).join(' ');
+          return '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2"/>';
+        }).join('');
+
+        chartContainer.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" width="' + width + '" height="' + height + '" role="img" aria-label="Leads diarios por ucariano">' +
+          gridLines + xLabels + paths +
+          '</svg>';
+      }
+
+      function render(data) {
+        currentData = data;
+        renderResumen(data);
+        renderKpis(data);
+        renderFilterOptions(data);
+        updateDiaCard(data);
+        renderLegend(data);
+        renderChart(data);
+      }
+
+      function loadLeads(date) {
+        statusEl.textContent = 'Cargando datos de Prospectos...';
+
+        fetch('/api/leads?date=' + encodeURIComponent(date), { cache: 'no-store' })
+          .then(function (response) {
+            return response.json().then(function (payload) {
+              if (!response.ok) {
+                throw new Error(payload.error || 'No se pudo consultar Prospectos.');
+              }
+              return payload;
+            });
+          })
+          .then(function (data) {
+            visibleHeaders = null;
+            render(data);
+            statusEl.textContent = 'Datos de la pestaña "' + data.tabName + '".';
+          })
+          .catch(function (error) {
+            console.error(error);
+            statusEl.textContent = error.message || 'No se pudo consultar Prospectos.';
+            resumenBody.innerHTML = '<tr><td colspan="6" class="p-4 text-text-muted">' + escapeHtml(statusEl.textContent) + '</td></tr>';
+            resumenFoot.innerHTML = '';
+            chartContainer.innerHTML = '';
+            chartLegend.innerHTML = '';
+            diaLabel.textContent = '--';
+            diaValor.textContent = '--';
+          });
+      }
+
+      dateInput.value = todayIsoLocal();
+      dateInput.addEventListener('change', function () {
+        if (dateInput.value) loadLeads(dateInput.value);
+      });
+
+      filterSelect.addEventListener('change', function () {
+        if (currentData) updateDiaCard(currentData);
+      });
+
+      loadLeads(dateInput.value);
+    })();
+  </script>
 </body>
 </html>

@@ -122,7 +122,16 @@ export async function fetchSpreadsheetTabTitles(spreadsheetId: string): Promise<
   };
 
   if (!response.ok) {
-    throw new Error(payload.error?.message || 'No se pudieron listar las pestañas del Google Sheet.');
+    const message = payload.error?.message || 'No se pudieron listar las pestañas del Google Sheet.';
+
+    // Raw Office files (not converted to native Google Sheets) don't expose spreadsheet metadata;
+    // list their tabs by downloading and parsing the workbook instead.
+    if (isOfficeFileError(new Error(message))) {
+      const buffer = await fetchDriveFileBuffer(spreadsheetId);
+      return listExcelSheetNames(buffer);
+    }
+
+    throw new Error(message);
   }
 
   return (payload.sheets || [])
@@ -170,23 +179,55 @@ async function fetchDriveFileBuffer(fileId: string): Promise<Buffer> {
   return Buffer.from(arrayBuffer);
 }
 
+/** Splits an A1 range like "'Tab Name'!A1:G47" into its sheet name and cell range parts. */
+function parseRangeString(range: string): { sheetName: string; a1Range?: string } {
+  const trimmed = range.trim();
+  const bangIndex = trimmed.lastIndexOf('!');
+
+  if (bangIndex === -1) {
+    return { sheetName: trimmed };
+  }
+
+  let sheetName = trimmed.slice(0, bangIndex).trim();
+  const a1Range = trimmed.slice(bangIndex + 1).trim();
+
+  if (sheetName.startsWith("'") && sheetName.endsWith("'")) {
+    sheetName = sheetName.slice(1, -1).replace(/''/g, "'");
+  }
+
+  return { sheetName, a1Range: a1Range || undefined };
+}
+
 /** Parses one sheet/tab of a raw Excel workbook (xlsx/xls) buffer into string[][] rows. */
-async function parseExcelSheetToRows(buffer: Buffer, sheetName: string): Promise<string[][]> {
+async function parseExcelSheetToRows(buffer: Buffer, range: string): Promise<string[][]> {
   const XLSX = await import('xlsx');
   const workbook = XLSX.read(buffer, { type: 'buffer' });
+  const { sheetName, a1Range } = parseRangeString(range);
 
   const requestedName = sheetName.trim();
-  const resolvedName = workbook.SheetNames.find(
-    (name) => name.toLowerCase() === requestedName.toLowerCase()
-  ) || workbook.SheetNames[0];
+  const resolvedName = (requestedName
+    ? workbook.SheetNames.find((name) => name.toLowerCase() === requestedName.toLowerCase())
+    : undefined) || workbook.SheetNames[0];
 
   const sheet = workbook.Sheets[resolvedName];
   if (!sheet) {
     return [];
   }
 
-  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, blankrows: false, defval: '' });
+  const rows = XLSX.utils.sheet_to_json<string[]>(sheet, {
+    header: 1,
+    blankrows: false,
+    defval: '',
+    ...(a1Range ? { range: a1Range } : {})
+  });
   return rows.map((row) => row.map((cell) => (cell === null || cell === undefined ? '' : String(cell))));
+}
+
+/** Lists the tab names of a raw Excel workbook (xlsx/xls) buffer. */
+async function listExcelSheetNames(buffer: Buffer): Promise<string[]> {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  return workbook.SheetNames;
 }
 
 function isOfficeFileError(error: unknown) {

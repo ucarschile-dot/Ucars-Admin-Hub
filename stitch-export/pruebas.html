@@ -106,15 +106,15 @@
 <main class="md:ml-[260px] mt-6 md:mt-24 p-4 md:p-container-padding min-h-screen pb-24 md:pb-container-padding">
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
 <div>
-<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background">Visor de Google Sheets</h2>
-<p class="text-body-md font-body-md text-on-surface-variant mt-1">Pestana temporal para probar la conexion con el Spreadsheet de ucarschile.</p>
+<h2 class="text-display-lg-mobile md:text-display-lg font-display-lg-mobile md:font-display-lg text-on-background">Leads (Google Sheet publico)</h2>
+<p class="text-body-md font-body-md text-on-surface-variant mt-1">Visor de solo lectura del Sheet publico de Leads. Elige la pestana a mostrar.</p>
 </div>
 </div>
 
 <section class="space-y-4">
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-<label class="text-body-sm font-body-sm text-on-surface-variant shrink-0" for="sheet-range-input">Rango o pestana:</label>
-<input class="flex-1 w-full sm:w-auto bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="sheet-range-input" placeholder="Ej: Ucarianos o A1:Z200" type="text"/>
+<label class="text-body-sm font-body-sm text-on-surface-variant shrink-0" for="sheet-tab-select">Pestana:</label>
+<select class="flex-1 w-full sm:w-auto bg-surface-container-low border border-outline-variant text-body-md font-body-md py-2 px-3 rounded focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" id="sheet-tab-select"><option value="">Cargando pestanas...</option></select>
 <button class="bg-[#282828] text-white py-2 px-4 rounded text-title-sm font-title-sm hover:bg-tertiary-container transition-colors shrink-0" id="sheet-range-load" type="button">Cargar</button>
 </div>
 
@@ -140,7 +140,7 @@
 <script>
         // Actualiza la tabla visible al cargar un rango de Google Sheets o al cambiarlo el usuario.
         (function () {
-                var rangeInput = document.getElementById('sheet-range-input');
+                var tabSelect = document.getElementById('sheet-tab-select');
                 var loadBtn = document.getElementById('sheet-range-load');
                 var tableHead = document.getElementById('sheet-table-head');
                 var tableBody = document.getElementById('sheet-table-body');
@@ -185,6 +185,12 @@
                         visibleCount.textContent = '(' + rows.length + ')';
                 }
 
+                // El rango queda fijo por ahora (A1:G47); solo cambia la pestaña seleccionada.
+                function buildRangeForTab(tabName) {
+                        var safeName = /^[A-Za-z0-9_]+$/.test(tabName) ? tabName : "'" + tabName.replace(/'/g, "''") + "'";
+                        return safeName + '!A1:G47';
+                }
+
                 function loadRange(range) {
                         tableHead.innerHTML = '';
                         tableBody.innerHTML = emptyRowHtml('Cargando datos desde Google Sheets...');
@@ -216,19 +222,52 @@
                                 });
                 }
 
-                if (loadBtn && rangeInput) {
+                function loadTabs() {
+                        return fetch('/api/sheets/raw?list=tabs', { cache: 'no-store' })
+                                .then(function (response) {
+                                        return response.json().then(function (payload) {
+                                                if (!response.ok) {
+                                                        throw new Error(payload.error || 'No se pudieron listar las pestanas del Sheet.');
+                                                }
+
+                                                return payload;
+                                        });
+                                })
+                                .then(function (payload) {
+                                        var tabs = Array.isArray(payload.tabs) ? payload.tabs : [];
+
+                                        if (tabs.length === 0) {
+                                                tabSelect.innerHTML = '<option value="">Sin pestanas disponibles</option>';
+                                                tableHead.innerHTML = '';
+                                                tableBody.innerHTML = emptyRowHtml('El Sheet no tiene pestanas o no se pudo leer su estructura.');
+                                                return;
+                                        }
+
+                                        tabSelect.innerHTML = tabs.map(function (tab) {
+                                                return '<option value="' + escapeHtml(tab) + '">' + escapeHtml(tab) + '</option>';
+                                        }).join('');
+
+                                        loadRange(buildRangeForTab(tabs[0]));
+                                })
+                                .catch(function (error) {
+                                        console.error(error);
+                                        tabSelect.innerHTML = '<option value="">Error al listar pestanas</option>';
+                                        tableHead.innerHTML = '';
+                                        tableBody.innerHTML = emptyRowHtml(error.message || 'No se pudieron listar las pestanas del Sheet.');
+                                });
+                }
+
+                if (loadBtn && tabSelect) {
                         loadBtn.addEventListener('click', function () {
-                                loadRange(rangeInput.value.trim());
+                                if (tabSelect.value) loadRange(buildRangeForTab(tabSelect.value));
                         });
 
-                        rangeInput.addEventListener('keydown', function (event) {
-                                if (event.key === 'Enter') {
-                                        loadRange(rangeInput.value.trim());
-                                }
+                        tabSelect.addEventListener('change', function () {
+                                if (tabSelect.value) loadRange(buildRangeForTab(tabSelect.value));
                         });
                 }
 
-                loadRange('');
+                loadTabs();
         })();
 </script>
 

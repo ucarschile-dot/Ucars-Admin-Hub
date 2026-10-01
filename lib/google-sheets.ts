@@ -106,6 +106,30 @@ export async function fetchSheetValues(spreadsheetId: string, range: string): Pr
   return payload.values || [];
 }
 
+/** Lists the tab (sheet) titles of a spreadsheet, so the UI can let the operator choose which one to read. */
+export async function fetchSpreadsheetTabTitles(spreadsheetId: string): Promise<string[]> {
+  const accessToken = await getAccessToken();
+  const url = `${SHEETS_API_BASE}/${spreadsheetId}?fields=sheets.properties.title`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: 'no-store'
+  });
+
+  const payload = (await response.json()) as {
+    sheets?: Array<{ properties?: { title?: string } }>;
+    error?: { message?: string };
+  };
+
+  if (!response.ok) {
+    throw new Error(payload.error?.message || 'No se pudieron listar las pestañas del Google Sheet.');
+  }
+
+  return (payload.sheets || [])
+    .map((sheet) => sheet.properties?.title)
+    .filter((title): title is string => Boolean(title));
+}
+
 /** Converts a sheet's first row into headers and maps remaining rows into objects. */
 export function rowsToObjects(rows: string[][]): Array<Record<string, string>> {
   if (rows.length === 0) {

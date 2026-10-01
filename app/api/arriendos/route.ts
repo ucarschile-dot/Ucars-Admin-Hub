@@ -12,7 +12,6 @@ import {
   COMMISSION_TERM_CANDIDATES,
   ARRIENDO_PRICE_CANDIDATES,
   ARRIENDO_PLATE_CANDIDATES,
-  ARRIENDO_VIN_CANDIDATES,
   ARRIENDO_MILEAGE_CANDIDATES,
   ARRIENDO_UCARIANO_RUT_CANDIDATES,
   ARRIENDO_UCARIANO_ADDRESS_CANDIDATES,
@@ -20,7 +19,6 @@ import {
   ARRIENDO_UCARIANO_PHONE_CANDIDATES,
   ARRIENDO_UCARIANO_EMAIL_CANDIDATES,
   STOCK_PLATE_CANDIDATES,
-  STOCK_VIN_CANDIDATES,
   STOCK_MILEAGE_CANDIDATES,
   STOCK_PRICE_CANDIDATES,
   UCARIANO_RUT_CANDIDATES,
@@ -70,7 +68,6 @@ type Arriendo = {
   numeroContrato: string;
   precioAutorizado: string;
   patente: string;
-  vin: string;
   kilometraje: string;
   plazoPagoComision: string;
   ucarianoRut: string;
@@ -208,7 +205,6 @@ function toArriendo(row: NotionRow, auto: RelationInfo, ucariano: RelationInfo):
     // el Arriendo (si el operador lo edito) tiene prioridad.
     precioAutorizado: getText(pickProperty(properties, ARRIENDO_PRICE_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_PRICE_CANDIDATES)),
     patente: getText(pickProperty(properties, ARRIENDO_PLATE_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_PLATE_CANDIDATES)),
-    vin: getText(pickProperty(properties, ARRIENDO_VIN_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_VIN_CANDIDATES)),
     kilometraje: getText(pickProperty(properties, ARRIENDO_MILEAGE_CANDIDATES)) || getText(pickProperty(auto.properties, STOCK_MILEAGE_CANDIDATES)),
     plazoPagoComision: getText(pickProperty(properties, COMMISSION_TERM_CANDIDATES)),
     ucarianoRut: getText(pickProperty(properties, ARRIENDO_UCARIANO_RUT_CANDIDATES)) || getText(pickProperty(ucariano.properties, UCARIANO_RUT_CANDIDATES)),
@@ -315,7 +311,6 @@ export async function POST(request: Request) {
     // Valores iniciales autocompletados desde Stock/Ucarianos; el operador puede editarlos despues via PATCH.
     setTextField(ARRIENDO_PRICE_CANDIDATES, getText(pickProperty(autoProps, STOCK_PRICE_CANDIDATES)));
     setTextField(ARRIENDO_PLATE_CANDIDATES, getText(pickProperty(autoProps, STOCK_PLATE_CANDIDATES)));
-    setTextField(ARRIENDO_VIN_CANDIDATES, getText(pickProperty(autoProps, STOCK_VIN_CANDIDATES)));
     setTextField(ARRIENDO_MILEAGE_CANDIDATES, getText(pickProperty(autoProps, STOCK_MILEAGE_CANDIDATES)));
     setTextField(ARRIENDO_UCARIANO_RUT_CANDIDATES, getText(pickProperty(ucarianoProps, UCARIANO_RUT_CANDIDATES)));
     setTextField(ARRIENDO_UCARIANO_ADDRESS_CANDIDATES, getText(pickProperty(ucarianoProps, UCARIANO_ADDRESS_CANDIDATES)));

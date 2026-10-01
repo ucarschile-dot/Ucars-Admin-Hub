@@ -245,10 +245,16 @@
     .vehicle-sheet-kicker { margin: 0 0 5px; color: #785a00; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
     .vehicle-sheet-close { width: 36px; height: 36px; border: 0; border-radius: 50%; background: #eff4ff; color: #0b1c30; cursor: pointer; font-size: 1.4rem; }
     .vehicle-sheet-body { padding: 24px; }
+    .vehicle-profile { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+    .vehicle-profile-photo { width: 220px; height: 160px; flex-shrink: 0; border-radius: 8px; object-fit: cover; background: #eff4ff; }
+    .vehicle-profile .vehicle-details { flex: 1; min-width: 280px; }
     .vehicle-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .vehicle-detail { padding: 12px; border: 1px solid #c4c7c7; border-radius: 6px; }
     .vehicle-detail-label { display: block; color: #444748; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
     .vehicle-detail-value { display: block; margin-top: 5px; overflow-wrap: anywhere; }
+    .assign-ucariano-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .assign-ucariano-row label { color: #444748; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; }
+    .assign-ucariano-row select { min-width: 220px; padding: 8px 10px; border: 1px solid #c4c7c7; border-radius: 6px; font: inherit; color: #0b1c30; background: #fff; }
     .vehicle-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #d3e4fe; }
     .vehicle-section h3 { margin: 0 0 12px; font-size: 1rem; }
     .vehicle-documents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -274,6 +280,8 @@
     @media (max-width: 700px) {
       .vehicle-sheet-header, .vehicle-sheet-body { padding: 16px; }
       .vehicle-details, .vehicle-documents, .contract-form { grid-template-columns: 1fr; }
+      .vehicle-profile { flex-direction: column; }
+      .vehicle-profile-photo { width: 100%; height: 200px; }
     }
 
   </style>
@@ -528,7 +536,6 @@
         { field: 'plazoPagoComision', label: 'Plazo pago comision (dias habiles)' },
         { field: 'precioAutorizado', label: 'Precio autorizado ($)' },
         { field: 'patente', label: 'Patente' },
-        { field: 'vin', label: 'VIN / Chasis' },
         { field: 'kilometraje', label: 'Kilometraje' },
         { field: 'ucarianoRut', label: 'RUT ucariano' },
         { field: 'ucarianoDomicilio', label: 'Domicilio ucariano' },
@@ -599,19 +606,35 @@
         var rentalErrorHtml = rentalError
           ? '<p style="margin: 12px 0 0; color: #93000a; font-size: 0.875rem;">Diagnostico de arriendo: ' + escapeHtml(rentalError) + '</p>'
           : '';
+        var photoUrl = vehicle.photoUrl || 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
+        var publicationHtml = vehicle.publicationUrl
+          ? '<a href="' + escapeHtml(vehicle.publicationUrl) + '" target="_blank" rel="noopener noreferrer">Ver publicacion</a>'
+          : 'No registrada';
         vehicleTitle.textContent = vehicle.name || 'Vehiculo sin nombre';
         vehicleContent.innerHTML = [
+          '<div class="vehicle-profile">',
+          '<img class="vehicle-profile-photo" alt="Imagen del vehiculo" src="' + escapeHtml(photoUrl) + '"/>',
           '<div class="vehicle-details">',
-          '<div class="vehicle-detail"><span class="vehicle-detail-label">VIN</span><span class="vehicle-detail-value">' + value(vehicle.vin) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Marca</span><span class="vehicle-detail-value">' + value(vehicle.brand) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Ano</span><span class="vehicle-detail-value">' + value(vehicle.year) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Kilometraje</span><span class="vehicle-detail-value">' + value(vehicle.mileage) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Motor</span><span class="vehicle-detail-value">' + value(vehicle.engine) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Transmision</span><span class="vehicle-detail-value">' + value(vehicle.transmission) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Precio</span><span class="vehicle-detail-value">' + value(vehicle.price) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Patente</span><span class="vehicle-detail-value">' + value(vehicle.licensePlate) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Origen</span><span class="vehicle-detail-value">' + value(vehicle.origin) + '</span></div>',
           '<div class="vehicle-detail"><span class="vehicle-detail-label">Estado</span><span class="vehicle-detail-value">' + value(vehicle.status) + '</span></div>',
+          '<div class="vehicle-detail"><span class="vehicle-detail-label">Publicacion</span><span class="vehicle-detail-value">' + publicationHtml + '</span></div>',
+          '</div>',
           '</div>',
           '<section class="vehicle-section"><h3>Certificados y documentos</h3><div class="vehicle-documents">',
           documentHtml('Revision tecnica', vehicle.technicalInspectionUrl),
           documentHtml('Permiso de circulacion', vehicle.circulationPermitUrl),
           documentHtml('Otros certificados', vehicle.otherCertificatesUrl),
           '</div></section>',
+          '<section class="vehicle-section"><h3>Asignar ucariano</h3>',
+          assignUcarianoSectionHtml(vehicle),
+          '</section>',
           '<section class="vehicle-section"><h3>Contrato de arriendo</h3><div class="vehicle-documents">',
           documentHtml('Contrato de arriendo', vehicle.rentalContractUrl),
           '</div><div class="vehicle-details" style="margin-top: 12px;">',
@@ -627,6 +650,146 @@
         ].join('');
 
         bindContractFormHandlers(vehicle, rental);
+        bindAssignUcarianoHandler(vehicle);
+      }
+
+      // Lista de ucarianos para el selector de asignacion; se carga una vez y se reutiliza en cada apertura de la ficha.
+      var ucarianosList = [];
+      var ucarianosLoaded = false;
+
+      function ensureUcarianosLoaded(callback) {
+        if (ucarianosLoaded) {
+          callback();
+          return;
+        }
+
+        fetch('/api/ucarianos', { cache: 'no-store' })
+          .then(function (response) { return response.json(); })
+          .then(function (payload) {
+            ucarianosList = Array.isArray(payload.ucarianos) ? payload.ucarianos : [];
+          })
+          .catch(function (error) {
+            console.error(error);
+            ucarianosList = [];
+          })
+          .finally(function () {
+            ucarianosLoaded = true;
+            callback();
+          });
+      }
+
+      function assignUcarianoOptionsHtml(vehicle) {
+        var currentId = vehicle.assignedUcarianoId || '';
+        var currentName = vehicle.assignedUcariano || 'Sin asignar';
+        var options = ['<option value="">Sin asignar</option>'];
+        var matchedById = false;
+
+        ucarianosList.forEach(function (ucariano) {
+          var selected = currentId && ucariano.id === currentId;
+          if (selected) matchedById = true;
+          options.push(
+            '<option value="' + escapeHtml(ucariano.id) + '" data-name="' + escapeHtml(ucariano.name) + '"' +
+              (selected ? ' selected' : '') +
+              '>' + escapeHtml(ucariano.name) + '</option>'
+          );
+        });
+
+        if (!matchedById && currentName && currentName !== 'Sin asignar') {
+          options.push('<option value="" data-name="' + escapeHtml(currentName) + '" selected>' + escapeHtml(currentName) + '</option>');
+        }
+
+        return options.join('');
+      }
+
+      function assignUcarianoSectionHtml(vehicle) {
+        if (!ucarianosLoaded) {
+          return '<div class="contract-empty">Cargando ucarianos...</div>';
+        }
+
+        return [
+          '<div class="assign-ucariano-row">',
+          '<label for="assign-ucariano-select">Ucariano asignado</label>',
+          '<select id="assign-ucariano-select">',
+          assignUcarianoOptionsHtml(vehicle),
+          '</select>',
+          '<span class="contract-status" id="assign-ucariano-status"></span>',
+          '</div>'
+        ].join('');
+      }
+
+      // Notifica al iframe de Stock que vuelva a cargar su grilla tras una asignacion hecha desde la ficha global.
+      function notifyStockRefresh() {
+        var stockFrame = document.querySelector('.screen[data-screen="stock"] iframe');
+        if (stockFrame && stockFrame.contentWindow) {
+          stockFrame.contentWindow.postMessage({ type: 'ucars:stock-refresh' }, window.location.origin);
+        }
+      }
+
+      // Conecta el selector de "Asignar ucariano" de la ficha (PATCH /api/stock y, si corresponde, crea el arriendo).
+      function bindAssignUcarianoHandler(vehicle) {
+        var select = document.getElementById('assign-ucariano-select');
+        if (!select) return;
+
+        var statusEl = document.getElementById('assign-ucariano-status');
+
+        function setStatus(message, kind) {
+          if (!statusEl) return;
+          statusEl.textContent = message || '';
+          statusEl.classList.toggle('is-error', kind === 'error');
+          statusEl.classList.toggle('is-ok', kind === 'ok');
+        }
+
+        select.addEventListener('change', function () {
+          var option = select.options[select.selectedIndex];
+          var ucarianoId = option ? option.value : '';
+          var ucarianoName = option ? (option.getAttribute('data-name') || option.textContent || '') : '';
+
+          select.disabled = true;
+          setStatus('Guardando...', '');
+
+          fetch('/api/stock', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ vehicleId: vehicle.id, ucarianoId: ucarianoId || null, ucarianoName: ucarianoName || '' })
+          })
+            .then(function (response) {
+              return response.json().then(function (payload) {
+                if (!response.ok) throw new Error(payload.error || 'No se pudo asignar el ucariano.');
+                return payload;
+              });
+            })
+            .then(function (payload) {
+              vehicle.assignedUcariano = payload.assignedUcariano || 'Sin asignar';
+              vehicle.assignedUcarianoId = payload.assignedUcarianoId || null;
+              notifyStockRefresh();
+
+              if (!ucarianoId) return null;
+
+              return fetch('/api/arriendos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  vehicleId: vehicle.id,
+                  vehicleName: vehicle.name || 'Vehiculo',
+                  ucarianoId: ucarianoId,
+                  ucarianoName: ucarianoName || 'Ucariano'
+                })
+              }).catch(function (error) {
+                console.error(error);
+                setStatus('Ucariano asignado, pero no se pudo generar el contrato de arriendo: ' + (error.message || 'error desconocido.'), 'error');
+              });
+            })
+            .then(function () {
+              return getRentalForVehicle(vehicle.id);
+            })
+            .then(function (result) {
+              renderVehicleOverlay(vehicle, result.rental, result.error);
+            })
+            .catch(function (error) {
+              setStatus(error.message || 'No se pudo asignar el ucariano.', 'error');
+              select.disabled = false;
+            });
+        });
       }
 
       // Conecta el formulario de contrato (guardar cambios via PATCH y generar el PDF via /api/arriendos/contrato).
@@ -712,16 +875,28 @@
         }
       }
 
-      // Abre la ficha de Stock primero con datos base y luego completa el arriendo de forma asincrona.
+      // Abre la ficha de Stock primero con datos base y luego completa el arriendo y la lista de ucarianos de forma asincrona.
+      var currentOverlayRental = null;
+      var currentOverlayRentalError = '';
+
       function openVehicleOverlay(vehicle) {
         if (!vehicleOverlay || !vehicleContent || !vehicleTitle) return;
+        currentOverlayRental = null;
+        currentOverlayRentalError = '';
         renderVehicleOverlay(vehicle, null, '');
         vehicleOverlay.classList.add('is-open');
         vehicleOverlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
         applyTopbarVisibility(false);
         vehicleClose.focus();
+        ensureUcarianosLoaded(function () {
+          if (vehicleOverlay.classList.contains('is-open')) {
+            renderVehicleOverlay(vehicle, currentOverlayRental, currentOverlayRentalError);
+          }
+        });
         getRentalForVehicle(vehicle.id).then(function (result) {
+          currentOverlayRental = result.rental;
+          currentOverlayRentalError = result.error;
           if (vehicleOverlay.classList.contains('is-open')) {
             renderVehicleOverlay(vehicle, result.rental, result.error);
           }
@@ -846,7 +1021,7 @@
           ['Add Vehicle', 'Agregar vehiculo'],
           ['All Brands', 'Todas las marcas'],
           ['All Ucarianos', 'Todos los ucarianos'],
-          ['Search stock, VIN...', 'Buscar stock o VIN...'],
+          ['Search stock, VIN...', 'Buscar stock...'],
           ['Search...', 'Buscar...'],
           ["Today's Agenda", 'Agenda de hoy'],
           ['Ucarianos Directory', 'Directorio de ucarianos'],

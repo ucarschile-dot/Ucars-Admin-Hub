@@ -48,7 +48,6 @@ type StockCardItem = {
   price: string;
   status: string;
   publicationUrl: string;
-  vin: string;
   licensePlate: string;
   origin: string;
   technicalInspectionUrl: string;
@@ -69,7 +68,6 @@ type WebVehicle = {
   combustible?: string;
   transmision?: string;
   color?: string;
-  vin?: string;
   patente?: string;
   estado?: string;
   badge?: string;
@@ -89,9 +87,6 @@ type VeeklsVehicle = {
   fuel?: string;
   gearbox?: string;
   color?: string;
-  vin?: unknown;
-  chassis?: unknown;
-  chasis?: unknown;
   licensePlate?: unknown;
   license_plate?: unknown;
   plate?: unknown;
@@ -107,7 +102,6 @@ type NotionSchemaProperty = { type?: string };
 const PLACEHOLDER_IMAGE = 'https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg';
 
 const PUBLICATION_URL_CANDIDATES = ['URL publicación', 'URL Publicacion', 'URL publicacion', 'URL', 'Url'];
-const VIN_CANDIDATES = ['VIN', 'Numero VIN', 'Número VIN', 'Chasis', 'Numero de chasis', 'Número de chasis'];
 const LICENSE_PLATE_CANDIDATES = ['Patente', 'Placa patente', 'Placa', 'License Plate'];
 const ORIGIN_CANDIDATES = ['Origen', 'Procedencia', 'Origen del vehiculo', 'Origen del vehículo', 'Vehicle Origin'];
 const TECHNICAL_INSPECTION_CANDIDATES = ['Revision tecnica', 'Revisión técnica', 'Certificado revision tecnica', 'Certificado revisión técnica'];
@@ -295,11 +289,6 @@ function mapVeeklsVehicleToWeb(vehicle: VeeklsVehicle): WebVehicle {
     combustible: decodeVeeklsEnum(vehicle.fuel),
     transmision: decodeVeeklsEnum(vehicle.gearbox),
     color: vehicle.color,
-    vin: getVeeklsVehicleField(vehicle, [
-      'vin', 'vinNumber', 'vin_number', 'vehicleVin', 'vehicleVIN', 'vehicleIdentificationNumber',
-      'chassis', 'chasis', 'vehicleChassis', 'vehicleChassisNumber', 'chassisNumber', 'chassis_number',
-      'chassisNo', 'chassisCode', 'serialNumber', 'frameNumber', 'numeroChasis', 'numeroDeChasis'
-    ]),
     patente: getVeeklsVehicleField(vehicle, ['licensePlate', 'license_plate', 'plate', 'patente', 'registration', 'registrationNumber', 'plateNumber']),
     estado: status,
     imagen: image
@@ -608,7 +597,6 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
   );
   const status = getText(pickProperty(properties, ['Estado', 'Status'])) || 'Disponible';
   const publicationUrl = extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES));
-  const vin = getText(pickProperty(properties, VIN_CANDIDATES));
   const licensePlate = getText(pickProperty(properties, LICENSE_PLATE_CANDIDATES));
   const origin = getText(pickProperty(properties, ORIGIN_CANDIDATES));
   const technicalInspectionUrl = extractFirstUrl(pickProperty(properties, TECHNICAL_INSPECTION_CANDIDATES));
@@ -632,7 +620,6 @@ function toCard(row: NotionRow, userNameMap: Map<string, string>): StockCardItem
     price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
     status,
     publicationUrl,
-    vin,
     licensePlate,
     origin,
     technicalInspectionUrl,
@@ -669,7 +656,6 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
       vehicle.url ||
       extractFirstUrl(pickProperty(properties, PUBLICATION_URL_CANDIDATES)) ||
       buildPublicationUrl(vehicle);
-    const vin = vehicle.vin || getText(pickProperty(properties, VIN_CANDIDATES));
     const licensePlate = vehicle.patente || getText(pickProperty(properties, LICENSE_PLATE_CANDIDATES));
     const origin = getText(pickProperty(properties, ORIGIN_CANDIDATES));
     const technicalInspectionUrl = extractFirstUrl(pickProperty(properties, TECHNICAL_INSPECTION_CANDIDATES));
@@ -696,7 +682,6 @@ function toCardFromWebVehicle(vehicle: WebVehicle, row: NotionRow | undefined, u
     price: priceNumber > 0 ? `$${priceNumber.toLocaleString('es-CL')}` : '',
     status,
     publicationUrl,
-    vin,
     licensePlate,
     origin,
     technicalInspectionUrl,
@@ -772,9 +757,6 @@ async function ensureStockIdentifierSchema(databaseId: string, notionToken: stri
   const schema = await getDatabaseSchema(databaseId, notionToken);
   const propertiesToCreate: Record<string, unknown> = {};
 
-  if (!findPropertyName(schema, VIN_CANDIDATES)) {
-    propertiesToCreate.VIN = { rich_text: {} };
-  }
   if (!findPropertyName(schema, LICENSE_PLATE_CANDIDATES)) {
     propertiesToCreate.Patente = { rich_text: {} };
   }
@@ -792,7 +774,7 @@ async function ensureStockIdentifierSchema(databaseId: string, notionToken: stri
   });
   const payload = (await response.json()) as { properties?: Record<string, NotionSchemaProperty>; message?: string };
   if (!response.ok) {
-    throw new Error(payload.message || 'No se pudieron crear las columnas VIN y Patente en Stock.');
+    throw new Error(payload.message || 'No se pudo crear la columna Patente en Stock.');
   }
 
   return payload.properties || getDatabaseSchema(databaseId, notionToken);
@@ -855,7 +837,6 @@ function buildNotionPropertiesFromWebVehicle(
     { candidates: ['Combustible', 'Fuel', 'Fuel Type'], rawValue: vehicle.combustible },
     { candidates: ['Tipo', 'Type', 'Categoria', 'Categoría'], rawValue: vehicle.tipo },
     { candidates: ['Color'], rawValue: vehicle.color },
-    { candidates: VIN_CANDIDATES, rawValue: vehicle.vin },
     { candidates: LICENSE_PLATE_CANDIDATES, rawValue: vehicle.patente },
     { candidates: ['Estado', 'Status'], rawValue: vehicle.estado || 'Disponible' },
     {
@@ -1073,7 +1054,6 @@ function fallbackCards(): StockCardItem[] {
     price: item.price > 0 ? `$${item.price.toLocaleString('es-CL')}` : '',
     status: item.status,
     publicationUrl: '',
-    vin: '',
     licensePlate: '',
     origin: '',
     technicalInspectionUrl: '',

@@ -163,11 +163,31 @@ export function parseLeadsSheetRows(rows: string[][]) {
   };
 }
 
-function findDailyRowForDay(dailyRows: LeadsDailyRow[], day: number) {
+function findDailyRowForDate(dailyRows: LeadsDailyRow[], year: number, monthIndex: number, day: number) {
   return (
     dailyRows.find((row) => {
-      const leadingNumber = parseInt(row.fecha, 10);
-      return Number.isFinite(leadingNumber) && leadingNumber === day;
+      const rawDate = row.fecha.trim();
+      const serial = Number(rawDate);
+
+      if (Number.isFinite(serial) && serial > 31) {
+        const excelDate = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000);
+        return (
+          excelDate.getUTCFullYear() === year &&
+          excelDate.getUTCMonth() === monthIndex &&
+          excelDate.getUTCDate() === day
+        );
+      }
+
+      const isoMatch = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(rawDate);
+      if (isoMatch) {
+        return Number(isoMatch[1]) === year && Number(isoMatch[2]) === monthIndex + 1 && Number(isoMatch[3]) === day;
+      }
+
+      const localizedMatch = /^(\d{1,2})(?:\s|[-/])?(.*)$/.exec(rawDate);
+      if (!localizedMatch || Number(localizedMatch[1]) !== day) return false;
+
+      const rowMonth = normalizeText(localizedMatch[2]);
+      return !rowMonth || rowMonth.includes(getMonthNameEs(monthIndex));
     }) || null
   );
 }
@@ -180,7 +200,7 @@ export async function fetchLeadsForDate(spreadsheetId: string, dateIso: string):
   const range = `'${tabName.replace(/'/g, "''")}'!A1:Z300`;
   const rows = await fetchSheetOrExcelValues(spreadsheetId, range);
   const parsed = parseLeadsSheetRows(rows);
-  const selectedDay = findDailyRowForDay(parsed.dailyRows, day);
+  const selectedDay = findDailyRowForDate(parsed.dailyRows, year, monthIndex, day);
 
   return {
     date: dateIso,
